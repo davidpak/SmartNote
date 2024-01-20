@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SmartNote Server" default="run" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+    <description>SmartNote server build file</description>
+
+    <property name="args" value=""/>
+
+    <!-- Directories -->
+    <property name="lib.dir" value="lib"/>
+    <property name="build.dir" value="build"/>
+    <property name="src.dir" value="src"/>
+    <property name="dist.dir" value="dist"/>
+
+    <!-- Classpath -->
+    <path id="lib.path">
+        <fileset dir="${lib.dir}"/>
+    </path>
+    <path id="run.path">
+        <path refid="lib.path"/>
+        <path location="${build.dir}"/>
+    </path>
+
+    <!-- =================================
+          target: resolve
+         ================================= -->
+    <target name="resolve" description="Retrieve dependencies with Ivy">
+        <ivy:retrieve/>
+    </target>
+
+    <!-- =================================
+          target: clean-cache
+         ================================= -->
+    <target name="clean-cache" description="Clean the Ivy cache">
+        <ivy:cleancache/>
+    </target>
+
+    <!-- =================================
+          target: clean-deps
+         ================================= -->
+    <target name="clean-deps" description="Clean the Ivy dependencies">
+        <delete dir="${lib.dir}"/>
+    </target>
+
+    <!-- =================================
+          target: init
+         ================================= -->
+    <target name="init" depends="resolve">
+        <tstamp/>
+        <mkdir dir="${build.dir}"/>
+    </target>
+
+    <!-- =================================
+          target: build
+         ================================= -->
+    <target name="build" depends="init" description="Compile the source">
+        <echo message="Using ivy to resolve dependencies..."/>
+        <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.1" pathid="lib.path.id" inline="true"/>
+
+        <echo message="Compiling the source..."/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path" includeAntRuntime="false"/>
+    </target>
+
+    <!-- =================================
+          target: dist
+         ================================= -->
+    <target name="dist" depends="build" description="Create the distribution">
+        <mkdir dir="${dist.dir}"/>
+        <jar destfile="dist/server.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.smartnote.server.Server"/>
+            </manifest>
+
+            <fileset dir="${build.dir}"/>
+        </jar>
+    </target>
+
+    <!-- =================================
+          target: run
+         ================================= -->
+    <target name="run" depends="build" description="Run the server">
+        <java classpathref="run.path" classname="com.smartnote.server.Server" fork="true">
+            <arg line="${args}"/>
+        </java>
+    </target>
+
+    <!-- =================================
+          target: clean
+         ================================= -->
+    <target name="clean" description="Clean the build and dist directory">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>  
+</project>

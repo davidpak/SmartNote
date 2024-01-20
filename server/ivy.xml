@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0">
+    <info organisation="org.smartnote" module="server"/>
+    <dependencies>
+        <dependency org="com.sparkjava" name="spark-core" rev="2.9.4"/>
+        <dependency org="com.google.code.gson" name="gson" rev="1.4"/>
+    </dependencies>
+</ivy-module>
