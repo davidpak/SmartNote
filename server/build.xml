@@ -8,9 +8,10 @@
     <property name="lib.dir" value="lib"/>
     <property name="build.dir" value="build/classes"/>
     <property name="src.dir" value="main/src"/>
-    <property name="dist.dir" value="dist"/>
+    <property name="jar.name" value="server.jar"/>
     <property name="test.src.dir" value="main/test"/>
     <property name="test.build.dir" value="build/test-classes"/>
+    <property name="dist.name" value="server.tar.gz"/>
 
     <!-- Classpath -->
     <path id="lib.path">
@@ -70,11 +71,10 @@
     </target>
 
     <!-- =================================
-          target: dist
+          target: jar
          ================================= -->
-    <target name="dist" depends="build" description="Create the distribution">
-        <mkdir dir="${dist.dir}"/>
-        <jar destfile="dist/server.jar">
+    <target name="jar" depends="build" description="Create a JAR archive of the server">
+        <jar destfile="${jar.name}">
             <manifest>
                 <attribute name="Main-Class" value="com.smartnote.server.Server"/>
             </manifest>
@@ -121,6 +121,18 @@
     <target name="clean" description="Clean compiled binaries">
         <delete dir="${build.dir}"/>
         <delete dir="${test.build.dir}"/>
-        <delete dir="${dist.dir}"/>
-    </target>  
+        <delete dir="${production.dir}"/>
+        <delete file="${jar.name}"/>
+        <delete file="${dist.name}"/>
+    </target>
+
+    <!-- =================================
+          target: dist
+         ================================= -->
+    <target name="dist" depends="jar" description="Create standalone distributable">
+        <tar destfile="${dist.name}" compression="gzip">
+            <tarfileset file="dist/${dist.name}"/>
+            <tarfileset dir="${lib.dir}" prefix="lib/"/>
+        </tar>
+    </target>
 </project>

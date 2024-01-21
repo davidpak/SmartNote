@@ -35,3 +35,7 @@ dist-ssr
 build
 lib
 out
+*.jar
+*.tar
+*.tar.gz
+*.zip

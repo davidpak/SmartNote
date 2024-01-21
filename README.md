@@ -37,7 +37,8 @@ Make sure your working directory is the `server/` directory before running any c
 
 * `ant resolve` - Checks for and downloads dependencies.
 * `ant build` - Builds the server. This will download dependencies if they have not already been downloaded.
-* `ant dist` - Creates a standalone distributable, which can be run without Ant. This will build the server if it has not already been built.
+* `ant jar` - Creates a JAR file of the server. This will build the server if it has not already been built.
+* `ant dist` - Creates a standalone distributable archive of the server. This will build the server if it has not already been built.
 * `ant build-test` - Builds the server and tests.
 
 You may also set up an IDE to build and run the server. Ensure your IDE has support for Ant and set up your project to use the buildfile `server/build.xml`, have configured it to use a suitable JRE, and to include all of the `jar` files in the `server/lib/` directory on the classpath.
@@ -56,8 +57,10 @@ From within the `client/` directory, do:
 
 Make sure your working directory is the `server/` directory before running any commands. The following commands are important:
 
-* `ant run` - Runs the server. This will build the server if it has not already been built. Specify `--Dargs="..."` to pass arguments to the server. This will not run the standalone distributable, rather the compiled classes.
+* `ant run` - Runs the server. This will build the server if it has not already been built. Specify `--Dargs="..."` to pass arguments to the server. This will only run the compiled classes, not the JAR file or distributable archive.
 * `ant test` - Runs the server tests. This will build the server and the tests if they have not already been built.
+
+If you have built a JAR file of the server, you may run either `server.bat [args...]` (Windows) or `server.sh [args...]` (Mac/Linux) from the `server/` directory.
 
 When using an IDE, you may need to setup run configurations to target buildfile `server/build.xml`. Some IDEs may be able to build without Ant, but you may need to set up the classpath within your IDE's configuration. It must include all of the `jar` files in the `server/lib/` directory. Ensure your IDE has set the working directory to the `server/` directory.
 
