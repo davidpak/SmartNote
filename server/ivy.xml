@@ -4,5 +4,8 @@
     <dependencies>
         <dependency org="com.sparkjava" name="spark-core" rev="2.9.4"/>
         <dependency org="com.google.code.gson" name="gson" rev="1.4"/>
+        <dependency org="junit" name="junit" rev="4.13.2">
+            <artifact name="junit" type="jar"/>
+        </dependency>
     </dependencies>
 </ivy-module>

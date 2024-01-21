@@ -6,9 +6,11 @@
 
     <!-- Directories -->
     <property name="lib.dir" value="lib"/>
-    <property name="build.dir" value="build"/>
-    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build/classes"/>
+    <property name="src.dir" value="main/src"/>
     <property name="dist.dir" value="dist"/>
+    <property name="test.src.dir" value="main/test"/>
+    <property name="test.build.dir" value="build/test-classes"/>
 
     <!-- Classpath -->
     <path id="lib.path">
@@ -17,6 +19,14 @@
     <path id="run.path">
         <path refid="lib.path"/>
         <path location="${build.dir}"/>
+    </path>
+    <path id="test.lib.path">
+        <pathelement path="${build.dir}"/>
+        <fileset dir="${lib.dir}"/>
+    </path>
+    <path id="test.run.path">
+        <path refid="run.path"/>
+        <path location="${test.build.dir}"/>
     </path>
 
     <!-- =================================
@@ -83,10 +93,34 @@
     </target>
 
     <!-- =================================
+        target: build-test
+        ================================= -->
+    <target name="build-test" depends="build" description="Compile the test source">
+        <mkdir dir="${test.build.dir}"/>
+        <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" classpathref="test.lib.path" includeAntRuntime="false"/>
+    </target>
+
+    <!-- =================================
+          target: test
+         ================================= -->
+    <target name="test" depends="build-test" description="Run the tests">
+        <junit printsummary="yes" haltonfailure="yes">
+            <classpath refid="test.run.path"/>
+            <formatter type="brief" usefile="false"/>
+            <batchtest fork="yes">
+                <fileset dir="${test.build.dir}">
+                    <include name="**/*Test*.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- =================================
           target: clean
          ================================= -->
-    <target name="clean" description="Clean the build and dist directory">
+    <target name="clean" description="Clean compiled binaries">
         <delete dir="${build.dir}"/>
+        <delete dir="${test.build.dir}"/>
         <delete dir="${dist.dir}"/>
     </target>  
 </project>
