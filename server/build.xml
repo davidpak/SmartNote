@@ -131,7 +131,7 @@
          ================================= -->
     <target name="dist" depends="jar" description="Create standalone distributable">
         <tar destfile="${dist.name}" compression="gzip">
-            <tarfileset file="dist/${dist.name}"/>
+            <tarfileset file="${jar.name}"/>
             <tarfileset dir="${lib.dir}" prefix="lib/"/>
         </tar>
     </target>
