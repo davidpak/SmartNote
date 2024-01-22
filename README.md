@@ -1,15 +1,28 @@
 # SmartNote
-SmartNote revolutionizes student engagement with LangChain, TypeScript, and Notion API. It automates detailed note creation from videos and PDFs, seamlessly integrating into the user’s Notion workspace.
+
+SmartNote is an automated note-taking organization application that aims to revolution of students engage with educational content. SmartNote automates the process of creating detailed notes from PDFs, slideshows, and audio transcripts. It also provides a simple way to transfer the generated notes to the user's Notion workspace.
+
+## Goals
+
+- Create detailed, formatted notes from PDFs (e.g. lecture slides, research papers)
+- Create detailed, formatted notes from video/audio transcripts (e.g. lecture recordings)
+- Connect to the user's Notion workspace to transfer the generated notes
+  - Conversion into Notion-friendly structure w/ headings, lists, etc.
+- Generation Customization (Inputting specialized AI prompts and toggles for specific settings)
+- Output categories identified from the document and allow the user to select which ones should be included or discluded in the generated notes
 
 ## Layout
 
-* `client/` - Client resources
-  * `src/` - Client web source code
-* `server/` - Server resources
-  * `main/` - Server sources
-    * `src/` - Main runtime sources
-    * `test/` - Test sources
-  * `scripts/` - Scripts used by the server
+- `client/` - Client resources
+  - `src/` - Client source code
+    - `assets/` - Images and other assets
+    - `components/` - React components
+    - `utils/` - Utility functions
+- `server/` - Server resources
+  - `main/` - Server sources
+    - `src/` - Main runtime sources
+    - `test/` - Test sources
+  - `scripts/` - Scripts used by the server
 
 ## Building
 
@@ -35,11 +48,11 @@ The server uses [Apache Ant](https://ant.apache.org/index.html) as its build sys
 
 Make sure your working directory is the `server/` directory before running any commands. The following commands are important:
 
-* `ant resolve` - Checks for and downloads dependencies.
-* `ant build` - Builds the server. This will download dependencies if they have not already been downloaded.
-* `ant jar` - Creates a JAR file of the server. This will build the server if it has not already been built.
-* `ant dist` - Creates a standalone distributable archive of the server. This will build the server if it has not already been built.
-* `ant build-test` - Builds the server and tests.
+- `ant resolve` - Checks for and downloads dependencies.
+- `ant build` - Builds the server. This will download dependencies if they have not already been downloaded.
+- `ant jar` - Creates a JAR file of the server. This will build the server if it has not already been built.
+- `ant dist` - Creates a standalone distributable archive of the server. This will build the server if it has not already been built.
+- `ant build-test` - Builds the server and tests.
 
 You may also set up an IDE to build and run the server. Ensure your IDE has support for Ant and set up your project to use the buildfile `server/build.xml`, have configured it to use a suitable JRE, and to include all of the `jar` files in the `server/lib/` directory on the classpath.
 
@@ -57,8 +70,8 @@ From within the `client/` directory, do:
 
 Make sure your working directory is the `server/` directory before running any commands. The following commands are important:
 
-* `ant run` - Runs the server. This will build the server if it has not already been built. Specify `--Dargs="..."` to pass arguments to the server. This will only run the compiled classes, not the JAR file or distributable archive.
-* `ant test` - Runs the server tests. This will build the server and the tests if they have not already been built.
+- `ant run` - Runs the server. This will build the server if it has not already been built. Specify `--Dargs="..."` to pass arguments to the server. This will only run the compiled classes, not the JAR file or distributable archive.
+- `ant test` - Runs the server tests. This will build the server and the tests if they have not already been built.
 
 If you have built a JAR file of the server, you may run either `server.bat [args...]` (Windows) or `server.sh [args...]` (Mac/Linux) from the `server/` directory.
 
@@ -66,6 +79,9 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 ## Third-Party Libraries
 
-* [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
-* [JUnit 4](https://junit.org/junit4/) - Used for testing server.
-* [Spark](https://sparkjava.com/) - Used as the backend web framework.
+- [Framer Motion](https://www.framer.com/motion/) - Used for animations.
+- [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
+- [JUnit 4](https://junit.org/junit4/) - Used for testing server.
+- [React](https://react.dev/) - Used for creating user interface components.
+- [Spark](https://sparkjava.com/) - Used as the backend web framework.
+- [Tailwind CSS](https://tailwindcss.com/) - Used for CSS.
