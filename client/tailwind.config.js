@@ -4,8 +4,9 @@ export default {
   theme: {
     colors: {
       accent: '#375EF9', // emphasis blue
-      background: '#FFFFFF', // white
-      'text-primary': '#000000', // black
+      'accent-dark': '#1B37A7',
+      white: '#FFFFFF', // white
+      black: '#000000', // black
       'text-secondary': '#636363', // grey 1
       'neutral-100': '#FBFBFB', // grey 5
       'neutral-200': '#EFEFEF', // grey 4
