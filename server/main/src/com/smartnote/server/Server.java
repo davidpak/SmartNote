@@ -23,7 +23,7 @@ public class Server {
     /**
      * The logger.
      */
-    public static final Logger LOG = LoggerFactory.getLogger("SmartNote Server");
+    public static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
     /**
      * The server.
@@ -85,7 +85,7 @@ public class Server {
      */
     private void validate() {
         if (config.useSSL()) {
-            System.out.printf("SSL is currently unsupported\n");
+            LOG.error("SSL is currently unsupported\n");
             System.exit(1);
         }
     }

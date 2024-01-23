@@ -94,8 +94,8 @@
     </target>
 
     <!-- =================================
-        target: build-test
-        ================================= -->
+          target: build-test
+         ================================= -->
     <target name="build-test" depends="build" description="Compile the test source">
         <mkdir dir="${test.build.dir}"/>
         <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" classpathref="test.lib.path" includeAntRuntime="false"/>

@@ -1,13 +1,18 @@
 package com.smartnote.server.auth;
 
+import static java.lang.System.*;
+
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Scanner;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.smartnote.server.Resource;
 
 import spark.Request;
 import spark.Response;
@@ -18,10 +23,8 @@ import spark.Response;
  * @author Ethan Vrhel
  */
 public class Session {
-    /**
-     * The name of the session secret resource.
-     */
-    public static final String SESSION_SECRET_NAME = "session_secret.txt";
+
+    private static final Logger LOG = LoggerFactory.getLogger(Session.class);
 
     /**
      * The issuer of the session.
@@ -38,43 +41,55 @@ public class Session {
      */
     public static final long SESSION_LENGTH = 60L * 10L; // 10 minutes
 
-    private static final String SECRET; // session secret
+    /**
+     * The length of the session secret in bytes.
+     */
+    public static final int SECRET_LENGTH = 32;
+
+    /**
+     * The default secret algorithm.
+     */
+    public static final String DEFAULT_SECRET_ALGORITHM = new SecureRandom().getAlgorithm();
+
     private static final Algorithm ALGORITHM; // algorithm for signing
     private static final JWTVerifier VERIFIER; // verifier for JWTs
 
     static {
-        Scanner scanner = null;
         String secret = null;
+        String algorithm = DEFAULT_SECRET_ALGORITHM;
 
+        // generate cryptographically secure random string
         try {
-            // load secret
-            scanner = new Scanner(Resource.readPrivate(SESSION_SECRET_NAME));
-            secret = scanner.next();
-        } catch (Exception e) {
-            // manual input
-            System.out.println("FAILED TO READ SESSION SECRET");
-            System.out.println("Use default (unsafe)? (Y/N)");
+            LOG.info("Generating session secret using " + algorithm);
 
-            // confirm
-            scanner = new Scanner(System.in);
-            String input;
-            do {
-                input = scanner.next();
-            } while (!input.equalsIgnoreCase("y") && !input.equalsIgnoreCase("n"));
+            SecureRandom rand = SecureRandom.getInstance(algorithm);
 
-            // exit if no
-            if (input.equalsIgnoreCase("n"))
-                System.exit(0);
+            byte[] bytes = new byte[SECRET_LENGTH];
+            rand.nextBytes(bytes);
 
-            secret = "unsafe";
-        } finally {
-            if (scanner != null)
-                scanner.close();
-            SECRET = secret;
+            short[] bytesUnsigned = new short[bytes.length];
+            for (int i = 0; i < bytes.length; i++)
+                bytesUnsigned[i] = (short) (bytes[i] & 0xFF);
+
+            // convert to alphanumeric string
+            final String CHAR_ARRAY = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            char[] chars = new char[bytes.length];
+            for (int i = 0; i < bytes.length; i++) {
+                chars[i] = CHAR_ARRAY.charAt(bytesUnsigned[i] % CHAR_ARRAY.length());
+
+                // zero out in memory for security
+                bytes[i] = 0;
+                bytesUnsigned[i] = 0;
+            }
+
+            secret = new String(chars);
+        } catch (NoSuchAlgorithmException e1) {
+            LOG.error("Algorithm " + algorithm + " was not found");
+            exit(1);
         }
 
         // create algorithm and verifier
-        ALGORITHM = Algorithm.HMAC256(SECRET);
+        ALGORITHM = Algorithm.HMAC256(secret);
         VERIFIER = JWT.require(ALGORITHM).build();
     }
 

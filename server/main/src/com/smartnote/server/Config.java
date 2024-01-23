@@ -1,5 +1,8 @@
 package com.smartnote.server;
 
+import java.security.Provider;
+import java.security.Security;
+
 /**
  * The server configuration.
  * 
@@ -21,6 +24,18 @@ public class Config {
         System.out.printf("  -p, --port <port>    Specify the port to listen on\n");
         System.out.printf("  -s, --ssl            Enable SSL\n");
         System.out.printf("  -i, --insecure       Disable SSL (default)\n");
+        System.out.printf("  -g, --algorithms     Print the supported algorithms\n");
+    }
+
+    private static void printAlgorithms() {
+        System.out.printf("Supported algorithms:\n");
+
+        Provider[] providers = Security.getProviders();
+        for (Provider p : providers) {
+            System.out.printf("Provider: %s\n", p.getName());
+            for (Provider.Service s : p.getServices())
+                System.out.printf("  Algorithm: %s\n", s.getAlgorithm());
+        }
     }
 
     private int port;
@@ -52,7 +67,7 @@ public class Config {
                     port = Integer.parseInt(args[i + 1]);
                     i++;
                 } else {
-                    System.err.println("Missing port number");
+                    System.err.printf("Missing port number\n");
                     printHelp();
                     return 1;
                 }
@@ -60,6 +75,9 @@ public class Config {
                 usessl = true;
             } else if (a.equals("-i") || a.equals("--insecure")) {
                 usessl = false;
+            } else if (a.equals("-g") || a.equals("--algorithms")) {
+                printAlgorithms();
+                return 0;
             } else {
                 System.err.println("Unknown option: " + a);
                 printHelp();

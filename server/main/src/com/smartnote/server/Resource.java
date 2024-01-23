@@ -62,6 +62,47 @@ public class Resource {
     }
 
     /**
+     * Opens an output stream to a private resource.
+     * 
+     * @param name The name of the resource.
+     * @return The stream to the resource, or <code>null</code> if
+     *         the resource does not exist.
+     * 
+     * @throws IOException            If an I/O error occurs.
+     * @throws IllegalAccessException If the resource is not in the private
+     *                                directory.
+     */
+    public static OutputStream writePrivate(String name) throws IOException, IllegalAccessException {
+        String path = PRIVATE_DIR + File.separatorChar + name;
+        File f = new File(path).getAbsoluteFile();
+
+        // check if file is in private directory
+        if (!f.getAbsolutePath().startsWith(new File(PRIVATE_DIR).getAbsolutePath()))
+            throw new IllegalAccessException(path + " is not in the private directory");
+
+        return new FileOutputStream(f);
+    }
+
+    /**
+     * Opens an output stream to a private resource.
+     * 
+     * @param name  The name of the resource.
+     * @param bytes The bytes to write.
+     * @return The stream to the resource, or <code>null</code> if
+     *         the resource does not exist.
+     * 
+     * @throws IOException            If an I/O error occurs.
+     * @throws IllegalAccessException If the resource is not in the private
+     *                                directory.
+     */
+    public static OutputStream writePrivate(String name, byte[] bytes) throws IOException, IllegalAccessException {
+        OutputStream out = writePrivate(name);
+        out.write(bytes);
+        out.close();
+        return out;
+    }
+
+    /**
      * Open an input stream to a public resource.
      * 
      * @param name The name of the resource.
