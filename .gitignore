@@ -40,3 +40,4 @@ out
 *.tar.gz
 *.zip
 server/main/private
+server/sessions

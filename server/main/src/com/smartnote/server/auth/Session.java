@@ -1,18 +1,15 @@
 package com.smartnote.server.auth;
 
-import static java.lang.System.*;
-
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Instant;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.smartnote.server.Resource;
+import com.smartnote.server.util.CryptoUtils;
 
 import spark.Request;
 import spark.Response;
@@ -23,18 +20,10 @@ import spark.Response;
  * @author Ethan Vrhel
  */
 public class Session {
-
-    private static final Logger LOG = LoggerFactory.getLogger(Session.class);
-
     /**
      * The issuer of the session.
      */
     public static final String ISSUER = "com.smartnote.server";
-
-    /**
-     * The subject of the session.
-     */
-    public static final String SUBJECT = "com.smartnote.server.session";
 
     /**
      * The length of the session in seconds.
@@ -47,46 +36,16 @@ public class Session {
     public static final int SECRET_LENGTH = 32;
 
     /**
-     * The default secret algorithm.
+     * The length of the session token in bytes.
      */
-    public static final String DEFAULT_SECRET_ALGORITHM = new SecureRandom().getAlgorithm();
+    public static final int TOKEN_LENGTH = 32;
 
     private static final Algorithm ALGORITHM; // algorithm for signing
     private static final JWTVerifier VERIFIER; // verifier for JWTs
 
     static {
-        String secret = null;
-        String algorithm = DEFAULT_SECRET_ALGORITHM;
-
         // generate cryptographically secure random string
-        try {
-            LOG.info("Generating session secret using " + algorithm);
-
-            SecureRandom rand = SecureRandom.getInstance(algorithm);
-
-            byte[] bytes = new byte[SECRET_LENGTH];
-            rand.nextBytes(bytes);
-
-            short[] bytesUnsigned = new short[bytes.length];
-            for (int i = 0; i < bytes.length; i++)
-                bytesUnsigned[i] = (short) (bytes[i] & 0xFF);
-
-            // convert to alphanumeric string
-            final String CHAR_ARRAY = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            char[] chars = new char[bytes.length];
-            for (int i = 0; i < bytes.length; i++) {
-                chars[i] = CHAR_ARRAY.charAt(bytesUnsigned[i] % CHAR_ARRAY.length());
-
-                // zero out in memory for security
-                bytes[i] = 0;
-                bytesUnsigned[i] = 0;
-            }
-
-            secret = new String(chars);
-        } catch (NoSuchAlgorithmException e1) {
-            LOG.error("Algorithm " + algorithm + " was not found");
-            exit(1);
-        }
+        String secret = CryptoUtils.randomString(SECRET_LENGTH);
 
         // create algorithm and verifier
         ALGORITHM = Algorithm.HMAC256(secret);
@@ -119,27 +78,19 @@ public class Session {
      * @return The session.
      */
     public static Session createSession() {
+        String user = CryptoUtils.randomString(TOKEN_LENGTH);
+
         // expiration date
         Instant expr = Instant.now().plusSeconds(SESSION_LENGTH);
 
         // create the token
         String token = JWT.create()
                 .withIssuer(ISSUER)
-                .withSubject(SUBJECT)
+                .withSubject(user)
                 .withExpiresAt(expr)
                 .sign(ALGORITHM);
 
         return new Session(VERIFIER.verify(token));
-    }
-
-    /**
-     * Stores a session in the response.
-     * 
-     * @param session  The session.
-     * @param response The response.
-     */
-    public static void storeSession(Session session, Response response) {
-        response.header("Authorization", session.getJWT().getToken());
     }
 
     /**
@@ -167,7 +118,7 @@ public class Session {
         // before we can do anything else
     }
 
-    private final DecodedJWT jwt;
+    private DecodedJWT jwt;
 
     private Session(DecodedJWT jwt) {
         this.jwt = jwt;
@@ -180,5 +131,44 @@ public class Session {
      */
     public DecodedJWT getJWT() {
         return jwt;
+    }
+
+    public void updateSession() {
+        // expiration date
+        Instant expr = Instant.now().plusSeconds(SESSION_LENGTH);
+
+        // create the token
+        String token = JWT.create()
+                .withIssuer(jwt.getIssuer())
+                .withSubject(jwt.getSubject())
+                .withExpiresAt(expr)
+                .sign(ALGORITHM);
+
+        jwt = VERIFIER.verify(token);
+    }
+
+    /**
+     * Writes the session token to the response. Will be stored in the
+     * <code>Authorization</code> header.
+     * 
+     * @param response The response.
+     */
+    public void writeToResponse(Response response) {
+        response.header("Authorization", jwt.getToken());
+    }
+
+    /**
+     * Write data to a session file.
+     * 
+     * @param name The name of the file.
+     * @param bytes The data to write.
+     * @throws IOException If an I/O error occurs.
+     * @throws IllegalAccessException The resource is not in the
+     * session directory.
+     */
+    public void writeSessionFile(String name, byte[] bytes) throws IOException, IllegalAccessException {
+        OutputStream out = Resource.writeSession(name, this);
+        out.write(bytes);
+        out.close();
     }
 }

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.rpc.Upload;
+import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.ServerRoute;
 
 import spark.Route;
@@ -62,6 +63,13 @@ public class Server {
             return rc;
 
         validate();
+
+        try {
+            CryptoUtils.init(null);
+        } catch (Exception e) {
+            LOG.error("Failed to initialize CryptoUtils", e);
+            return 1;
+        }
 
         Session.init();
 

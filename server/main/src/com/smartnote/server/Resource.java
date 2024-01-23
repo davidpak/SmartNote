@@ -128,7 +128,7 @@ public class Resource {
      * Opens an input stream to a session resource.
      * 
      * @param name  The name of the resource.
-     * @param token The session token.
+     * @param session The session.
      * @return The stream to the resource, or <code>null</code> if
      *         the resource does not exist.
      * 
@@ -136,16 +136,15 @@ public class Resource {
      * @throws IllegalAccessException If the resource is not in the session
      *                                directory or the session token is invalid.
      */
-    public static InputStream readSession(String name, String token)
+    public static InputStream readSession(String name, Session session)
             throws IOException, IllegalAccessException {
-        if (!Session.isTokenValid(token))
-            throw new IllegalAccessException("Invalid session token");
+        String sessionDirName = session.getJWT().getSubject();
 
-        String path = SESSION_DIR + File.separatorChar + token + File.separatorChar + name;
+        String path = SESSION_DIR + File.separatorChar + sessionDirName + File.separatorChar + name;
         File f = new File(path).getAbsoluteFile();
 
         // session directory
-        String dir = new File(SESSION_DIR + File.separatorChar + token).getAbsolutePath();
+        String dir = new File(SESSION_DIR + File.separatorChar + sessionDirName).getAbsolutePath();
 
         // check if file is in session directory for the session
         if (!f.getAbsolutePath().startsWith(dir))
@@ -157,7 +156,8 @@ public class Resource {
     /**
      * Opens an output stream to a private resource.
      * 
-     * @param name The name of the resource.
+     * @param name  The name of the resource.
+     * @param session The session.
      * @return The stream to the resource, or <code>null</code> if
      *         the resource does not exist.
      * 
@@ -165,25 +165,27 @@ public class Resource {
      * @throws IllegalAccessException If the resource is not in the private
      *                                directory.
      */
-    public static OutputStream writeSession(String name, String token)
+    public static OutputStream writeSession(String name, Session session)
             throws IOException, IllegalAccessException {
-        if (!Session.isTokenValid(token))
-            throw new IllegalAccessException("Invalid session token");
+        String sessionDirName = session.getJWT().getSubject();
 
-        String path = SESSION_DIR + File.separatorChar + token + File.separatorChar + name;
+        String path = SESSION_DIR + File.separatorChar + sessionDirName + File.separatorChar + name;
         File f = new File(path).getAbsoluteFile();
 
         // session directory
-        String dir = new File(SESSION_DIR + File.separatorChar + token).getAbsolutePath();
+        File dir = new File(SESSION_DIR + File.separatorChar + sessionDirName);
 
         // check if file is in session directory for the session
-        if (!f.getAbsolutePath().startsWith(dir))
+        if (!f.getAbsolutePath().startsWith(dir.getAbsolutePath()))
             throw new IllegalAccessException(path + " is not in the session directory for the session");
+
+        // create directory if it doesn't exist
+        if (!dir.exists())
+            dir.mkdirs();
 
         return new FileOutputStream(f);
     }
 
     // prevent instantiation
-    private Resource() {
-    }
+    private Resource() {}
 }
