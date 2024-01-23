@@ -7,8 +7,8 @@ import java.lang.reflect.Constructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
-import com.smartnote.server.rpc.Upload;
 import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.ServerRoute;

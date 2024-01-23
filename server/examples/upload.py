@@ -1,11 +1,29 @@
 #!/usr/bin/env python3
 
+from typing import *
+
 import requests
 import sys
 import urllib.parse
+import util
 
-# Upload file
-def upload_file(base_url, filename, auth=None):
+def upload_file(
+        base_url: str,
+        filename: str,
+        auth: Union[str, None]=None) -> Union[str, None]:
+    """
+    Upload a file to the server. See README.md for more information.
+
+    Parameters:
+    - `base_url`: Server base URL.
+    - `filename`: File name.
+    - `auth`: Authentication token. If `None`, then no authentication
+              token is used.
+
+    Returns:
+    The new authentication token, if any.
+    """
+    
     print(f'Upload {filename}... ', end='')
 
     with open(filename, 'rb') as f:
@@ -13,7 +31,7 @@ def upload_file(base_url, filename, auth=None):
         f.close()
 
     filename_safe = urllib.parse.quote(filename)
-    url = f'{base_url}/upload?filename={filename_safe}'
+    url = f'{base_url}/api/v1/upload?name={filename_safe}'
 
     headers = {
         'Content-Type': 'text/plain'
@@ -32,49 +50,41 @@ def upload_file(base_url, filename, auth=None):
 
     return auth
 
-# Print usage
 def usage():
     print('Usage: ./upload.py [options...] <host> [files...]')
     print('Options:')
     print('  -h  --help           Show this help message and exit')
     print('  -a, --auth <token>   Authentication token')
 
-def main():
-    if len(sys.argv) < 2:
-        usage()
-        return 1
+    return 0
 
-    # options
-    host = None
-    url = None
-    auth = None
-    files = []
+def main() -> int:
+    switches = [
+        util.Switch('help', 'h', 'Show this help message and exit', value=usage),
+        util.Switch('auth', 'a', 'Authentication token', type=str)
+    ]
 
-    # parse command line
-    i = 1
-    while i < len(sys.argv):
-        if sys.argv[i] in ('-h', '--help'):
-            usage()
-            return 0
-        elif sys.argv[i] in ('-a', '--auth'):
-            i = i + 1
-            if i >= len(sys.argv):
-                print('Missing auth token')
-                return 1
-            auth = sys.argv[i]
-        elif sys.argv[i].startswith('-'):
-            print(f'Unknown option: {sys.argv[i]}')
-            return 1
-        elif host is None:
-            host = sys.argv[i]
-        else:
-            files.append(sys.argv[i])
+    res = util.parse_command_line(
+        sys.argv,
+        switches=switches
+    )
 
-        i = i + 1
+    if isinstance(res, int):
+        return res
+    args, options = res
 
+    if len(args) + len(options) == 0:
+        return usage()
+
+    host = args[0]
+    files = args[1:]
+    
     if host is None:
         print('Missing host')
         return 1
+    assert isinstance(host, str)
+
+    auth = options.get('auth', None)
 
     if len(files) == 0:
         print('No files')
