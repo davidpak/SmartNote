@@ -8,6 +8,9 @@ import java.lang.annotation.ElementType;
 /**
  * Annotation for server routes. Describes the method type and path
  * that the route will be bound to.
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.util.MethodType
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

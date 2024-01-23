@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.util.FileUtils;
 
 /**
  * Interface for accessing resources.
@@ -15,6 +16,7 @@ import com.smartnote.server.auth.Session;
  * @author Ethan Vrhel
  */
 public class Resource {
+
     /**
      * The private directory.
      */
@@ -30,14 +32,9 @@ public class Resource {
      */
     public static final String SESSION_DIR = "sessions";
 
-    static {
-        // delete all files in session directory
-        File[] files = new File(SESSION_DIR).listFiles();
-        if (files != null) {
-            for (File f : files)
-                f.delete();
-        }
-    }
+    public static final File PRIVATE_FILE = new File(PRIVATE_DIR).getAbsoluteFile();
+    public static final File PUBLIC_FILE = new File(PUBLIC_DIR).getAbsoluteFile();
+    public static final File SESSION_FILE = new File(SESSION_DIR).getAbsoluteFile();
 
     /**
      * Open an output stream to a private resource.
@@ -55,7 +52,7 @@ public class Resource {
         File f = new File(path).getAbsoluteFile();
 
         // check if file is in private directory
-        if (!f.getAbsolutePath().startsWith(new File(PRIVATE_DIR).getAbsolutePath()))
+        if (!FileUtils.isFileInDirectory(f, new File(PRIVATE_DIR)))
             throw new IllegalAccessException(path + " is not in the private directory");
 
         return new FileInputStream(f);
@@ -77,7 +74,7 @@ public class Resource {
         File f = new File(path).getAbsoluteFile();
 
         // check if file is in private directory
-        if (!f.getAbsolutePath().startsWith(new File(PRIVATE_DIR).getAbsolutePath()))
+        if (!FileUtils.isFileInDirectory(f, PRIVATE_FILE))
             throw new IllegalAccessException(path + " is not in the private directory");
 
         return new FileOutputStream(f);
@@ -118,7 +115,7 @@ public class Resource {
         File f = new File(path).getAbsoluteFile();
 
         // check if file is in public directory
-        if (!f.getAbsolutePath().startsWith(new File(PUBLIC_DIR).getAbsolutePath()))
+        if (!FileUtils.isFileInDirectory(f, PUBLIC_FILE))
             throw new IllegalAccessException(path + " is not in the public directory");
 
         return new FileInputStream(f);
@@ -147,7 +144,7 @@ public class Resource {
         String dir = new File(SESSION_DIR + File.separatorChar + sessionDirName).getAbsolutePath();
 
         // check if file is in session directory for the session
-        if (!f.getAbsolutePath().startsWith(dir))
+        if (!FileUtils.isFileInDirectory(f, new File(dir)))
             throw new IllegalAccessException(path + " is not in the session directory for the session");
 
         return new FileInputStream(f);
@@ -170,18 +167,18 @@ public class Resource {
         String sessionDirName = session.getJWT().getSubject();
 
         String path = SESSION_DIR + File.separatorChar + sessionDirName + File.separatorChar + name;
-        File f = new File(path).getAbsoluteFile();
 
-        // session directory
-        File dir = new File(SESSION_DIR + File.separatorChar + sessionDirName);
+        File f = new File(path).getAbsoluteFile();
+        File sessionDir = new File(SESSION_DIR + File.separatorChar + sessionDirName);
 
         // check if file is in session directory for the session
-        if (!f.getAbsolutePath().startsWith(dir.getAbsolutePath()))
+        if (!FileUtils.isFileInDirectory(f, sessionDir))
             throw new IllegalAccessException(path + " is not in the session directory for the session");
 
         // create directory if it doesn't exist
-        if (!dir.exists())
-            dir.mkdirs();
+        File parent = f.getParentFile();
+        if (!parent.exists())
+            parent.mkdirs();
 
         return new FileOutputStream(f);
     }

@@ -1,8 +1,15 @@
 package com.smartnote.server.auth;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
@@ -10,6 +17,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.smartnote.server.Resource;
 import com.smartnote.server.util.CryptoUtils;
+import com.smartnote.server.util.FileUtils;
 
 import spark.Request;
 import spark.Response;
@@ -28,7 +36,7 @@ public class Session {
     /**
      * The length of the session in seconds.
      */
-    public static final long SESSION_LENGTH = 60L * 10L; // 10 minutes
+    public static final long SESSION_LENGTH = 60 * 10; // 10 minutes
 
     /**
      * The length of the session secret in bytes.
@@ -40,8 +48,17 @@ public class Session {
      */
     public static final int TOKEN_LENGTH = 32;
 
+    /**
+     * The interval at which the session directory is cleaned.
+     */
+    public static final int GC_INTERVAL = 60; // 1 minute
+
     private static final Algorithm ALGORITHM; // algorithm for signing
     private static final JWTVerifier VERIFIER; // verifier for JWTs
+
+    private static final ScheduledExecutorService EXECUTOR_SERVICE;
+
+    private static final Logger LOG = LoggerFactory.getLogger(Session.class);
 
     static {
         // generate cryptographically secure random string
@@ -50,6 +67,35 @@ public class Session {
         // create algorithm and verifier
         ALGORITHM = Algorithm.HMAC256(secret);
         VERIFIER = JWT.require(ALGORITHM).build();
+
+        // start garbage collector
+        EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
+        EXECUTOR_SERVICE.scheduleAtFixedRate(() -> {
+            LOG.debug("Running session garbage collector");
+
+            File[] sessionDirs = new File(Resource.SESSION_DIR).listFiles();
+            if (sessionDirs == null)
+                return;
+
+            for (File f : sessionDirs) {
+                File token = new File(f.getAbsolutePath() + File.separatorChar + ".token");
+
+                // delete session if token does not exist
+                if (!token.exists()) {
+                    FileUtils.deleteFile(f);
+                    continue;
+                }
+
+                // delete session if token is invalid
+                try {
+                    String tokenStr = FileUtils.readFile(token);
+                    if (!isTokenValid(tokenStr))
+                        FileUtils.deleteFile(f);
+                } catch (Exception e) {
+                    FileUtils.deleteFile(f);
+                }
+            }
+        }, GC_INTERVAL, GC_INTERVAL, TimeUnit.SECONDS);
     }
 
     /**
@@ -90,7 +136,9 @@ public class Session {
                 .withExpiresAt(expr)
                 .sign(ALGORITHM);
 
-        return new Session(VERIFIER.verify(token));
+        Session session = new Session(VERIFIER.verify(token));
+        session.store();
+        return session;
     }
 
     /**
@@ -119,9 +167,12 @@ public class Session {
     }
 
     private DecodedJWT jwt;
+    private File sessionDirectory;
 
     private Session(DecodedJWT jwt) {
         this.jwt = jwt;
+        this.sessionDirectory = new File(Resource.SESSION_DIR + File.separatorChar + jwt.getSubject());
+        this.sessionDirectory = FileUtils.getCanonicalFile(sessionDirectory);
     }
 
     /**
@@ -131,6 +182,19 @@ public class Session {
      */
     public DecodedJWT getJWT() {
         return jwt;
+    }
+
+    /**
+     * Gets the session directory.
+     * 
+     * @return The session directory.
+     */
+    public File getSessionDirectory() {
+        return sessionDirectory;
+    }
+
+    public File getFile(String name) {
+        return new File(sessionDirectory, name);
     }
 
     public void updateSession() {
@@ -145,6 +209,8 @@ public class Session {
                 .sign(ALGORITHM);
 
         jwt = VERIFIER.verify(token);
+
+        store();
     }
 
     /**
@@ -170,5 +236,16 @@ public class Session {
         OutputStream out = Resource.writeSession(name, this);
         out.write(bytes);
         out.close();
+    }
+
+    /**
+     * Store session information in this session's directory.
+     */
+    private void store() {
+        try {
+            OutputStream out = Resource.writeSession(".token", this);
+            out.write(jwt.getToken().getBytes());
+            out.close();
+        } catch (Exception e) {}
     }
 }

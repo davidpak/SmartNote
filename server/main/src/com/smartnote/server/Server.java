@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.rpc.Upload;
 import com.smartnote.server.util.CryptoUtils;
+import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.ServerRoute;
 
 import spark.Route;
@@ -70,6 +71,12 @@ public class Server {
             LOG.error("Failed to initialize CryptoUtils", e);
             return 1;
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+
+        // should have been deleted by the shutdown hook, but abnormal
+        // termination may have left it
+        FileUtils.deleteFile(Resource.SESSION_DIR);
 
         Session.init();
 
@@ -134,5 +141,17 @@ public class Server {
         }
 
         LOG.info("Added route: " + route.method() + " " + path);
+    }
+
+    /**
+     * Used to clean up resources that should not persist after the server
+     * shuts down.
+     */
+    private static class ShutdownHook implements Runnable {
+        @Override
+        public void run() {
+            LOG.info("Cleaning up session directory");
+            FileUtils.deleteFile(Resource.SESSION_DIR);
+        }
     }
 }

@@ -1,6 +1,9 @@
 package com.smartnote.server.rpc;
 
+import java.io.File;
+
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -15,6 +18,7 @@ import spark.Route;
  */
 @ServerRoute(method = MethodType.POST, path = "/upload")
 public class Upload implements Route {
+    public static final String UPLOAD_DIR = "uploads/";
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
@@ -28,6 +32,17 @@ public class Upload implements Route {
         if (filename == null) {
             response.status(400);
             return "{\"message\": \"filename not specified\"}";
+        }
+
+        filename = filename.trim();
+        filename = UPLOAD_DIR + filename;
+
+        // check if file is in upload directory
+        File file = session.getFile(filename);
+        File uploadDir = new File(session.getSessionDirectory(), UPLOAD_DIR);
+        if (!FileUtils.isFileInDirectory(file, uploadDir)) {
+            response.status(400);
+            return "{\"message\": \"invalid filename\"}";
         }
 
         // write file to session directory
