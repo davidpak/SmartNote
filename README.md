@@ -81,6 +81,7 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 - [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
+- [java-jwt](https://github.com/auth0/java-jwt) - Used for JSON Web Token (JWT) creation and verification.
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
 - [React](https://react.dev/) - Used for creating user interface components.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.

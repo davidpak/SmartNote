@@ -47,8 +47,9 @@
     <!-- =================================
           target: clean-deps
          ================================= -->
-    <target name="clean-deps" description="Clean the Ivy dependencies">
+    <target name="clean-deps" description="Clean the Ivy dependencies and cache">
         <delete dir="${lib.dir}"/>
+        <ivy:cleancache/>
     </target>
 
     <!-- =================================
@@ -67,7 +68,7 @@
         <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.1" pathid="lib.path.id" inline="true"/>
 
         <echo message="Compiling the source..."/>
-        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path" includeAntRuntime="false"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path" debug="true" debuglevel="lines,vars,source" includeAntRuntime="false"/>
     </target>
 
     <!-- =================================
