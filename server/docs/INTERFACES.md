@@ -6,7 +6,6 @@ Before continuing, see [Types](TYPES.md) for a description of the types used in 
 
 **Note**: The name of body fields (in tables) are not included in the body. For example, even if a body field is named `result` and is of type `object`, the object will not contain the field `result`, unless otherwise specified. The name is only used to describe the contents of the field.
 
-
 ## Quick Links
 
 * [`login`](#authentication)
@@ -49,6 +48,7 @@ On failure, no body will be present. The server will respond with one of the fol
 
 | Status Code | Description |
 | ----------- | ----------- |
+| `400 Bad Request` | The `Authorization` header was present. |
 | `401 Unauthorized` | The session could not be created. |
 | `403 Forbidden` | The client is not allowed to create a session. |
 | `429 Too Many Requests` | The client is trying to create too many sessions. |
@@ -312,3 +312,5 @@ The server will respond with one of the following status codes:
 | `403 Forbidden` | The client is not allowed to access the resource. |
 | `404 Not Found` | The resource does not exist. |
 | `406 Not Acceptable` | The `Accept` header does not match the resource's content type. |
+
+**Note**: The server will respond with `404 Not Found` if the resource is not found **or** if the resource is not accessible by an authenticated client. This is to prevent information leakage.

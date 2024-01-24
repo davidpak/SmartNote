@@ -4,9 +4,10 @@ import java.security.Provider;
 import java.security.Security;
 
 /**
- * The server configuration.
+ * <p>Stores configuration information for the server.</p>
  * 
  * @author Ethan Vrhel
+ * @see com.smartnote.server.Server
  */
 public class Config {
     /**
@@ -27,7 +28,11 @@ public class Config {
         System.out.printf("  -g, --algorithms     Print the supported algorithms\n");
     }
 
+    /**
+     * Print supported cryptographic algorithms.
+     */
     private static void printAlgorithms() {
+        // this was used earler, but probably can be removed
         System.out.printf("Supported algorithms:\n");
 
         Provider[] providers = Security.getProviders();
@@ -88,10 +93,20 @@ public class Config {
         return -1;
     }
 
+    /**
+     * Gets the port.
+     * 
+     * @return The port.
+     */
     public int getPort() {
         return port;
     }
 
+    /**
+     * Gets whether or not to use SSL.
+     * 
+     * @return Whether or not to use SSL.
+     */
     public boolean useSSL() {
         return usessl;
     }

@@ -11,9 +11,15 @@ import com.smartnote.server.auth.Session;
 import com.smartnote.server.util.FileUtils;
 
 /**
- * Interface for accessing resources.
+ * <p>Interface for accessing resources. The actual location of
+ * resources is not specified, as this serves as an abstraction
+ * layer for accessing resources.</p>
+ * 
+ * <p>Some resources are protected and may only be accessed by
+ * a valid session.</p>
  * 
  * @author Ethan Vrhel
+ * @see {@link Session}
  */
 public class Resource {
 

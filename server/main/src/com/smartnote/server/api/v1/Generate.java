@@ -9,6 +9,12 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * <p>Generates summaries from uploaded files.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.auth.Session
+ */
 @ServerRoute(method = MethodType.POST, path = "/api/v1/generate")
 public class Generate implements Route {
 

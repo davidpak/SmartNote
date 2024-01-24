@@ -6,11 +6,14 @@ import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 
 /**
- * Annotation for server routes. Describes the method type and path
- * that the route will be bound to.
+ * <p>Annotation for server routes. Describes the method type and path
+ * that the route will be bound to. Adding this annotation to a class
+ * allows is to be registered as a route from within the
+ * {@link com.smartnote.server.Server} class.</p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.util.MethodType
+ * @see com.smartnote.server.Server
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

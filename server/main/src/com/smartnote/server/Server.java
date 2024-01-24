@@ -7,6 +7,10 @@ import java.lang.reflect.Constructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.smartnote.server.api.v1.Export;
+import com.smartnote.server.api.v1.Fetch;
+import com.smartnote.server.api.v1.Generate;
+import com.smartnote.server.api.v1.Login;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.util.CryptoUtils;
@@ -16,9 +20,12 @@ import com.smartnote.server.util.ServerRoute;
 import spark.Route;
 
 /**
- * The server.
+ * <p>The server. Handles initialization and shutdown.</p>
  * 
  * @author Ethan Vrhel
+ * @see com.smartnote.server.auth.Session
+ * @see com.smartnote.server.Resource
+ * @see com.smartnote.server.util.ServerRoute
  */
 public class Server {
 
@@ -32,7 +39,7 @@ public class Server {
      */
     private static Server SERVER;
 
-    private Config config;
+    private Config config; // the server config
 
     public static void main(String[] args) {
         SERVER = new Server();
@@ -68,7 +75,8 @@ public class Server {
         try {
             CryptoUtils.init(null);
         } catch (Exception e) {
-            LOG.error("Failed to initialize CryptoUtils", e);
+            LOG.error("Failed to initialize CryptoUtils");
+            e.printStackTrace();
             return 1;
         }
 
@@ -89,6 +97,12 @@ public class Server {
 
         port(config.getPort());
 
+        // Add RPC routes
+        addRoute(Export.class);
+        addRoute(Fetch.class);
+        addRoute(Generate.class);
+        addRoute(Upload.class);
+        addRoute(Login.class);
         addRoute(Upload.class);
 
         return 0;

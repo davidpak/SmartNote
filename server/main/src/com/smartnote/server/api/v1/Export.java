@@ -9,6 +9,12 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * <p>Exports generated summaries to files or remote locations.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.auth.Session
+ */
 @ServerRoute(method = MethodType.POST, path = "/api/v1/generate")
 public class Export implements Route {
     @Override

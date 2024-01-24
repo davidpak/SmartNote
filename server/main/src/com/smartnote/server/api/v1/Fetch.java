@@ -9,6 +9,12 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+/**
+ * <p>Fetches resources on server.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.auth.Session
+ */
 @ServerRoute(method = MethodType.GET, path = "/api/v1/fetch")
 public class Fetch implements Route {
 
