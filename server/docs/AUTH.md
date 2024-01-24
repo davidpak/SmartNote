@@ -10,7 +10,7 @@ Tokens expire after a certain amount of time, after which they are not accepted.
 
 ### Creation
 
-A session may be created through the [login interface](INTERFACES.md#login). If the request is successful, the server will generate a new session for the client and return a JWT in the `Authorization` header of the response.
+A session may be created through the [login interface](INTERFACES.md#login). If the request is successful, the server will generate a new session for the client and return a JWT in the `Authorization` header of the response. This `Authorization` header can then be used in subsequent requests to access session-protected resources.
 
 ### Creation
 

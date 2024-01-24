@@ -24,7 +24,7 @@ Binary data is stored in little-endian and is tightly packed. The following type
 | `uint32` | 32-bit unsigned integer. |
 | `bstring` | A UTF-8 encoded string of characters. Terminated with a single byte `0x00`. Length depends on content of string as UTF-8 is a variable length encoding. |
 | `binary` | Stream of binary data. Length is dependent on use case. |
-| `object` | A [JSON object](#JSON), stored in UTF-8. Length is dependent on use case. |
+| `json` | A [JSON object](#JSON), stored in UTF-8. Length is dependent on use case. |
 | `plain` | A plain text string, stored in UTF-8. Length is dependent on use case. |
 
 ## JSON
