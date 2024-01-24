@@ -21,7 +21,7 @@ const Button = ({ children, icon: Icon, variant = 'primary' }: ButtonType) => {
       }`}
     >
       <div className='flex items-center gap-1'>
-        {Icon && <Icon />}
+        {Icon && <Icon aria-hidden='true' />}
         {children}
       </div>
     </button>
