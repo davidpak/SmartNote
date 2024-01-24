@@ -17,7 +17,7 @@ The `result` object always contains the following fields:
 | `success` | `bool` | Whether the request was successful. |
 | `message` | `string` | A message describing the result of the request. |
 
-It is guaranteed that upon successful `POST` requests, `success` will be `true` and `message` will contain a description of the result of the request. Additionally, the request was unsuccessful, `success` will be `false` and `message` will contain a description of the error. The `result` object may contain additional fields depending on the RPC. See the RPC's description for more information. 
+It is guaranteed that all `POST` requests will have these fields in the response body, regardless of the success of the request. The `result` object may contain additional fields depending on the RPC. See the RPC's description for more information.
 
 **Note**: The name of body fields (in tables) are not included in the body. For example, even if a body field is named `result` and is of type `json`, the underlying JSON object will not necessarily contain the field `result`. The name is only used to describe the contents of the field.
 
@@ -41,7 +41,7 @@ No body is expected in the request and will be ignored if present.
 
 #### Success
 
-If the request was successful, the server will respond with `200 OK` and a new JWT in the `Authorization` header of the response.
+If the request was successful, the server will respond with `200 OK` and the `Authorization` header will contain the new JWT.
 
 #### Failure
 
@@ -82,17 +82,15 @@ The body must be present in the request.
 
 ### Response
 
-#### Body
-
-The body is always present in the response. It is defined as follows:
-
-| Name | Type | Contents |
-| ---- | ---- | ----------- |
-| `result` | `json` | A JSON object with a single field `message` describing the result of the request.
-
 #### Success
 
-If the file was successfully uploaded, the server will respond with `200 OK`.
+If the file was successfully uploaded, the server will respond with `200 OK`. The `result` field of the response body will contain the additional fields:
+
+| Name | Type | Contents |
+| ---- | ---- | -------- |
+| `name` | `string` | The name of the uploaded resource. |
+
+The `name` field can be used in the [`fetch`](#fetch) RPC to fetch the uploaded file. It is not necessarily the same as the name given in the request query parameters.
 
 #### Failure
 
@@ -130,25 +128,13 @@ See [Generation Options](GENERATION.md) for a description of the `options` objec
 
 ### Response
 
-The body is always present in the response. It is defined as follows:
-
-| Name | Type | Contents |
-| ---- | ---- | ----------- |
-| `result` | `json` | A JSON object with contains information about the result of the request. |
-
-The `result` object always contains the following fields:
-
-| Name | Type | Contents |
-| ---- | ---- | ----------- |
-| `message` | `string` | A message describing the result of the request. |
-
 #### Success
 
 If the request was successful, the server will respond with `200 OK`. The `result` field of the response body will contain the additional fields:
 
 | Name | Type | Contents |
-| ---- | ---- | ----------- |
-| `name` | `string` | The name of the summary resource. |
+| ---- | ---- | -------- |
+| `name` | `string` | The name of the generated resource. |
 | `time` | `number` | The time taken to generate the summaries, in seconds. |
 
 When the server successfully generates the summaries, it will respond with `200 OK`. The `name` field of the `result` object will contain the name of the summary resource. The `time` field will contain the time taken to generate the summaries and is tracked across timeouts. `name` may be used in the 
@@ -156,7 +142,7 @@ When the server successfully generates the summaries, it will respond with `200 
 
 #### Failure
 
-When the server fails to generate the summaries, the `message` field of the `result` object will contain a description of the error. The status code will be one of the following:
+When the server fails to generate the summaries, it will respond with one of the following status codes:
 
 | Status Code | Description |
 | ----------- | ----------- |
@@ -171,7 +157,7 @@ When the server fails to generate the summaries, the `message` field of the `res
 | `503 Service Unavailable` | The generator is unavailable. |
 | `504 Gateway Timeout` | The generator timed out. |
 
-The server defines a timeout for generating summaries. The timeout does not abort the generation process, but rather returns a `408 Request Timeout` response to the client to prevent the client from waiting too long. If the client receives a `408 Request Timeout` response, it should retry the request with the same options. The server only allows one request to be processed per client at a time. Consequently, if the same options are not used in the retry request, the server will respond with `409 Conflict`. If the underlying generator has timed out (a timeout longer than the server's timeout), the server will respond with `504 Gateway Timeout` instead. When this occurs, the client should stop retrying the request.
+The server defines a timeout for generating summaries. The timeout does not abort the generation process, but rather returns a `408 Request Timeout` response to the client. If the client receives a `408 Request Timeout` response, it should retry the request with the same options. The server only allows one generation request to be processed per session at a time. Consequently, if the same options are not used in the retry request, the server will respond with `409 Conflict`. If the underlying generator has timed out (which may be different than the server timeout), the server will respond with `504 Gateway Timeout` instead. When this occurs, the client should stop retrying the request temporarily and try again later.
 
 ## `export`
 
@@ -215,25 +201,25 @@ The body must be present in the request.
 
 ### Response
 
-The response will always contain a body. Its contents depend on the success of the request and the `type` field in `options`.
-
 #### Body
-
-The body may be overridden by the server on some occasions, see below.
-
-| Name | Type | Contents |
-| ---- | ---- | -------- |
-| `success` | `bool` | Whether the export was successful. |
-| `message` | `string` | A message describing the result of the export. |
-| `name` | `string` | The name of the exported resource. |
 
 #### Success
 
-If the request was successful, the server will respond with `200 OK`. If the export was to a local resource, the `name` field of the response body will contain the name of the exported resource. If the export was to a remote location, the `name` field will not be present in the response body.
+If the request was successful, the server will respond with `200 OK`.
+
+If the export was to a local resource, the response body will contain the additional fields:
+
+| Name | Type | Contents |
+| ---- | ---- | -------- |
+| `name` | `string` | The name of the exported resource. |
+
+`name` can be used in the [`fetch`](#fetch) RPC to fetch the exported resource.
+
+If the export was to a remote location, the `name` field will not be present in the response body.
 
 #### Failure
 
-The `success` field of the response body will be set to `false` and the `message` field will contain a description of the error. The server will respond with one of the following status codes:
+The server will respond with one of the following status codes:
 
 | Status Code | Description |
 | ----------- | ----------- |
@@ -261,7 +247,7 @@ Fetches a resource from the server. Resources are defined by an authority and a 
 #### Query Parameters
 
 | Key | Type | Description |
-| -- | ---- | ----------- |
+| --- | ---- | ----------- |
 | `name` | `string` | The name of the resource to fetch. |
 | `authority` | `string` | The authority of the resource to fetch. Optional. |
 
@@ -282,8 +268,6 @@ No body is expected in the request and will be ignored if present.
 
 ### Response
 
-A body will always be present in the response.
-
 #### Success
 
 If the resource was successfully fetched, the server will respond with `200 OK` and the resource's data in the response body. The `Content-Type` header of the response will be set to the appropriate MIME type. The body will be a binary stream of the resource's data as follows:
@@ -297,7 +281,8 @@ If the resource was successfully fetched, the server will respond with `200 OK` 
 The body of the response will contain a JSON object describing the error. It is defined as follows:
 
 | Name | Type | Contents |
-| ---- | ---- | ----------- |
+| ---- | ---- | -------- |
+| `success` | `bool` | Whether the request was successful. Always `false`. |
 | `result` | `json` | A JSON object with a single field `message` describing the result of the request. |
 
 The server will respond with one of the following status codes:

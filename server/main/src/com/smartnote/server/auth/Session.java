@@ -2,6 +2,7 @@ package com.smartnote.server.auth;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
 import java.util.concurrent.Executors;
@@ -15,34 +16,46 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.smartnote.server.NoSuchResourceException;
 import com.smartnote.server.Resource;
 import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
+import com.smartnote.server.util.IOUtils;
 
 import spark.Request;
 import spark.Response;
 
 /**
- * <p>Stores session information. Sessions are implemented using
+ * <p>
+ * Stores session information. Sessions are implemented using
  * <a href="https://en.wikipedia.org/wiki/JSON_Web_Token">JSON Web Tokens</a>
  * (JWTs). The JWT is stored in the <code>Authorization</code> header
- * within HTTP requests and responses.</p>
+ * within HTTP requests and responses.
+ * </p>
  * 
- * <p>Sessions are only valid for a certain amount of time and do not
- * persist across server restarts.</p>
+ * <p>
+ * Sessions are only valid for a certain amount of time and do not
+ * persist across server restarts.
+ * </p>
  * 
- * <p>Sessions have access to resources available only to the current
+ * <p>
+ * Sessions have access to resources available only to the current
  * session. They may be accessed through the
- * {@link com.smartnote.server.Resource} class.</p>
+ * {@link com.smartnote.server.Resource} class.
+ * </p>
  * 
- * <p>When this class is loaded, the following occurs:</p>
+ * <p>
+ * When this class is loaded, the following occurs:
+ * </p>
  * 
  * <ol>
  * <li>A session secret is randomly generated to sign JWTs.</li>
  * <li>An executor service is started to clean up expired sessions.</li>
  * </ol>
  * 
- * <p>When a session is created, the following occurs:</p>
+ * <p>
+ * When a session is created, the following occurs:
+ * </p>
  * 
  * <ol>
  * <li>A random token is generated to identify the session.</li>
@@ -50,18 +63,24 @@ import spark.Response;
  * <li>The JWT is stored in the session directory.</li>
  * </ol>
  * 
- * <p>The session directory is located in the <code>sessions</code>
+ * <p>
+ * The session directory is located in the <code>sessions</code>
  * and is named after the random token, which is stored in the
  * subject field of the JWT. In the directory, there is a file named
- * <code>.token</code> which contains the JWT.</p>
+ * <code>.token</code> which contains the JWT.
+ * </p>
  * 
- * <p>Sessions should be created using the {@link #createSession()}
+ * <p>
+ * Sessions should be created using the {@link #createSession()}
  * method. Sessions should be retrieved using the
- * {@link #getSession(Request)} method.</p>
+ * {@link #getSession(Request)} method.
+ * </p>
  * 
- * <p>Sessions should be renewed only if a client made a request
+ * <p>
+ * Sessions should be renewed only if a client made a request
  * using the session that resulted in a successful response. This
- * can be done using the {@link #updateSession()} method.</p>
+ * can be done using the {@link #updateSession()} method.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Resource
@@ -259,7 +278,11 @@ public class Session {
     }
 
     /**
-     * Gets a file in the session directory.
+     * Gets a file in the session directory. This includes private
+     * files (as specified in {@link com.smartnote.server.Resource}).
+     * The existence of these files should not be exposed to the
+     * remote client.
+     * 
      * 
      * @param name The name of the file.
      * @return The file, or <code>null</code> if the file does not exist
@@ -267,10 +290,10 @@ public class Session {
      */
     public File getFile(String name) {
         File file = new File(sessionDirectory, name);
-        
+
         if (!FileUtils.isFileInDirectory(file, sessionDirectory))
             return null;
-            
+
         // hide the token file
         if (file.getPath().equalsIgnoreCase(tokenFile.getPath()))
             return null;
@@ -310,21 +333,40 @@ public class Session {
     /**
      * Write data to a session file.
      * 
-     * @param name The name of the file.
+     * @param name  The name of the file.
      * @param bytes The data to write.
-     * @throws IOException If an I/O error occurs.
+     * @throws IOException            If an I/O error occurs.
      * @throws IllegalAccessException The resource is not in the
-     * session directory.
-     * @throws IllegalStateException The storage quota has been
-     * exceeded.
+     *                                session directory.
+     * @throws IllegalStateException  The storage quota has been
+     *                                exceeded.
      */
-    public void writeSessionFile(String name, byte[] bytes) throws IOException, IllegalAccessException, IllegalStateException {
+    public void writeSessionFile(String name, byte[] bytes)
+            throws IOException, IllegalAccessException, IllegalStateException {
         if (FileUtils.getDirectorySize(sessionDirectory) + bytes.length > STORAGE_QUOTA)
             throw new IllegalStateException("Storage quota exceeded");
 
         OutputStream out = Resource.writeSession(name, this);
         out.write(bytes);
         out.close();
+    }
+
+    /**
+     * Read data from a session resource.
+     * 
+     * @param name The name of the resource.
+     * @return The data.
+     * @throws IOException             If an I/O error occurs.
+     * @throws IllegalAccessException  The resource is not in the
+     *                                 session directory. The existence
+     *                                 of the resource is not checked.
+     * @throws NoSuchResourceException The resource does not exist.
+     */
+    public byte[] readSessionResource(String name) throws IOException, IllegalAccessException, NoSuchResourceException {
+        InputStream in = Resource.readSession(name, this);
+        byte[] result = IOUtils.readAllBytes(in);
+        in.close();
+        return result;
     }
 
     /**
@@ -335,6 +377,7 @@ public class Session {
             OutputStream out = Resource.writeSession(".token", this);
             out.write(jwt.getToken().getBytes());
             out.close();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 }
