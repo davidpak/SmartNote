@@ -19,13 +19,14 @@ SmartNote is an automated note-taking organization application that aims to revo
     - `components/` - React components
     - `utils/` - Utility functions
 - `server/` - Server resources
-  - `examples/` - Example documents
   - `main/` - Server sources
     - `src/` - Main runtime sources
     - `test/` - Test sources
   - `scripts/` - Scripts used by the server
 
 ## Building
+
+First, run `./depends.sh` to check for and download dependencies, for both the client and server. This will also check that you have all the necessary tools installed (such as `npm`, `ant`, etc.) Unix-like systems (e.g. Mac, Linux) should be able to run this script directly. Windows users may need to run it using Git Bash.
 
 ### Client
 
@@ -80,13 +81,16 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 ## Third-Party Libraries
 
+- [python-dotenv](https://github.com/theskumar/python-dotenv) - Used to load environment variables from `.env` files.
 - [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
 - [Headless UI](https://headlessui.com/) - Used for UI components.
 - [java-jwt](https://github.com/auth0/java-jwt) - Used for JSON Web Token (JWT) creation and verification.
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
+- [LangChain](https://www.langchain.com/) - Used for LLM interaction to generate summaries.
 - [React](https://react.dev/) - Used for creating user interface components.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
 - [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
+- [requests](https://requests.readthedocs.io/en/latest/) - Used in Python scripts to make HTTP requests.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.
 - [Tailwind CSS](https://tailwindcss.com/) - Used for CSS.
