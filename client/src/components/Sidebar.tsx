@@ -25,7 +25,7 @@ const Sidebar = ({
 }) => {
   return (
     <div>
-      <H2 className='text-base mb-2 px-8'>Upload Files</H2>
+      <H2 className='text-base mb-2 px-8'>Uploaded Files</H2>
       <ul className='p-0 list-none'>
         {files.map((file, index) => (
           <li key={index}>
