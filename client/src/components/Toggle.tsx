@@ -1,19 +1,28 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { Switch } from '@headlessui/react';
 
-const Toggle = () => {
-  // useState hook --> tracks toggle state
-  const [toggleState, setToggle] = useState(false);
+const Toggle = ({ label }: { label: string }) => {
+  const [enabled, setEnabled] = useState(false);
 
-  function handleOnChange() {
-    setToggle(!toggleState);
-  }
-
-  return(
-    <label className="flex w-20 h-10 scale-50 bg-neutral-300 rounded-full relative has-[:checked]:bg-accent">
-      <input type="checkbox" checked={toggleState} onChange={handleOnChange} className="sr-only peer"></input>
-      <span className="w-10 h-10 scale-75 bg-background rounded-full absolute peer-checked:left-10"></span>
+  return (
+    <label className='flex justify-between gap-2 text-neutral-500'>
+      {label}
+      <Switch
+        checked={enabled}
+        onChange={setEnabled}
+        className={`${
+          enabled ? 'bg-accent' : 'bg-neutral-300'
+        } relative inline-flex h-6 w-12 items-center rounded-full shrink-0`}
+      >
+        <span className='sr-only'>{label}</span>
+        <span
+          className={`${
+            enabled ? 'translate-x-7' : 'translate-x-1'
+          } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+        />
+      </Switch>
     </label>
   );
 };
 
-export default Toggle
+export default Toggle;

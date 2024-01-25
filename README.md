@@ -82,9 +82,11 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 - [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
+- [Headless UI](https://headlessui.com/) - Used for UI components.
 - [java-jwt](https://github.com/auth0/java-jwt) - Used for JSON Web Token (JWT) creation and verification.
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
 - [React](https://react.dev/) - Used for creating user interface components.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
+- [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.
 - [Tailwind CSS](https://tailwindcss.com/) - Used for CSS.
