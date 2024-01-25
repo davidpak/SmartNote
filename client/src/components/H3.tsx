@@ -5,9 +5,7 @@ const H3 = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <h3 className={`${className ?? ''} font-bold text-base`}>{children}</h3>
-  );
+  return <h3 className={`${className ?? ''} font-bold text-xl`}>{children}</h3>;
 };
 
 export default H3;
