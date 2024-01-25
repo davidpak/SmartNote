@@ -13,7 +13,7 @@ interface File {
   type: FileType;
 }
 
-const SideBar = ({
+const Sidebar = ({
   files,
   activeIndex,
   selectFile,
@@ -57,4 +57,4 @@ const SideBar = ({
     </div>
   );
 };
-export default SideBar;
+export default Sidebar;
