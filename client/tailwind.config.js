@@ -7,12 +7,12 @@ export default {
       'accent-dark': '#1B37A7',
       white: '#FFFFFF', // white
       black: '#000000', // black
-      'text-secondary': '#636363', // grey 1
       'neutral-100': '#FBFBFB', // grey 5
       'neutral-150': '#F5F5F5',
       'neutral-200': '#EFEFEF', // grey 4
       'neutral-300': '#D9D9D9', // grey 3
       'neutral-400': '#CCCCCC', // grey 2
+      'neutral-500': '#37352F', // grey 1
       warning: '#B33B38',
       'warning-light': '#FFD3D3',
     },
