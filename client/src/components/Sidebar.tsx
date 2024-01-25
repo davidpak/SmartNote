@@ -3,6 +3,7 @@ import {
   FiMusic as Audio,
   FiFilm as Video,
 } from 'react-icons/fi';
+import Truncate from 'react-truncate-inside';
 
 import H2 from './H2';
 
@@ -24,12 +25,12 @@ const Sidebar = ({
 }) => {
   return (
     <div>
-      <H2 className='text-base mb-2 px-4'>Upload Files</H2>
+      <H2 className='text-base mb-2 px-8'>Upload Files</H2>
       <ul className='p-0 list-none'>
         {files.map((file, index) => (
           <li key={index}>
             <button
-              className={`w-full px-4 py-2 flex items-center gap-2 rounded-r cursor-pointer transition ${
+              className={`w-full pl-8 pr-4 py-2 flex items-center gap-2 rounded-r cursor-pointer transition hover:bg-neutral-150 ${
                 activeIndex === index && 'bg-neutral-200 relative'
               }`}
               onClick={() => {
@@ -43,13 +44,15 @@ const Sidebar = ({
                 ></span>
               )}
               {file.type === 'text' ? (
-                <Text aria-hidden='true' />
+                <Text aria-hidden='true' className='shrink-0' />
               ) : file.type === 'audio' ? (
-                <Audio aria-hidden='true' />
+                <Audio aria-hidden='true' className='shrink-0' />
               ) : (
-                <Video aria-hidden='true' />
+                <Video aria-hidden='true' className='shrink-0' />
               )}
-              {file.name}
+              <p title={file.name} className='text-left'>
+                <Truncate text={file.name} width={100} />
+              </p>
             </button>
           </li>
         ))}
