@@ -18,6 +18,9 @@ HAS_PIP=false
 
 MISSING_DEPS=0
 HAS_REQUESTS=false
+HAS_LANGCHAIN=false
+HAS_DOTENV=false
+HAS_TEXTWRAP=false
 HAS_NODE_MODULES=false
 
 DO_INSTALL=false
@@ -30,6 +33,20 @@ IS_DARWIN=false
 IS_LINUX=false
 
 DO_INSTALL=true
+
+SYS_OS_NAME="$(uname -s)"
+SYS_ARCH="$(uname -m)"
+
+#####################################################################
+# OS detection
+
+if [[ "$SYS_OS_NAME" == "Windows_NT" ]]; then
+    IS_WINDOWS=true
+elif [[ "$SYS_OS_NAME" == "Darwin" ]]; then
+    IS_DARWIN=true
+elif [[ "$SYS_OS_NAME" == "Linux" ]]; then
+    IS_LINUX=true
+fi
 
 extract_major_version() {
     echo "$1" | awk -F '.' '{print $1}'
@@ -56,6 +73,33 @@ fail() {
     clear_line
     printf "Has ${BOLD}$1${NC} - ${RED}FAIL${NC}\n"
 }
+
+# hash_file <file>
+hash_file() {
+    if [[ "$IS_DARWIN"=true ]]; then
+        md5 -q "$1"
+    else
+        md5sum "$1" | awk '{print $1}'
+    fi
+}
+
+if [[ "$IS_WINDOWS"=true ]]; then
+    get_os_version() {
+        wmic os get Caption,Version | sed -n '2p'
+    }
+fi
+
+if [[ "$IS_LINUX"=true ]]; then
+    get_os_version() {
+        lsb_release -d | awk -F ' ' '{print $2}'
+    }
+fi
+
+if [[ "$IS_DARWIN"=true ]]; then
+    get_os_version() {
+        sw_vers -productVersion
+    }
+fi
 
 #####################################################################
 # Command line arguments
@@ -90,39 +134,13 @@ if [[ $DO_SILENT = true ]]; then
 fi
 
 #####################################################################
-# Check operating system
-
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    IS_LINUX=true
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    IS_DARWIN=true
-elif [[ "$OSTYPE" == "cygwin" ]]; then
-    IS_WINDOWS=true
-elif [[ "$OSTYPE" == "msys" ]]; then
-    IS_WINDOWS=true
-elif [[ "$OSTYPE" == "win32" ]]; then
-    IS_WINDOWS=true
-elif [[ "$OSTYPE" == "freebsd"* ]]; then
-    IS_LINUX=true
-else
-    printf "${RED}Unknown operating system${NC}\n"
-fi
-
-#####################################################################
 
 printf "${BOLD}System${NC}\n"
 print_line
 
-printf "Operating System  ${BOLD}$OSTYPE${NC}\n"
-printf "Architecture      ${BOLD}$(uname -m)${NC}\n"
-
-if [[ "$IS_WINDOWS"=true ]]; then
-    printf "OS Version        ${BOLD}$(wmic os get Caption,Version | sed -n '2p')${NC}\n"
-elif [[ "$IS_DARWIN"=true ]]; then
-    printf "OS Version        ${BOLD}$(sw_vers -productVersion)${NC}\n"
-elif [[ "$IS_LINUX"=true ]]; then
-    printf "OS Version        ${BOLD}$(lsb_release -d | awk -F ' ' '{print $2}')${NC}\n"
-fi
+printf "Operating System  ${BOLD}$SYS_OS_NAME${NC}\n"
+printf "Architecture      ${BOLD}$SYS_ARCH${NC}\n"
+printf "OS Version        ${BOLD}$(get_os_version)${NC}\n"
 
 #####################################################################
 # Check tools
@@ -423,10 +441,43 @@ else
     HAS_REQUESTS=true
 fi
 
+# langchain
+printf "${YELLOW}Checking ${BOLD}langchain${NC}"
+
+if ! python -c "import langchain" &> /dev/null; then
+    fail "langchain"
+    MISSING_DEPS=$((MISSING_DEPS+1))
+else
+    succeed "langchain"
+    HAS_LANGCHAIN=true
+fi
+
+# dotenv
+printf "${YELLOW}Checking ${BOLD}dotenv${NC}"
+
+if ! python -c "import dotenv" &> /dev/null; then
+    fail "dotenv"
+    MISSING_DEPS=$((MISSING_DEPS+1))
+else
+    succeed "dotenv"
+    HAS_DOTENV=true
+fi
+
+# textwrap
+printf "${YELLOW}Checking ${BOLD}textwrap${NC}"
+
+if ! python -c "import textwrap" &> /dev/null; then
+    fail "textwrap"
+    MISSING_DEPS=$((MISSING_DEPS+1))
+else
+    succeed "textwrap"
+    HAS_TEXTWRAP=true
+fi
+
 # node_modules
 printf "${YELLOW}Checking ${BOLD}node_modules${NC}"
 
-current_package_json_hash=$(md5sum "client/package.json" | awk '{print $1}')
+current_package_json_hash=$(hash_file "client/package.json")
 if [[ ! -d "client/node_modules" ]]; then
     # npm install has not been run
     fail "node_modules"
@@ -481,6 +532,48 @@ if [[ $DO_INSTALL = true ]]; then
         printf "\n"
     fi
 
+    if [[ $HAS_LANGCHAIN = false && $HAS_PIP = true ]]; then
+        printf "${YELLOW}Install ${BOLD}langchain${NC}${YELLOW}...${NC}\n"
+        pip install langchain
+        success=$?
+        if [[ $success -eq 0 ]]; then
+            printf "${GREEN}Installed ${BOLD}langchain${NC}\n"
+            HAS_LANGCHAIN=true
+            MISSING_DEPS=$((MISSING_DEPS-1))
+        else
+            printf "${RED}Failed to install ${BOLD}langchain${NC}\n"
+        fi
+        printf "\n"
+    fi
+
+    if [[ $HAS_DOTENV = false && $HAS_PIP = true ]]; then
+        printf "${YELLOW}Install ${BOLD}dotenv${NC}${YELLOW}...${NC}\n"
+        pip install python-dotenv
+        success=$?
+        if [[ $success -eq 0 ]]; then
+            printf "${GREEN}Installed ${BOLD}dotenv${NC}\n"
+            HAS_DOTENV=true
+            MISSING_DEPS=$((MISSING_DEPS-1))
+        else
+            printf "${RED}Failed to install ${BOLD}dotenv${NC}\n"
+        fi
+        printf "\n"
+    fi
+
+    if [[ $HAS_TEXTWRAP = false && $HAS_PIP = true ]]; then
+        printf "${YELLOW}Install ${BOLD}textwrap${NC}${YELLOW}...${NC}\n"
+        pip install textwrap
+        success=$?
+        if [[ $success -eq 0 ]]; then
+            printf "${GREEN}Installed ${BOLD}textwrap${NC}\n"
+            HAS_TEXTWRAP=true
+            MISSING_DEPS=$((MISSING_DEPS-1))
+        else
+            printf "${RED}Failed to install ${BOLD}textwrap${NC}\n"
+        fi
+        printf "\n"
+    fi
+
     if [[ $HAS_NODE_MODULES = false && $HAS_NPM = true ]]; then
         printf "${YELLOW}Install ${BOLD}node_modules${NC}${YELLOW}...${NC}\n"
 
@@ -497,8 +590,6 @@ if [[ $DO_INSTALL = true ]]; then
         else
             printf "${RED}Failed to install ${BOLD}node_modules${NC}\n"
         fi
-
-        
         printf "\n"
     fi
 else
@@ -594,6 +685,24 @@ printf "\n${BOLD}Dependencies${NC}\n"
 # Requests
 printf "  - ${BOLD}requests${NC} (Python)\n"
 if [[ $HAS_REQUESTS = false ]]; then
+    printf "      ${RED}Missing${NC}\n"
+fi
+
+# Langchain
+printf "  - ${BOLD}langchain${NC} (Python)\n"
+if [[ $HAS_LANGCHAIN = false ]]; then
+    printf "      ${RED}Missing${NC}\n"
+fi
+
+# Dotenv
+printf "  - ${BOLD}dotenv${NC} (Python)\n"
+if [[ $HAS_DOTENV = false ]]; then
+    printf "      ${RED}Missing${NC}\n"
+fi
+
+# Textwrap
+printf "  - ${BOLD}textwrap${NC} (Python)\n"
+if [[ $HAS_TEXTWRAP = false ]]; then
     printf "      ${RED}Missing${NC}\n"
 fi
 
