@@ -42,4 +42,9 @@ out
 server/main/private
 server/sessions
 __pycache__
-*tmp
+
+#####################################################################
+# General
+
+*.tmp
+*.md5
