@@ -7,6 +7,7 @@ import java.nio.file.Files;
  * File utilities.
  * 
  * @author Ethan Vrhel
+ * @see com.smartnote.server.Resource
  */
 public class FileUtils {
     
@@ -101,6 +102,24 @@ public class FileUtils {
         for (int i = 1; i < files.length; i++)
             f = new File(f, files[i]).getPath();
         return f;
+    }
+
+    /**
+     * Calculates the size of a directory by adding the size of all
+     * files in the directory and its subdirectories.
+     * 
+     * @param directory The directory.
+     * @return The size of the directory.
+     */
+    public static long getDirectorySize(File directory) {
+        long size = 0;
+        for (File f : directory.listFiles()) {
+            if (f.isDirectory())
+                size += getDirectorySize(f);
+            else
+                size += f.length();
+        }
+        return size;
     }
 
     // don't allow instantiation

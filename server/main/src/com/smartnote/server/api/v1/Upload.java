@@ -3,7 +3,6 @@ package com.smartnote.server.api.v1;
 import java.io.File;
 
 import com.smartnote.server.auth.Session;
-import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -12,20 +11,26 @@ import spark.Response;
 import spark.Route;
 
 /**
- * Handles uploading of files to the server.
+ * <p>Uploads a file to the server.</p>
  * 
  * @author Ethan Vrhel
+ * @see com.smartnote.server.auth.Session
  */
 @ServerRoute(method = MethodType.POST, path = "/api/v1/upload")
 public class Upload implements Route {
+    /**
+     * Directory within session directory to store uploaded files.
+     */
     public static final String UPLOAD_DIR = "uploads/";
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
         // create session
         Session session = Session.getSession(request);
-        if (session == null)
-            session = Session.createSession();
+        if (session == null) {
+            response.status(401);
+            return "{\"message\": \"No session\"}";
+        }
 
         // name of file to upload
         String filename = request.queryParams("name");
@@ -37,10 +42,8 @@ public class Upload implements Route {
         filename = filename.trim();
         filename = UPLOAD_DIR + filename;
 
-        // check if file is in upload directory
         File file = session.getFile(filename);
-        File uploadDir = new File(session.getSessionDirectory(), UPLOAD_DIR);
-        if (!FileUtils.isFileInDirectory(file, uploadDir)) {
+        if (file == null) {
             response.status(400);
             return "{\"message\": \"Name is invalid\"}";
         }
@@ -51,6 +54,9 @@ public class Upload implements Route {
         } catch (IllegalAccessException e) {
             response.status(400);
             return "{\"message\": \"Name is invalid\"}";
+        } catch (IllegalStateException e) {
+            response.status(413);
+            return "{\"message\": \"File is too large, quota is: " + Session.STORAGE_QUOTA + "\"}";
         }
 
         session.updateSession();

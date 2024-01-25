@@ -104,6 +104,20 @@ def main() -> int:
     else:
         url = f'http://{host}:{port}'
         
+    # get auth token if not provided
+    if auth is None:
+        print(f'No authentication token provided')
+        print(f'Trying to authenticate with server... ', end='')
+
+        r = requests.post(f'{url}/api/v1/login')
+        auth = r.headers.get('Authorization', None)
+
+        if r.status_code == 200:
+            print(f'Done')
+        else:
+            print(f'Failed: {r.status_code} {r.reason}')
+            return 1
+
     # upload files
     try:
         for filename in files:

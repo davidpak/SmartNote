@@ -10,18 +10,18 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Generates summaries from uploaded files.</p>
+ * <p>Fetches resources on server.</p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
  */
-@ServerRoute(method = MethodType.POST, path = "/api/v1/generate")
-public class Generate implements Route {
+@ServerRoute(method = MethodType.GET, path = "/api/v1/fetch")
+public class Fetch implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        // TODO: handle generate request
         halt(501);
         return null;
     }
+
 }

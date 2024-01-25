@@ -13,7 +13,8 @@ export default {
       'neutral-200': '#EFEFEF', // grey 4
       'neutral-300': '#D9D9D9', // grey 3
       'neutral-400': '#CCCCCC', // grey 2
-      warning: '#FFD3D3', // light rose red
+      warning: '#B33B38',
+      'warning-light': '#FFD3D3',
     },
     fontFamily: {
       sans: ['Inter', 'sans-serif'],

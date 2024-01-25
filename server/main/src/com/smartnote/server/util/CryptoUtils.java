@@ -4,14 +4,18 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
- * Utility class for cryptography.
+ * <p>Utility class for cryptography. Provides methods that generate
+ * cryptographically secure random data.</p>
  * 
  * @author Ethan Vrhel
+ * @see com.smartnote.server.auth.Session
  */
 public class CryptoUtils {
 
+    // secure random number generator for the server
     private static SecureRandom RANDOM = null;
 
+    // character array for random string generation
     private static final String CHAR_ARRAY = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     /**
