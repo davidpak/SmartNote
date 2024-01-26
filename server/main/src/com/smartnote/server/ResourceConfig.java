@@ -1,6 +1,9 @@
 package com.smartnote.server;
 
-public class ResourceConfig {
+import com.smartnote.server.cli.CommandLineHandler;
+import com.smartnote.server.cli.CommandLineParser;
+
+public class ResourceConfig implements CommandLineHandler, Validator {
     /**
      * Default private directory.
      */
@@ -54,5 +57,25 @@ public class ResourceConfig {
      */
     public String getSessionDir() {
         return sessionDir;
+    }
+
+    @Override
+    public void addHandlers(CommandLineParser parser) {
+        parser.addHandler("private-dir", (p, a) -> {
+            privateDir = p.next();
+        }, "r");
+
+        parser.addHandler("public-dir", (p, a) -> {
+            publicDir = p.next();
+        }, "u");
+
+        parser.addHandler("session-dir", (p, a) -> {
+            sessionDir = p.next();
+        }, "e");
+    }
+
+    @Override
+    public void validate() throws IllegalStateException {
+        // No validation
     }
 }

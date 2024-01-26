@@ -8,15 +8,13 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
- * <p>Parses command line arguments.</p>
- * 
- * <p>Register handlers for command line arguments. The handlers will be called when the argument
- * is encountered. The handler will be passed the CommandLineParser object and the argument.</p>
- * 
- * <p>In the handler, call the appropriate methods to parse the argument. For example, if a
- * switch requires an integer argument, call <code>parser.nextInt()</code>.</p>
- * 
+ * <p>Parses command line arguments. This class is iterable, and can be
+ * used to iterate over the arguments.</p>
+ *  
  * @author Ethan Vrhel
+ * @see CommandLineHandler
+ * @see ExitEarlyEarlyException
+ * @see NoSuchSwitchException
  */
 public class CommandLineParser implements Iterator<String> {
     private String[] args; // arguments
@@ -28,15 +26,11 @@ public class CommandLineParser implements Iterator<String> {
     /**
      * Creates a new CommandLineParser object.
      * 
-     * @param args The command line arguments.
+     * @param args The command line arguments. Will be copied.
      */
     public CommandLineParser(String[] args) {
-        Objects.requireNonNull(args);
-        if (args.length == 0)
-            throw new IllegalArgumentException("args must not be empty");            
-
-        this.args = new String[args.length - 1];
-        System.arraycopy(args, 1, this.args, 0, this.args.length);
+        this.args = new String[Objects.requireNonNull(args).length];
+        System.arraycopy(args, 0, this.args, 0, args.length);
 
         this.index = 0;
         this.handlers = new HashMap<>();
@@ -44,12 +38,7 @@ public class CommandLineParser implements Iterator<String> {
     }
 
     /**
-     * <p>Adds a handler for a command line argument.</p>
-     * 
-     * <p>The handler will be called when the argument is encountered. The handler will be passed
-     * the CommandLineParser object and the argument. Handlers should call the appropriate methods
-     * to parse the argument. For example, if a switch requires an integer argument, call
-     * <code>parser.nextInt()</code>.</p>
+     * <p>Adds a handler for a command line argument. Arguments are case-insensitive.</p>
      * 
      * <p>The argument should throw an exception on invalid format, missing arguments, or the
      * program should exit early. See {@link #parse()} for more information.</p>
@@ -57,16 +46,36 @@ public class CommandLineParser implements Iterator<String> {
      * @param arg The argument's long name (e.g. help). Will be prefixed with "--".
      * @param handler The handler.
      * @param shortName The argument's short name (e.g. h). Will be prefixed with "-". If
-     * <code>null</code>, the argument will not have a short name.
+     * <code>null</code>, the first non-duplicate character of the long name will be used.
+     * @throws IllegalArgumentException If the argument already exists or the short name already
+     * exists.
      */
-    public void addHandler(String arg, BiConsumer<CommandLineParser, String> handler, String shortName) {
+    public void addHandler(String arg, BiConsumer<CommandLineParser, String> handler, String shortName) 
+        throws IllegalArgumentException {
+
+        arg = arg.toLowerCase();
+
+        if (handlers.containsKey(arg))
+            throw new IllegalArgumentException("Argument already exists");
+
         this.handlers.put(arg, handler);
-        if (shortName != null)
-            this.shortToLong.put(shortName, arg);
+        if (shortName == null) {
+            int i;
+            for (i = 0; i < arg.length(); i++) {
+                char c = arg.charAt(i);
+                if (!shortToLong.containsKey(String.valueOf(c))) {
+                    shortName = String.valueOf(c);
+                    break;
+                }
+            }
+            
+            if (i == arg.length())
+                throw new IllegalArgumentException("No short name available");
+        }
     }
 
     /**
-     * Adds a handler for a command line argument. The argument will not have a short name.
+     * Adds a handler for a command line argument. Arguments are case-insensitive.
      * 
      * @param arg The argument's long name (e.g. help). Will be prefixed with "--".
      * @param handler The handler.
@@ -78,7 +87,19 @@ public class CommandLineParser implements Iterator<String> {
     }
 
     /**
-     * Parses the command line arguments. Uses the handlers to parse the arguments.
+     * Adds a handler for a command line argument. Arguments are case-insensitive.
+     * 
+     * @param handler The handler.
+     * 
+     * @see #addHandler(String, BiConsumer, String)
+     */
+    public void addHandler(CommandLineHandler handler) {
+        handler.addHandlers(this);
+    }
+
+    /**
+     * Parses the command line arguments. Uses the handlers to parse the arguments. All arguments
+     * are converted to lowercase before being passed to the handlers.
      * 
      * @return The remaining arguments after all switches have been parsed.
      * @throws ExitEarlyEarlyException If the program should exit early. This is not an error. The
@@ -138,12 +159,23 @@ public class CommandLineParser implements Iterator<String> {
         return args[index++];
     }
 
+    /**
+     * Looks at the next argument without advancing the index.
+     * 
+     * @return The next argument.
+     * @throws NoSuchElementException If there are no more arguments.
+     */
     public String peek() throws NoSuchElementException {
         if (!hasNext())
             throw new NoSuchElementException();
         return args[index];
     }
 
+    /**
+     * Checks if the next argument is an integer.
+     * 
+     * @return Whether or not the next argument is an integer.
+     */
     public boolean hasNextInt() {
         if (!hasNext())
             return false;
@@ -155,27 +187,14 @@ public class CommandLineParser implements Iterator<String> {
         }
     }
 
+    /**
+     * Gets the next argument as an integer.
+     * 
+     * @return The next argument as an integer.
+     * @throws NoSuchElementException If there are no more arguments.
+     * @throws NumberFormatException If the next argument is not an integer.
+     */
     public int nextInt() throws NoSuchElementException, NumberFormatException {
         return Integer.parseInt(next());
-    }
-
-    public boolean isNextSwitch() {
-        if (!hasNext())
-            return false;
-        String arg = peek();
-        return arg.startsWith("-") && !arg.startsWith("--");
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CommandLineParser[");
-        for (int i = 0; i < args.length; i++) {
-            sb.append(args[i]);
-            if (i < args.length - 1)
-                sb.append(", ");
-        }
-        sb.append("]");
-        return sb.toString();
     }
 }

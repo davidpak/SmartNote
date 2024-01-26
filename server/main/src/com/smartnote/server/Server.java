@@ -3,6 +3,7 @@ package com.smartnote.server;
 import static spark.Spark.*;
 
 import java.lang.reflect.Constructor;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,9 @@ import com.smartnote.server.api.v1.Generate;
 import com.smartnote.server.api.v1.Login;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.cli.ExitEarlyEarlyException;
+import com.smartnote.server.cli.NoSuchSwitchException;
 import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.ServerRoute;
@@ -66,11 +70,29 @@ public class Server {
      * @param args The command line arguments.
      */
     public int init(String[] args) {
-        int rc = config.parseCommandLine(args);
-        if (rc >= 0)
-            return rc;
+        CommandLineParser parser = new CommandLineParser(args);
+        
+        parser.addHandler("help", (p, s) -> {
+            printHelp();
+            throw new ExitEarlyEarlyException(0);
+        }, "h");
 
-        validate();
+        parser.addHandler(config);
+
+        try {
+            parser.parse();
+        } catch (NoSuchSwitchException e) {
+            System.err.println("Unknown switch: " + e.getMessage());
+            return 1;
+        } catch (ExitEarlyEarlyException e) {
+            return e.getCode();
+        } catch (Exception e) {
+            e.printStackTrace();
+            printHelp();
+            return 1;
+        }
+
+        config.validate();
 
         try {
             CryptoUtils.init(null);
@@ -95,7 +117,7 @@ public class Server {
             res.body("Internal server error");
         });
 
-        port(config.getPort());
+        port(config.getServerConfig().getPort());
 
         // Add RPC routes
         addRoute(Export.class);
@@ -106,17 +128,6 @@ public class Server {
         addRoute(Upload.class);
 
         return 0;
-    }
-
-    /**
-     * Validates the server configuration. Run this before starting
-     * the server.
-     */
-    private void validate() {
-        if (config.useSSL()) {
-            LOG.error("SSL is currently unsupported\n");
-            System.exit(1);
-        }
     }
 
     /**
@@ -167,5 +178,21 @@ public class Server {
             LOG.info("Cleaning up session directory");
             FileUtils.deleteFile(Resource.SESSION_DIR);
         }
+    }
+
+    /**
+     * Prints the help message.
+     */
+    private static void printHelp() {
+        System.out.printf("Usage: java -jar server.jar [options]\n");
+        System.out.printf("Options:\n");
+        System.out.printf("  -h, --help               Print this help message\n");
+        System.out.printf("  -p, --port <port>        Specify the port to listen on\n");
+        System.out.printf("  -s, --ssl                Enable SSL\n");
+        System.out.printf("  -i, --insecure           Disable SSL (default)\n");
+        System.out.printf("  -c, --cert <file>        Specify the certificate file\n");
+        System.out.printf("  -r, --private-dir <dir>  Specify the private directory\n");
+        System.out.printf("  -u, --public-dir <dir>   Specify the public directory\n");
+        System.out.printf("  -e, --session-dir <dir>  Specify the per-session directory\n");
     }
 }
