@@ -179,6 +179,19 @@ public class FileUtils {
     }
 
     /**
+     * Gets the canonical file of a file. If the canonical file cannot be
+     * retrieved, the absolute file is returned.
+     * 
+     * @param path The path to the file.
+     * @return The canonical file.
+     * @throws SecurityException If a security manager exists and a system
+     * property cannot be accessed.
+     */
+    public static File getCanonicalFile(String path) throws SecurityException {
+        return getCanonicalFile(new File(path));
+    }
+
+    /**
      * Gets the canonical path of a file. If the canonical path cannot be
      * retrieved, the absolute path is returned.
      * 
@@ -193,6 +206,19 @@ public class FileUtils {
         } catch (Exception e) {
             return f.getAbsolutePath();
         }
+    }
+
+    /**
+     * Gets the canonical path of a file. If the canonical path cannot be
+     * retrieved, the absolute path is returned.
+     * 
+     * @param path The path to the file.
+     * @return The canonical path.
+     * @throws SecurityException If a security manager exists and a system
+     * property cannot be accessed.
+     */
+    public static String getCanonicalPath(String path) throws SecurityException {
+        return getCanonicalPath(new File(path));
     }
 
     /**

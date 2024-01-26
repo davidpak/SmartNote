@@ -4,11 +4,12 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.server.util.FileUtils;
+import com.smartnote.server.util.Validator;
 
 /**
  * <p>Stores configuration information for the server.</p>

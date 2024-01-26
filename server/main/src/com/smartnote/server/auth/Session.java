@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.Permission;
 import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,8 +17,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.smartnote.server.NoSuchResourceException;
 import com.smartnote.server.Resource;
+import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.IOUtils;
@@ -265,6 +266,10 @@ public class Session {
         return jwt;
     }
 
+    public String getId() {
+        return jwt.getSubject();
+    }
+
     /**
      * Gets the session directory.
      * 
@@ -328,6 +333,15 @@ public class Session {
     }
 
     /**
+     * Gets the permission associated with this session.
+     * 
+     * @return The permission.
+     */
+    public Permission getPermission() {
+        return new SessionPermission(this);
+    }
+
+    /**
      * Write data to a session file.
      * 
      * @param name  The name of the file.
@@ -364,6 +378,20 @@ public class Session {
         byte[] result = IOUtils.readAllBytes(in);
         in.close();
         return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Session))
+            return false;
+
+        Session s = (Session) o;
+        return s.jwt.getToken().equals(jwt.getToken());
+    }
+
+    @Override
+    public int hashCode() {
+        return jwt.getToken().hashCode();
     }
 
     /**

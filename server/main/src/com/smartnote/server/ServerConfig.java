@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.util.Validator;
 
 /**
  * <p>Stores configuration information for the server.</p>

@@ -1,4 +1,4 @@
-package com.smartnote.server;
+package com.smartnote.server.util;
 
 /**
  * Validates the state of an object.

@@ -1,8 +1,8 @@
-package com.smartnote.server;
+package com.smartnote.server.resource;
 
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
-
+import com.smartnote.server.util.Validator;
 
 /**
  * Stores configuration information for the resource system.

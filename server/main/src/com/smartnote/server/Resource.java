@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.util.FileUtils;
 
 /**

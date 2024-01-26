@@ -1,4 +1,4 @@
-package com.smartnote.server;
+package com.smartnote.server.resource;
 
 import java.io.IOException;
 
