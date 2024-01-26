@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 /**
@@ -51,7 +52,7 @@ public class FileUtils {
     /**
      * Reads a file.
      * 
-     * @param f The file to read.
+     * @param file The file to read.
      * @return The contents of the file. Never <code>null</code>.
      * 
      * @throws InvalidPathException If the path is invalid.
@@ -60,9 +61,9 @@ public class FileUtils {
      * @throws SecurityException If a security manager exists and its
      *       <code>checkRead</code> method denies read access to the file.
      */
-    public static String readFile(File f) throws InvalidPathException,
+    public static String readFile(File file) throws InvalidPathException,
         IOException, OutOfMemoryError, SecurityException {
-        return new String(Files.readAllBytes(f.toPath()));
+        return new String(Files.readAllBytes(file.toPath()));
     }
 
     /**
@@ -80,6 +81,70 @@ public class FileUtils {
     public static String readFile(String path) throws InvalidPathException,
         IOException, OutOfMemoryError, SecurityException {
         return readFile(new File(path));
+    }
+
+    /**
+     * Writes data to a file.
+     * 
+     * @param file The file to write to.
+     * @param data The data to write.
+     * 
+     * @throws InvalidPathException If the path is invalid.
+     * @throws IOException If an I/O error occurs.
+     * @throws SecurityException If a security manager exists and its
+     *       <code>checkWrite</code> method denies write access to the file.
+     */
+    public static void writeFile(File file, byte[] data) throws InvalidPathException,
+        IOException, SecurityException {
+        Files.write(file.toPath(), data, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+    }
+
+    /**
+     * Writes data to a file.
+     * 
+     * @param file The file to write to.
+     * @param data The data to write.
+     * 
+     * @throws InvalidPathException If the path is invalid.
+     * @throws IOException If an I/O error occurs.
+     * @throws SecurityException If a security manager exists and its
+     *       <code>checkWrite</code> method denies write access to the file.
+     */
+    public static void writeFile(File file, String data) throws InvalidPathException,
+        IOException, SecurityException {
+        writeFile(file, data.getBytes());
+    }
+
+    /**
+     * Writes data to a file.
+     * 
+     * @param path The path to the file to write to.
+     * @param data The data to write.
+     * 
+     * @throws InvalidPathException If the path is invalid.
+     * @throws IOException If an I/O error occurs.
+     * @throws SecurityException If a security manager exists and its
+     *       <code>checkWrite</code> method denies write access to the file.
+     */
+    public static void writeFile(String path, byte[] data) throws InvalidPathException,
+        IOException, SecurityException {
+        writeFile(new File(path), data);
+    }
+
+    /**
+     * Writes data to a file.
+     * 
+     * @param path The path to the file to write to.
+     * @param data The data to write.
+     * 
+     * @throws InvalidPathException If the path is invalid.
+     * @throws IOException If an I/O error occurs.
+     * @throws SecurityException If a security manager exists and its
+     *       <code>checkWrite</code> method denies write access to the file.
+     */
+    public static void writeFile(String path, String data) throws InvalidPathException,
+        IOException, SecurityException {
+        writeFile(new File(path), data.getBytes());
     }
 
     /**

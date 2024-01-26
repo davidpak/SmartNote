@@ -114,8 +114,15 @@ public class Server {
 
         if (configLoaded)
             LOG.info("Loaded config file: " + Config.CONFIG_FILE);
-        else 
+        else {
             LOG.error("Failed to load " + Config.CONFIG_FILE + ", using default config");
+            try {
+                Config.writeConfig(config);
+            } catch (Exception e) {
+                LOG.error("Failed to write default config");
+                e.printStackTrace();
+            }
+        }
 
         // validate the config
         config.validate();

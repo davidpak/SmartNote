@@ -3,6 +3,8 @@ package com.smartnote.server;
 import java.io.IOException;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
@@ -39,6 +41,19 @@ public class Config implements CommandLineHandler, Validator {
         }
     
         return gson.fromJson(data, Config.class);
+    }
+
+    /**
+     * Writes the config file.
+     * 
+     * @param config The config file to write.
+     * @throws IOException If an I/O error occurs while writing the file.
+     */
+    public static void writeConfig(Config config) throws IOException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        
+        String data = gson.toJson(config);
+        FileUtils.writeFile(CONFIG_FILE, data);
     }
 
     private ServerConfig server;
