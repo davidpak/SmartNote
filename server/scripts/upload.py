@@ -5,7 +5,7 @@ from typing import *
 import requests
 import sys
 import urllib.parse
-import util
+import cmdline as cl
 
 def upload_file(
         base_url: str,
@@ -52,6 +52,7 @@ def upload_file(
 
 def usage():
     print('Usage: ./upload.py [options...] <host> [files...]')
+    print('Upload one or more files to the server using the upload RPC.')
     print('Options:')
     print('  -h  --help           Show this help message and exit')
     print('  -a, --auth <token>   Authentication token')
@@ -60,14 +61,11 @@ def usage():
 
 def main() -> int:
     switches = [
-        util.Switch('help', 'h', 'Show this help message and exit', value=usage),
-        util.Switch('auth', 'a', 'Authentication token', type=str)
+        cl.Switch('help', value=usage),
+        cl.Switch('auth', type=str)
     ]
 
-    res = util.parse_command_line(
-        sys.argv,
-        switches=switches
-    )
+    res = cl.parse(sys.argv, switches=switches)
 
     if isinstance(res, int):
         return res

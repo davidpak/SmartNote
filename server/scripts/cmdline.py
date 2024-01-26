@@ -5,32 +5,44 @@ SwitchType = Union[None, type[str], type[int], type[float], type[bool]]
 
 class Switch:
     """
-    Command line switch.
+    Command line switch. Provides a way to specify command line options
+    and flags. Also supports custom handling of a switch, e.g. to
+    display a usage message on `--help`.
     """
 
     def __init__(self,
                  name: str,
-                 short: Union[str, None],
-                 description: Union[str, None]=None,
+                 short: Union[str, None]=None,
                  value: SwitchValue=None,
                  type: SwitchType=None):
         """
         Create a new switch.
 
         Parameters:
-        - `name`: Switch name.
-        - `short`: Short switch name, e.g. `'h'` for `'--help'`. If
-                   `None`, then the switch has no short name.
-        - `description`: Switch description.
-        - `value`: Switch value.
-        - `type`: Switch type.
+        - `name`: Switch name. Does not include the leading `--` or `-`.
+        - `short`: Short switch name, e.g. `'h'` for `'--help'`. Short
+                   names are identified by a single leading `-`, but
+                   this argument should not include it. If this is `None`,
+                   then the switch's short name will be the first letter
+                   of its name. If there are duplicate short names, then
+                   the last switch with a given short name will be used.
+        - `value`: Default switch value. `None` means no default value
+                   and the switch `type` must be specified.
+        - `type`: Switch type. `None` means no type and the switch
+                  `value` must be specified. This is only `None` if
+                  `value` is callable (e.g. for a help switch).
         """
 
         self.name = name
-        self.short = short
-        self.description = description
+        self.short = name[0] if short is None else short
         self.value = value
         self.type = type
+
+        if self.type is None and self.value is None:
+            raise Exception('Switch must have a type or value')
+        
+        if callable(self.value) and self.type is not None:
+            raise Exception('Switch cannot have a type and a callable value')
 
     def handle(self, argv: list[str], i: int) -> tuple[int, Union[int, None]]:
         """
@@ -85,21 +97,23 @@ class Switch:
         return (i, rc)
 
 
-def parse_command_line(argv: list[str],
-                       switches: Union[list[Switch],None]=None
-                       ) -> Union[tuple[list[str], dict[str, SwitchValue]], int]:
+def parse(argv: list[str],
+          switches: Union[list[Switch],None]=None
+          ) -> Union[tuple[list[str], dict[str, SwitchValue]], int]:
     """
     Parse command line arguments.
 
     Parameters:
-    - `argv`: Command line arguments, including program name.
-    - `switches`: List of Switch objects representing command line
-                  switches, if None then no switches are parsed.
+    - `argv`: Command line arguments, including program name. The program
+              name is ignored.
+    - `switches`: List of `Switch` objects representing command line
+                  switches. Specifiying `None` means no switches and
+                  is the same as specifying an empty `list`.
 
     Returns:
-    Either a tuple of `(args, options)` or an exit code. `args` is a
-    list of non-switch arguments and `options` is a dict of switch
-    values that were parsed.
+    Either a tuple of `(args, options)` or an exit code, as an `int`.
+    `args` is a `list` of non-switch arguments and `options` is a
+    `dict` of switch values that were parsed.
     """
 
     result_switches: dict[str, SwitchValue] = {}

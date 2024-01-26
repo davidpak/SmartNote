@@ -20,7 +20,6 @@ MISSING_DEPS=0
 HAS_REQUESTS=false
 HAS_LANGCHAIN=false
 HAS_DOTENV=false
-HAS_TEXTWRAP=false
 HAS_NODE_MODULES=false
 
 DO_INSTALL=false
@@ -77,29 +76,21 @@ fail() {
 # hash_file <file>
 hash_file() {
     if [[ "$IS_DARWIN"=true ]]; then
-        md5 -q "$1"
+        echo $($md5 -q "$1")
     else
-        md5sum "$1" | awk '{print $1}'
+        echo $($md5sum "$1" | awk '{print $1}')
     fi
 }
 
-if [[ "$IS_WINDOWS"=true ]]; then
-    get_os_version() {
-        wmic os get Caption,Version | sed -n '2p'
-    }
-fi
-
-if [[ "$IS_LINUX"=true ]]; then
-    get_os_version() {
-        lsb_release -d | awk -F ' ' '{print $2}'
-    }
-fi
-
-if [[ "$IS_DARWIN"=true ]]; then
-    get_os_version() {
-        sw_vers -productVersion
-    }
-fi
+get_os_version() {
+    if [[ "$IS_WINDOWS"=true ]]; then
+        echo $(wmic os get Caption,Version | sed -n '2p')
+    elif [[ "$IS_LINUX"=true ]]; then
+        echo $(lsb_release -d | awk -F ' ' '{print $2}')
+    elif [[ "$IS_DARWIN"=true ]]; then
+        echo $(sw_vers -productVersion)
+    fi
+}
 
 #####################################################################
 # Command line arguments
@@ -463,17 +454,6 @@ else
     HAS_DOTENV=true
 fi
 
-# textwrap
-printf "${YELLOW}Checking ${BOLD}textwrap${NC}"
-
-if ! python -c "import textwrap" &> /dev/null; then
-    fail "textwrap"
-    MISSING_DEPS=$((MISSING_DEPS+1))
-else
-    succeed "textwrap"
-    HAS_TEXTWRAP=true
-fi
-
 # node_modules
 printf "${YELLOW}Checking ${BOLD}node_modules${NC}"
 
@@ -556,20 +536,6 @@ if [[ $DO_INSTALL = true ]]; then
             MISSING_DEPS=$((MISSING_DEPS-1))
         else
             printf "${RED}Failed to install ${BOLD}dotenv${NC}\n"
-        fi
-        printf "\n"
-    fi
-
-    if [[ $HAS_TEXTWRAP = false && $HAS_PIP = true ]]; then
-        printf "${YELLOW}Install ${BOLD}textwrap${NC}${YELLOW}...${NC}\n"
-        pip install textwrap
-        success=$?
-        if [[ $success -eq 0 ]]; then
-            printf "${GREEN}Installed ${BOLD}textwrap${NC}\n"
-            HAS_TEXTWRAP=true
-            MISSING_DEPS=$((MISSING_DEPS-1))
-        else
-            printf "${RED}Failed to install ${BOLD}textwrap${NC}\n"
         fi
         printf "\n"
     fi
@@ -697,12 +663,6 @@ fi
 # Dotenv
 printf "  - ${BOLD}dotenv${NC} (Python)\n"
 if [[ $HAS_DOTENV = false ]]; then
-    printf "      ${RED}Missing${NC}\n"
-fi
-
-# Textwrap
-printf "  - ${BOLD}textwrap${NC} (Python)\n"
-if [[ $HAS_TEXTWRAP = false ]]; then
     printf "      ${RED}Missing${NC}\n"
 fi
 
