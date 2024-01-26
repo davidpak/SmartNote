@@ -41,7 +41,7 @@ public class CommandLineParser implements Iterator<String> {
      * <p>Adds a handler for a command line argument. Arguments are case-insensitive.</p>
      * 
      * <p>The argument should throw an exception on invalid format, missing arguments, or the
-     * program should exit early. See {@link #parse()} for more information.</p>
+     * program should exit early. See {@link #parse()} for exceptions that can be thrown.</p>
      * 
      * @param arg The argument's long name (e.g. help). Will be prefixed with "--".
      * @param handler The handler.
@@ -65,6 +65,7 @@ public class CommandLineParser implements Iterator<String> {
                 char c = arg.charAt(i);
                 if (!shortToLong.containsKey(String.valueOf(c))) {
                     shortName = String.valueOf(c);
+                    shortToLong.put(shortName, arg);
                     break;
                 }
             }
@@ -118,19 +119,21 @@ public class CommandLineParser implements Iterator<String> {
                 BiConsumer<CommandLineParser, String> handler;
 
                 if (arg.startsWith("--")) {
+                    // handle long name
                     String longName = arg.substring(2);
                     if (handlers.containsKey(longName))
                         handler = handlers.get(longName);
                     else
                         throw new NoSuchSwitchException(arg);
                 } else if (arg.startsWith("-")) {
+                    // handle short name
                     String shortName = arg.substring(1);
                     if (shortToLong.containsKey(shortName))
                         handler = handlers.get(shortToLong.get(shortName));
                     else
                         throw new NoSuchSwitchException(shortName);
                 } else
-                    break;
+                    break; // no more switches
 
                 handler.accept(this, arg);
             }
@@ -139,10 +142,11 @@ public class CommandLineParser implements Iterator<String> {
             throw e;
         }
 
+        // store remaining arguments
         String[] remaining = new String[args.length - index];
         System.arraycopy(args, index, remaining, 0, remaining.length);
 
-        index = old;
+        index = old; // restore index
 
         return remaining;
     }

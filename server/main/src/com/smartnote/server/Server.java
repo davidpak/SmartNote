@@ -3,7 +3,6 @@ package com.smartnote.server;
 import static spark.Spark.*;
 
 import java.lang.reflect.Constructor;
-import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,24 +35,26 @@ public class Server {
     /**
      * The logger.
      */
-    public static final Logger LOG = LoggerFactory.getLogger(Server.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
     /**
      * The server.
      */
-    private static Server SERVER;
+    public static final Server SERVER = new Server();
+    
+    /**
+     * The version.
+     */
+    public static final String VERSION = "1.0.0";
 
     private Config config; // the server config
-
+  
     public static void main(String[] args) {
-        SERVER = new Server();
         SERVER.init(args);
     }
 
-    // don't allow instantiation
-    private Server() {
-        this.config = new Config();
-    }
+    // Only allow one instance
+    private Server() {}
 
     /**
      * Get the server config.
@@ -70,15 +71,34 @@ public class Server {
      * @param args The command line arguments.
      */
     public int init(String[] args) {
+        boolean configLoaded = false;
+
+        // load the config file
+        try {
+            config = Config.loadConfig();
+            configLoaded = true;
+        } catch (Exception e) {
+            config = new Config();
+            configLoaded = false;
+        }
+
+        // set up the command line parser
+
         CommandLineParser parser = new CommandLineParser(args);
         
         parser.addHandler("help", (p, s) -> {
             printHelp();
             throw new ExitEarlyEarlyException(0);
-        }, "h");
+        });
+
+        parser.addHandler("version", (p, s) -> {
+            printVersion();
+            throw new ExitEarlyEarlyException(0);
+        });
 
         parser.addHandler(config);
 
+        // parse the command line
         try {
             parser.parse();
         } catch (NoSuchSwitchException e) {
@@ -92,8 +112,15 @@ public class Server {
             return 1;
         }
 
+        if (configLoaded)
+            LOG.info("Loaded config file: " + Config.CONFIG_FILE);
+        else 
+            LOG.error("Failed to load " + Config.CONFIG_FILE + ", using default config");
+
+        // validate the config
         config.validate();
 
+        // initialize the crypto utils
         try {
             CryptoUtils.init(null);
         } catch (Exception e) {
@@ -102,13 +129,8 @@ public class Server {
             return 1;
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
-
-        // should have been deleted by the shutdown hook, but abnormal
-        // termination may have left it
-        FileUtils.deleteFile(Resource.SESSION_DIR);
-
-        Session.init();
+        // remove old sessions
+        Session.forceGc();
 
         // handle exceptions
         exception(Exception.class, (e, req, res) -> {
@@ -169,18 +191,6 @@ public class Server {
     }
 
     /**
-     * Used to clean up resources that should not persist after the server
-     * shuts down.
-     */
-    private static class ShutdownHook implements Runnable {
-        @Override
-        public void run() {
-            LOG.info("Cleaning up session directory");
-            FileUtils.deleteFile(Resource.SESSION_DIR);
-        }
-    }
-
-    /**
      * Prints the help message.
      */
     private static void printHelp() {
@@ -194,5 +204,9 @@ public class Server {
         System.out.printf("  -r, --private-dir <dir>  Specify the private directory\n");
         System.out.printf("  -u, --public-dir <dir>   Specify the public directory\n");
         System.out.printf("  -e, --session-dir <dir>  Specify the per-session directory\n");
+    }
+
+    private static void printVersion() {
+        System.out.printf("SmartNote Server v%s\n", VERSION);
     }
 }

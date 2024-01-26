@@ -7,5 +7,11 @@ package com.smartnote.server;
  */
 @FunctionalInterface
 public interface Validator {
+
+    /**
+     * Validates the state of the object. Does nothing if the state is valid.
+     * 
+     * @throws IllegalStateException If the state is invalid.
+     */
     void validate() throws IllegalStateException;    
 }

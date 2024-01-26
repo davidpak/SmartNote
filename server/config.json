@@ -4,8 +4,8 @@
         "ssl": false
     },
     "resource": {
-        "private": "private",
-        "public": "public",
-        "session": "sessions"
+        "privateDir": "private",
+        "publicDir": "public",
+        "sessionDir": "sessions"
     }
 }

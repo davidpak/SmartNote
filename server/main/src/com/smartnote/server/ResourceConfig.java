@@ -3,6 +3,14 @@ package com.smartnote.server;
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
 
+
+/**
+ * Stores configuration information for the resource system.
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.Resource
+ * @see com.smartnote.server.cli.CommandLineParser
+ */
 public class ResourceConfig implements CommandLineHandler, Validator {
     /**
      * Default private directory.

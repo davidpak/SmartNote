@@ -145,31 +145,37 @@ public class Session {
             // directory is deleted.
 
             LOG.debug("Running session garbage collector");
-
-            File[] sessionDirs = new File(Resource.SESSION_DIR).listFiles();
-            if (sessionDirs == null)
-                return;
-
-            // Iterate over all session directories
-            for (File f : sessionDirs) {
-                File token = new File(f.getAbsolutePath() + File.separatorChar + ".token");
-
-                // delete session if token does not exist
-                if (!token.exists()) {
-                    FileUtils.deleteFile(f);
-                    continue;
-                }
-
-                // delete session if token is invalid
-                try {
-                    String tokenStr = FileUtils.readFile(token);
-                    if (!isTokenValid(tokenStr))
-                        FileUtils.deleteFile(f);
-                } catch (Exception e) {
-                    FileUtils.deleteFile(f);
-                }
-            }
+            forceGc();
         }, GC_INTERVAL, GC_INTERVAL, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Forces garbage collection of sessions.
+     */
+    public static void forceGc() {
+        File[] sessionDirs = new File(Resource.getSessionDirectory()).listFiles();
+        if (sessionDirs == null)
+            return;
+
+        // Iterate over all session directories
+        for (File f : sessionDirs) {
+            File token = new File(f.getAbsolutePath() + File.separatorChar + ".token");
+
+            // delete session if token does not exist
+            if (!token.exists()) {
+                FileUtils.deleteFile(f);
+                continue;
+            }
+
+            // delete session if token is invalid
+            try {
+                String tokenStr = FileUtils.readFile(token);
+                if (!isTokenValid(tokenStr))
+                    FileUtils.deleteFile(f);
+            } catch (Exception e) {
+                FileUtils.deleteFile(f);
+            }
+        }
     }
 
     /**
@@ -231,15 +237,6 @@ public class Session {
         return true;
     }
 
-    /**
-     * Initializes the session manager.
-     */
-    public static void init() {
-        // this method is only here to force the static initializer to run
-        // when the server starts as we need to read the session secret
-        // before we can do anything else
-    }
-
     private DecodedJWT jwt; // JSON web token
     private File sessionDirectory; // session directory
     private File tokenFile; // file containing the token
@@ -252,7 +249,7 @@ public class Session {
     private Session(DecodedJWT jwt) {
         this.jwt = jwt;
 
-        this.sessionDirectory = new File(Resource.SESSION_DIR, jwt.getSubject());
+        this.sessionDirectory = new File(Resource.getSessionDirectory(), jwt.getSubject());
         this.sessionDirectory = FileUtils.getCanonicalFile(sessionDirectory);
 
         this.tokenFile = new File(sessionDirectory, ".token");

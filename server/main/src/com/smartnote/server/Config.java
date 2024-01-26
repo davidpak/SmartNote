@@ -1,7 +1,12 @@
 package com.smartnote.server;
 
+import java.io.IOException;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.util.FileUtils;
 
 /**
  * <p>Stores configuration information for the server.</p>
@@ -11,15 +16,40 @@ import com.smartnote.server.cli.CommandLineParser;
  */
 public class Config implements CommandLineHandler, Validator {
 
-    private ServerConfig serverConfig;
-    private ResourceConfig resourceConfig;
+    /**
+     * Location of the config file.
+     */
+    public static final String CONFIG_FILE = "config.json";
+
+    /**
+     * Loads the config file.
+     * 
+     * @return The config file.
+     * @throws IOException If an I/O error occurs while reading the file.
+     * @throws JsonSyntaxException If the file is not valid JSON.
+     */
+    public static Config loadConfig() throws IOException, JsonSyntaxException {
+        Gson gson = new Gson();
+
+        String data = null;
+        try {
+            data = FileUtils.readFile(CONFIG_FILE);
+        } catch (Exception e) {
+            throw new IOException("Could not load config file", e);
+        }
+    
+        return gson.fromJson(data, Config.class);
+    }
+
+    private ServerConfig server;
+    private ResourceConfig resource;
 
     /**
      * Creates a new Config object with default values.
      */
     public Config() {
-        this.serverConfig = new ServerConfig();
-        this.resourceConfig = new ResourceConfig();
+        this.server = new ServerConfig();
+        this.resource = new ResourceConfig();
     }
 
     /**
@@ -28,7 +58,7 @@ public class Config implements CommandLineHandler, Validator {
      * @return The server configuration
      */
     public ServerConfig getServerConfig() {
-        return serverConfig;
+        return server;
     }
 
     /**
@@ -37,18 +67,18 @@ public class Config implements CommandLineHandler, Validator {
      * @return The resource configuration
      */
     public ResourceConfig getResourceConfig() {
-        return resourceConfig;
+        return resource;
     }
 
     @Override
     public void validate() throws IllegalStateException {
-        serverConfig.validate();
-        resourceConfig.validate();
+        server.validate();
+        resource.validate();
     }
 
     @Override
     public void addHandlers(CommandLineParser parser) {
-        parser.addHandler(serverConfig);
-        parser.addHandler(resourceConfig);
+        parser.addHandler(server);
+        parser.addHandler(resource);
     }
 }
