@@ -42,6 +42,7 @@ out
 server/main/private
 server/sessions
 __pycache__
+server/config.json
 
 #####################################################################
 # General
