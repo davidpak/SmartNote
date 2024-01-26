@@ -11,12 +11,12 @@ const DropdownSelect = ({
   options: string[];
   refresh: () => void;
 }) => {
-  const [selected, setSelected] = useState(options[0])
+  const [, setSelected] = useState(options[0])
 
   return (
     <div className="fixed w-1/4 ml-3">
       <button
-        className='flex flex-row items-center text-sm text-neutral-400'
+        className='flex flex-row items-center text-sm text-neutral-450'
         onClick={() => {
           refresh();
         }}
@@ -27,15 +27,17 @@ const DropdownSelect = ({
       <Listbox defaultValue={label} onChange={setSelected}>
         <Listbox.Button
           className={({ open }) => `${
-            open ? 'border-2 border-accent' : 'border border-neutral-400'
+            open ? 'border-2 border-accent' : 'border border-neutral-450'
           } relative w-full py-2 pl-4 text-left rounded-lg shadow`}
         >
           {({ value }: { value : string }) =>
-            <div className='flex flex-row'>
+            <div
+              className={`flex flex-row ${ value === label && 'text-neutral-450' }`}
+            >
               {value}
               <span className="absolute inset-y-0 right-0 flex items-center pr-1">
                 <LuChevronsUpDown
-                  className="size-8/12 text-neutral-400"
+                  className="size-8/12 text-neutral-450"
                   aria-hidden="true"
                 />
               </span>
