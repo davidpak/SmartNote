@@ -1,7 +1,14 @@
 package com.smartnote.server;
 
-import java.security.Provider;
-import java.security.Security;
+import java.io.IOException;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSyntaxException;
+import com.smartnote.server.cli.CommandLineHandler;
+import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.util.FileUtils;
 
 /**
  * <p>Stores configuration information for the server.</p>
@@ -9,105 +16,84 @@ import java.security.Security;
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
  */
-public class Config {
-    /**
-     * The default port.
-     */
-    public static final int DEFAULT_PORT = 4567;
+public class Config implements CommandLineHandler, Validator {
 
     /**
-     * Prints the help message.
+     * Location of the config file.
      */
-    private static void printHelp() {
-        System.out.printf("Usage: java -jar server.jar [options]\n");
-        System.out.printf("Options:\n");
-        System.out.printf("  -h, --help           Print this help message\n");
-        System.out.printf("  -p, --port <port>    Specify the port to listen on\n");
-        System.out.printf("  -s, --ssl            Enable SSL\n");
-        System.out.printf("  -i, --insecure       Disable SSL (default)\n");
-        System.out.printf("  -g, --algorithms     Print the supported algorithms\n");
-    }
+    public static final String CONFIG_FILE = "config.json";
 
     /**
-     * Print supported cryptographic algorithms.
+     * Loads the config file.
+     * 
+     * @return The config file.
+     * @throws IOException If an I/O error occurs while reading the file.
+     * @throws JsonSyntaxException If the file is not valid JSON.
      */
-    private static void printAlgorithms() {
-        // this was used earler, but probably can be removed
-        System.out.printf("Supported algorithms:\n");
+    public static Config loadConfig() throws IOException, JsonSyntaxException {
+        Gson gson = new Gson();
 
-        Provider[] providers = Security.getProviders();
-        for (Provider p : providers) {
-            System.out.printf("Provider: %s\n", p.getName());
-            for (Provider.Service s : p.getServices())
-                System.out.printf("  Algorithm: %s\n", s.getAlgorithm());
+        String data = null;
+        try {
+            data = FileUtils.readFile(CONFIG_FILE);
+        } catch (Exception e) {
+            throw new IOException("Could not load config file", e);
         }
+    
+        return gson.fromJson(data, Config.class);
     }
 
-    private int port;
-    private boolean usessl;
+    /**
+     * Writes the config file.
+     * 
+     * @param config The config file to write.
+     * @throws IOException If an I/O error occurs while writing the file.
+     */
+    public static void writeConfig(Config config) throws IOException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        
+        String data = gson.toJson(config);
+        FileUtils.writeFile(CONFIG_FILE, data);
+    }
+
+    private ServerConfig server;
+    private ResourceConfig resource;
 
     /**
      * Creates a new Config object with default values.
      */
     public Config() {
-        this.port = DEFAULT_PORT;
-        this.usessl = false;
+        this.server = new ServerConfig();
+        this.resource = new ResourceConfig();
     }
 
     /**
-     * Parse command line options into a Config object.
+     * Gets the server configuration.
      * 
-     * @param args The command line arguments.
-     * @return The exit code. If less than 0, the program should
-     *         continue.
+     * @return The server configuration
      */
-    public int parseCommandLine(String[] args) {
-        for (int i = 0; i < args.length; i++) {
-            String a = args[i];
-            if (a.equals("-h") || a.equals("--help")) {
-                printHelp();
-                return 0;
-            } else if (a.equals("-p") || a.equals("--port")) {
-                if (i + 1 < args.length) {
-                    port = Integer.parseInt(args[i + 1]);
-                    i++;
-                } else {
-                    System.err.printf("Missing port number\n");
-                    printHelp();
-                    return 1;
-                }
-            } else if (a.equals("-s") || a.equals("--ssl")) {
-                usessl = true;
-            } else if (a.equals("-i") || a.equals("--insecure")) {
-                usessl = false;
-            } else if (a.equals("-g") || a.equals("--algorithms")) {
-                printAlgorithms();
-                return 0;
-            } else {
-                System.err.println("Unknown option: " + a);
-                printHelp();
-                return 1;
-            }
-        }
-
-        return -1;
+    public ServerConfig getServerConfig() {
+        return server;
     }
 
     /**
-     * Gets the port.
+     * Gets the resource configuration.
      * 
-     * @return The port.
+     * @return The resource configuration
      */
-    public int getPort() {
-        return port;
+    public ResourceConfig getResourceConfig() {
+        return resource;
     }
 
-    /**
-     * Gets whether or not to use SSL.
-     * 
-     * @return Whether or not to use SSL.
-     */
-    public boolean useSSL() {
-        return usessl;
+    @Override
+    public void validate() throws IllegalStateException {
+        server.validate();
+        resource.validate();
+    }
+
+    @Override
+    public void addHandlers(CommandLineParser parser) {
+        parser.addHandler(server);
+        parser.addHandler(resource);
     }
 }

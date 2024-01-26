@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.util.FileUtils;
 
@@ -33,36 +36,37 @@ import com.smartnote.server.util.FileUtils;
  * @see {@link Session}
  */
 public class Resource {
+    static {
+        // clean up session directory on shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(new CleanupSessionDirectoryHook()));
+    }
 
     /**
-     * The private directory.
+     * Gets the public directory.
+     * 
+     * @return The public directory.
      */
-    public static final String PRIVATE_DIR = "private";
+    public static String getPublicDirectory() {
+        return Server.SERVER.getConfig().getResourceConfig().getPublicDir();
+    }
 
     /**
-     * The public directory.
+     * Gets the private directory.
+     * 
+     * @return The private directory.
      */
-    public static final String PUBLIC_DIR = "public";
+    public static String getPrivateDirectory() {
+        return Server.SERVER.getConfig().getResourceConfig().getPrivateDir();
+    }
 
     /**
-     * Per-session directory.
+     * Gets the session directory.
+     * 
+     * @return The session directory.
      */
-    public static final String SESSION_DIR = "sessions";
-
-    /**
-     * The private directory.
-     */
-    public static final File PRIVATE_FILE = new File(PRIVATE_DIR).getAbsoluteFile();
-
-    /**
-     * The public directory.
-     */
-    public static final File PUBLIC_FILE = new File(PUBLIC_DIR).getAbsoluteFile();
-
-    /**
-     * Per-session directory.
-     */
-    public static final File SESSION_FILE = new File(SESSION_DIR).getAbsoluteFile();
+    public static String getSessionDirectory() {
+        return Server.SERVER.getConfig().getResourceConfig().getSessionDir();
+    }
 
     /**
      * Open an output stream to a private resource.
@@ -77,7 +81,7 @@ public class Resource {
      */
     public static InputStream readPrivate(String name)
             throws IOException, IllegalAccessException, NoSuchResourceException {
-        String path = PRIVATE_DIR + File.separatorChar + name;
+        String path = getPrivateDirectory() + File.separatorChar + name;
         File f = new File(path).getAbsoluteFile();
 
         if (f.getName().startsWith("."))
@@ -87,7 +91,7 @@ public class Resource {
             throw new NoSuchResourceException(path + " does not exist");
 
         // check if file is in private directory
-        if (!FileUtils.isFileInDirectory(f, new File(PRIVATE_DIR)))
+        if (!FileUtils.isFileInDirectory(f, new File(getPrivateDirectory())))
             throw new IllegalAccessException(path + " is not in the private directory");
 
         return new FileInputStream(f);
@@ -105,14 +109,14 @@ public class Resource {
      *                                existence of the resource is not checked.
      */
     public static OutputStream writePrivate(String name) throws IOException, IllegalAccessException {
-        String path = PRIVATE_DIR + File.separatorChar + name;
+        String path = getPrivateDirectory() + File.separatorChar + name;
         File f = new File(path).getAbsoluteFile();
 
         if (f.getName().startsWith("."))
             throw new IllegalAccessException(path + " is a hidden resource");
 
         // check if file is in private directory
-        if (!FileUtils.isFileInDirectory(f, PRIVATE_FILE))
+        if (!FileUtils.isFileInDirectory(f, new File(getPrivateDirectory())))
             throw new IllegalAccessException(path + " is not in the private directory");
 
         return new FileOutputStream(f);
@@ -131,7 +135,7 @@ public class Resource {
      */
     public static InputStream readPublic(String name)
             throws IOException, IllegalAccessException, NoSuchResourceException {
-        String path = PUBLIC_DIR + File.separatorChar + name;
+        String path = getPublicDirectory() + File.separatorChar + name;
         File f = new File(path).getAbsoluteFile();
 
         if (f.getName().startsWith("."))
@@ -141,7 +145,7 @@ public class Resource {
             throw new NoSuchResourceException(path + " does not exist");
 
         // check if file is in public directory
-        if (!FileUtils.isFileInDirectory(f, PUBLIC_FILE))
+        if (!FileUtils.isFileInDirectory(f, new File(getPublicDirectory())))
             throw new IllegalAccessException(path + " is not in the public directory");
 
         return new FileInputStream(f);
@@ -163,7 +167,7 @@ public class Resource {
             throws IOException, IllegalAccessException, NoSuchResourceException {
         String sessionDirName = session.getJWT().getSubject();
 
-        String path = SESSION_DIR + File.separatorChar + sessionDirName + File.separatorChar + name;
+        String path = getSessionDirectory() + File.separatorChar + sessionDirName + File.separatorChar + name;
         File f = new File(path).getAbsoluteFile();
 
         if (f.getName().startsWith("."))
@@ -173,7 +177,7 @@ public class Resource {
             throw new NoSuchResourceException(path + " does not exist");
 
         // session directory
-        String dir = new File(SESSION_DIR + File.separatorChar + sessionDirName).getAbsolutePath();
+        String dir = new File(getSessionDirectory() + File.separatorChar + sessionDirName).getAbsolutePath();
 
         // check if file is in session directory for the session
         if (!FileUtils.isFileInDirectory(f, new File(dir)))
@@ -197,14 +201,14 @@ public class Resource {
             throws IOException, IllegalAccessException {
         String sessionDirName = session.getJWT().getSubject();
 
-        String path = SESSION_DIR + File.separatorChar + sessionDirName + File.separatorChar + name;
+        String path = getSessionDirectory() + File.separatorChar + sessionDirName + File.separatorChar + name;
 
         File f = new File(path).getAbsoluteFile();
 
         if (f.getName().startsWith("."))
             throw new IllegalAccessException(path + " is a hidden resource");
 
-        File sessionDir = new File(SESSION_DIR + File.separatorChar + sessionDirName);
+        File sessionDir = new File(getSessionDirectory() + File.separatorChar + sessionDirName);
 
         // check if file is in session directory for the session
         if (!FileUtils.isFileInDirectory(f, sessionDir))
@@ -220,5 +224,19 @@ public class Resource {
 
     // prevent instantiation
     private Resource() {
+    }
+
+    /**
+     * Used to clean up resources that should not persist after the server
+     * shuts down.
+     */
+    private static class CleanupSessionDirectoryHook implements Runnable {
+        private static final Logger LOG = LoggerFactory.getLogger(CleanupSessionDirectoryHook.class);
+
+        @Override
+        public void run() {
+            LOG.info("Cleaning up session directory");
+            FileUtils.deleteFile(getSessionDirectory());
+        }
     }
 }

@@ -13,6 +13,9 @@ import com.smartnote.server.api.v1.Generate;
 import com.smartnote.server.api.v1.Login;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.cli.ExitEarlyEarlyException;
+import com.smartnote.server.cli.NoSuchSwitchException;
 import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.ServerRoute;
@@ -32,24 +35,26 @@ public class Server {
     /**
      * The logger.
      */
-    public static final Logger LOG = LoggerFactory.getLogger(Server.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
     /**
      * The server.
      */
-    private static Server SERVER;
+    public static final Server SERVER = new Server();
+    
+    /**
+     * The version.
+     */
+    public static final String VERSION = "1.0.0";
 
     private Config config; // the server config
-
+  
     public static void main(String[] args) {
-        SERVER = new Server();
         SERVER.init(args);
     }
 
-    // don't allow instantiation
-    private Server() {
-        this.config = new Config();
-    }
+    // Only allow one instance
+    private Server() {}
 
     /**
      * Get the server config.
@@ -66,12 +71,63 @@ public class Server {
      * @param args The command line arguments.
      */
     public int init(String[] args) {
-        int rc = config.parseCommandLine(args);
-        if (rc >= 0)
-            return rc;
+        boolean configLoaded = false;
 
-        validate();
+        // load the config file
+        try {
+            config = Config.loadConfig();
+            configLoaded = true;
+        } catch (Exception e) {
+            config = new Config();
+            configLoaded = false;
+        }
 
+        // set up the command line parser
+
+        CommandLineParser parser = new CommandLineParser(args);
+        
+        parser.addHandler("help", (p, s) -> {
+            printHelp();
+            throw new ExitEarlyEarlyException(0);
+        });
+
+        parser.addHandler("version", (p, s) -> {
+            printVersion();
+            throw new ExitEarlyEarlyException(0);
+        });
+
+        parser.addHandler(config);
+
+        // parse the command line
+        try {
+            parser.parse();
+        } catch (NoSuchSwitchException e) {
+            System.err.println("Unknown switch: " + e.getMessage());
+            return 1;
+        } catch (ExitEarlyEarlyException e) {
+            return e.getCode();
+        } catch (Exception e) {
+            e.printStackTrace();
+            printHelp();
+            return 1;
+        }
+
+        if (configLoaded)
+            LOG.info("Loaded config file: " + Config.CONFIG_FILE);
+        else {
+            LOG.error("Failed to load " + Config.CONFIG_FILE + ", using default config");
+            try {
+                Config.writeConfig(config);
+            } catch (Exception e) {
+                LOG.error("Failed to write default config");
+                e.printStackTrace();
+            }
+        }
+
+        // validate the config
+        config.validate();
+
+        // initialize the crypto utils
         try {
             CryptoUtils.init(null);
         } catch (Exception e) {
@@ -80,13 +136,8 @@ public class Server {
             return 1;
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
-
-        // should have been deleted by the shutdown hook, but abnormal
-        // termination may have left it
-        FileUtils.deleteFile(Resource.SESSION_DIR);
-
-        Session.init();
+        // remove old sessions
+        Session.forceGc();
 
         // handle exceptions
         exception(Exception.class, (e, req, res) -> {
@@ -95,7 +146,7 @@ public class Server {
             res.body("Internal server error");
         });
 
-        port(config.getPort());
+        port(config.getServerConfig().getPort());
 
         // Add RPC routes
         addRoute(Export.class);
@@ -106,17 +157,6 @@ public class Server {
         addRoute(Upload.class);
 
         return 0;
-    }
-
-    /**
-     * Validates the server configuration. Run this before starting
-     * the server.
-     */
-    private void validate() {
-        if (config.useSSL()) {
-            LOG.error("SSL is currently unsupported\n");
-            System.exit(1);
-        }
     }
 
     /**
@@ -158,14 +198,22 @@ public class Server {
     }
 
     /**
-     * Used to clean up resources that should not persist after the server
-     * shuts down.
+     * Prints the help message.
      */
-    private static class ShutdownHook implements Runnable {
-        @Override
-        public void run() {
-            LOG.info("Cleaning up session directory");
-            FileUtils.deleteFile(Resource.SESSION_DIR);
-        }
+    private static void printHelp() {
+        System.out.printf("Usage: java -jar server.jar [options]\n");
+        System.out.printf("Options:\n");
+        System.out.printf("  -h, --help               Print this help message\n");
+        System.out.printf("  -p, --port <port>        Specify the port to listen on\n");
+        System.out.printf("  -s, --ssl                Enable SSL\n");
+        System.out.printf("  -i, --insecure           Disable SSL (default)\n");
+        System.out.printf("  -c, --cert <file>        Specify the certificate file\n");
+        System.out.printf("  -r, --private-dir <dir>  Specify the private directory\n");
+        System.out.printf("  -u, --public-dir <dir>   Specify the public directory\n");
+        System.out.printf("  -e, --session-dir <dir>  Specify the per-session directory\n");
+    }
+
+    private static void printVersion() {
+        System.out.printf("SmartNote Server v%s\n", VERSION);
     }
 }
