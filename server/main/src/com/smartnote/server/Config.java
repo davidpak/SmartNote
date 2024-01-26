@@ -10,10 +10,6 @@ import java.security.Security;
  * @see com.smartnote.server.Server
  */
 public class Config {
-    /**
-     * The default port.
-     */
-    public static final int DEFAULT_PORT = 4567;
 
     /**
      * Prints the help message.
@@ -43,15 +39,15 @@ public class Config {
         }
     }
 
-    private int port;
-    private boolean usessl;
+    private ServerConfig serverConfig;
+    private ResourceConfig resourceConfig;
 
     /**
      * Creates a new Config object with default values.
      */
     public Config() {
-        this.port = DEFAULT_PORT;
-        this.usessl = false;
+        this.serverConfig = new ServerConfig();
+        this.resourceConfig = new ResourceConfig();
     }
 
     /**
