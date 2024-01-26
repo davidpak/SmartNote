@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 class FileResource implements Resource {
-    private File file;
+    protected File file;
     
     FileResource(File file) {
         this.file = Objects.requireNonNull(file, "file must not be null");
@@ -28,5 +28,10 @@ class FileResource implements Resource {
     @Override
     public String toString() {
         return file.toString();
+    }
+
+    @Override
+    public void delete() throws SecurityException, IOException {
+        file.delete();
     }
 }

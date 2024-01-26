@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
@@ -158,6 +159,12 @@ public class FileUtils {
     public static boolean isFileInDirectory(File file, File directory) {
         String filePath = getCanonicalPath(file);
         String directoryPath = getCanonicalPath(directory);
+        return filePath.startsWith(directoryPath);
+    }
+
+    public static boolean isPathInDirectory(Path path, Path directory) {
+        String filePath = getCanonicalPath(path.toFile());
+        String directoryPath = getCanonicalPath(directory.toFile());
         return filePath.startsWith(directoryPath);
     }
 

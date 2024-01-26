@@ -266,6 +266,11 @@ public class Session {
         return jwt;
     }
 
+    /**
+     * Gets the ID of this session.
+     * 
+     * @return The ID.
+     */
     public String getId() {
         return jwt.getSubject();
     }

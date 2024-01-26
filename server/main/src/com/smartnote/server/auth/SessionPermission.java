@@ -4,6 +4,8 @@ import java.security.Permission;
 import java.util.Objects;
 
 import com.smartnote.server.security.PublicPermission;
+import com.smartnote.server.security.ReadOnlyPermission;
+import com.smartnote.server.security.ReadWriteDeletePermission;
 
 /**
  * <p>Represents a session permission level. Allows read, write, and delete
@@ -26,8 +28,6 @@ public class SessionPermission extends Permission {
 
     @Override
     public boolean implies(Permission permission) {
-        if (permission instanceof PublicPermission)
-            return true;
         return permission.equals(this);
     }
 
@@ -46,5 +46,9 @@ public class SessionPermission extends Permission {
     @Override
     public String getActions() {
         return actions;
+    }
+
+    public Session getSession() {
+        return session;
     }
 }

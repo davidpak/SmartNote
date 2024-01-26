@@ -3,10 +3,6 @@ package com.smartnote.server.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.AccessControlException;
-import java.security.Permission;
-
-import org.eclipse.jetty.util.IO;
 
 /**
  * <p>Represents an abstract resource. Resources can be retrieved
@@ -44,17 +40,4 @@ public interface Resource {
      * @throws IOException If the resource could not be deleted.
      */
     public void delete() throws SecurityException, IOException;
-
-    /**
-     * Find a sub-resource of this resource.
-     * 
-     * @param path The path to the resource.
-     * @param permission The permission to use to find the resource.
-     * @return The resource.
-     * @throws AccessControlException When the given permission is not
-     * sufficient to find the resource.
-     * @throws NoSuchResourceException When the resource does not exist.
-     * @throws IOException If the resource could not be found.
-     */
-    public Resource findResource(String path, Permission permission) throws AccessControlException, NoSuchResourceException, IOException;
 }
