@@ -42,7 +42,7 @@ const DropdownSelect = ({
             </div>
           }
         </Listbox.Button>
-        <Listbox.Options className="flex flex-col absolute max-h-60 w-full overflow-auto rounded-md py-1 shadow-lg">
+        <Listbox.Options className="flex flex-col absolute max-h-60 w-full overflow-y-scroll rounded-md py-1 shadow-lg">
           <input
             type='text'
             placeholder='Search...'
