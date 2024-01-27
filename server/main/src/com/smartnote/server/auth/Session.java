@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.Permission;
 import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,8 +19,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.smartnote.server.NoSuchResourceException;
-import com.smartnote.server.Resource;
+import com.smartnote.server.Server;
+import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.IOUtils;
@@ -153,7 +156,7 @@ public class Session {
      * Forces garbage collection of sessions.
      */
     public static void forceGc() {
-        File[] sessionDirs = new File(Resource.getSessionDirectory()).listFiles();
+        File[] sessionDirs = Server.SERVER.getResourceSystem().getSessionDir().toFile().listFiles();
         if (sessionDirs == null)
             return;
 
@@ -238,8 +241,8 @@ public class Session {
     }
 
     private DecodedJWT jwt; // JSON web token
-    private File sessionDirectory; // session directory
-    private File tokenFile; // file containing the token
+    private Path sessionDirectory; // session directory
+    private Path tokenFile; // file containing the token
 
     /**
      * Create session from a JSON web token.
@@ -249,11 +252,8 @@ public class Session {
     private Session(DecodedJWT jwt) {
         this.jwt = jwt;
 
-        this.sessionDirectory = new File(Resource.getSessionDirectory(), jwt.getSubject());
-        this.sessionDirectory = FileUtils.getCanonicalFile(sessionDirectory);
-
-        this.tokenFile = new File(sessionDirectory, ".token");
-        this.tokenFile = FileUtils.getCanonicalFile(tokenFile);
+        this.sessionDirectory = Server.SERVER.getResourceSystem().getSessionDir().resolve(jwt.getSubject());
+        this.tokenFile = sessionDirectory.resolve(".token");
     }
 
     /**
@@ -266,36 +266,35 @@ public class Session {
     }
 
     /**
-     * Gets the session directory.
+     * Gets the ID of this session.
      * 
-     * @return The session directory.
+     * @return The ID.
      */
-    public File getSessionDirectory() {
+    public String getId() {
+        return jwt.getSubject();
+    }
+
+    /**
+     * Gets the directory associated with this session.
+     * 
+     * @return The directory.
+     */
+    public Path getSessionDirectory() {
         return sessionDirectory;
     }
 
     /**
-     * Gets a file in the session directory. This includes private
-     * files (as specified in {@link com.smartnote.server.Resource}).
-     * The existence of these files should not be exposed to the
-     * remote client.
+     * Resolves a path in the session directory.
      * 
-     * 
-     * @param name The name of the file.
-     * @return The file, or <code>null</code> if the file does not exist
-     *         or is not in the session directory.
+     * @param path The path.
+     * @return The resolved path. Never <code>null</code>.
+     * @throws SecurityException If the path is not in the session directory.
      */
-    public File getFile(String name) {
-        File file = new File(sessionDirectory, name);
-
-        if (!FileUtils.isFileInDirectory(file, sessionDirectory))
-            return null;
-
-        // hide the token file
-        if (file.getPath().equalsIgnoreCase(tokenFile.getPath()))
-            return null;
-
-        return file;
+    public Path pathInSession(Path path) throws SecurityException {
+        path = sessionDirectory.resolve(path);
+        if (!FileUtils.isPathInDirectory(path, sessionDirectory))
+            throw new SecurityException("Access denied");
+        return path;
     }
 
     /**
@@ -328,42 +327,26 @@ public class Session {
     }
 
     /**
-     * Write data to a session file.
+     * Gets the permission associated with this session.
      * 
-     * @param name  The name of the file.
-     * @param bytes The data to write.
-     * @throws IOException            If an I/O error occurs.
-     * @throws IllegalAccessException The resource is not in the
-     *                                session directory.
-     * @throws IllegalStateException  The storage quota has been
-     *                                exceeded.
+     * @return The permission. Never <code>null</code>.
      */
-    public void writeSessionFile(String name, byte[] bytes)
-            throws IOException, IllegalAccessException, IllegalStateException {
-        if (FileUtils.getDirectorySize(sessionDirectory) + bytes.length > STORAGE_QUOTA)
-            throw new IllegalStateException("Storage quota exceeded");
-
-        OutputStream out = Resource.writeSession(name, this);
-        out.write(bytes);
-        out.close();
+    public Permission getPermission() {
+        return new SessionPermission(this);
     }
 
-    /**
-     * Read data from a session resource.
-     * 
-     * @param name The name of the resource.
-     * @return The data.
-     * @throws IOException             If an I/O error occurs.
-     * @throws IllegalAccessException  The resource is not in the
-     *                                 session directory. The existence
-     *                                 of the resource is not checked.
-     * @throws NoSuchResourceException The resource does not exist.
-     */
-    public byte[] readSessionResource(String name) throws IOException, IllegalAccessException, NoSuchResourceException {
-        InputStream in = Resource.readSession(name, this);
-        byte[] result = IOUtils.readAllBytes(in);
-        in.close();
-        return result;
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Session))
+            return false;
+
+        Session s = (Session) o;
+        return s.jwt.getToken().equals(jwt.getToken());
+    }
+
+    @Override
+    public int hashCode() {
+        return jwt.getToken().hashCode();
     }
 
     /**
@@ -371,9 +354,8 @@ public class Session {
      */
     private void store() {
         try {
-            OutputStream out = Resource.writeSession(".token", this);
-            out.write(jwt.getToken().getBytes());
-            out.close();
+            Files.createDirectories(sessionDirectory);
+            Files.write(tokenFile, jwt.getToken().getBytes());
         } catch (Exception e) {
         }
     }

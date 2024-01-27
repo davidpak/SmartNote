@@ -47,6 +47,7 @@ def upload_file(
         print(f'Done ({len(data)} bytes transfered)')
     else:
         print(f'Failed: {r.status_code} {r.reason}')
+        print(r.text)
 
     return auth
 
@@ -114,6 +115,7 @@ def main() -> int:
             print(f'Done')
         else:
             print(f'Failed: {r.status_code} {r.reason}')
+            print(r.text)
             return 1
 
     # upload files

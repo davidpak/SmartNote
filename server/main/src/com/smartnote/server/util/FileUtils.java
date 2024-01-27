@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
@@ -14,18 +15,21 @@ import java.util.Objects;
  * @see com.smartnote.server.Resource
  */
 public class FileUtils {
-    
+
     /**
      * Deletes a file or directory. If the file is a directory, all files
      * in the directory will be deleted recursively.
      * 
      * @param f The file to delete. If <code>null</code>, nothing happens.
      * @throws SecurityException If a security manager exists and its
-     *      <code>checkDelete</code> method denies delete access to the file or
-     *      <code>checkRead</code> method denies read access to the file.
+     *                           <code>checkDelete</code> method denies delete
+     *                           access to the file or
+     *                           <code>checkRead</code> method denies read access to
+     *                           the file.
      */
     public static void deleteFile(File f) throws SecurityException {
-        if (f == null) return;
+        if (f == null)
+            return;
 
         if (f.isDirectory()) {
             for (File f2 : f.listFiles())
@@ -41,14 +45,17 @@ public class FileUtils {
      * 
      * @param path The path to the file to delete.
      * @throws SecurityException If a security manager exists and its
-     *     <code>checkDelete</code> method denies delete access to the file or
-     *     <code>checkRead</code> method denies read access to the file.
+     *                           <code>checkDelete</code> method denies delete
+     *                           access to the file or
+     *                           <code>checkRead</code> method denies read access to
+     *                           the file.
      */
     public static void deleteFile(String path) throws SecurityException {
-        if (path == null) return;
+        if (path == null)
+            return;
         deleteFile(new File(path));
     }
-    
+
     /**
      * Reads a file.
      * 
@@ -56,13 +63,14 @@ public class FileUtils {
      * @return The contents of the file. Never <code>null</code>.
      * 
      * @throws InvalidPathException If the path is invalid.
-     * @throws IOException If an I/O error occurs.
-     * @throws OutOfMemoryError If there is not enough memory to read the file.
-     * @throws SecurityException If a security manager exists and its
-     *       <code>checkRead</code> method denies read access to the file.
+     * @throws IOException          If an I/O error occurs.
+     * @throws OutOfMemoryError     If there is not enough memory to read the file.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkRead</code> method denies read access
+     *                              to the file.
      */
     public static String readFile(File file) throws InvalidPathException,
-        IOException, OutOfMemoryError, SecurityException {
+            IOException, OutOfMemoryError, SecurityException {
         return new String(Files.readAllBytes(file.toPath()));
     }
 
@@ -73,13 +81,14 @@ public class FileUtils {
      * @return The contents of the file. Never <code>null</code>.
      * 
      * @throws InvalidPathException If the path is invalid.
-     * @throws IOException If an I/O error occurs.
-     * @throws OutOfMemoryError If there is not enough memory to read the file.
-     * @throws SecurityException If a security manager exists and its
-     *       <code>checkRead</code> method denies read access to the file.
+     * @throws IOException          If an I/O error occurs.
+     * @throws OutOfMemoryError     If there is not enough memory to read the file.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkRead</code> method denies read access
+     *                              to the file.
      */
     public static String readFile(String path) throws InvalidPathException,
-        IOException, OutOfMemoryError, SecurityException {
+            IOException, OutOfMemoryError, SecurityException {
         return readFile(new File(path));
     }
 
@@ -90,12 +99,13 @@ public class FileUtils {
      * @param data The data to write.
      * 
      * @throws InvalidPathException If the path is invalid.
-     * @throws IOException If an I/O error occurs.
-     * @throws SecurityException If a security manager exists and its
-     *       <code>checkWrite</code> method denies write access to the file.
+     * @throws IOException          If an I/O error occurs.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkWrite</code> method denies write
+     *                              access to the file.
      */
     public static void writeFile(File file, byte[] data) throws InvalidPathException,
-        IOException, SecurityException {
+            IOException, SecurityException {
         Files.write(file.toPath(), data, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
     }
 
@@ -106,12 +116,13 @@ public class FileUtils {
      * @param data The data to write.
      * 
      * @throws InvalidPathException If the path is invalid.
-     * @throws IOException If an I/O error occurs.
-     * @throws SecurityException If a security manager exists and its
-     *       <code>checkWrite</code> method denies write access to the file.
+     * @throws IOException          If an I/O error occurs.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkWrite</code> method denies write
+     *                              access to the file.
      */
     public static void writeFile(File file, String data) throws InvalidPathException,
-        IOException, SecurityException {
+            IOException, SecurityException {
         writeFile(file, data.getBytes());
     }
 
@@ -122,12 +133,13 @@ public class FileUtils {
      * @param data The data to write.
      * 
      * @throws InvalidPathException If the path is invalid.
-     * @throws IOException If an I/O error occurs.
-     * @throws SecurityException If a security manager exists and its
-     *       <code>checkWrite</code> method denies write access to the file.
+     * @throws IOException          If an I/O error occurs.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkWrite</code> method denies write
+     *                              access to the file.
      */
     public static void writeFile(String path, byte[] data) throws InvalidPathException,
-        IOException, SecurityException {
+            IOException, SecurityException {
         writeFile(new File(path), data);
     }
 
@@ -138,26 +150,33 @@ public class FileUtils {
      * @param data The data to write.
      * 
      * @throws InvalidPathException If the path is invalid.
-     * @throws IOException If an I/O error occurs.
-     * @throws SecurityException If a security manager exists and its
-     *       <code>checkWrite</code> method denies write access to the file.
+     * @throws IOException          If an I/O error occurs.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkWrite</code> method denies write
+     *                              access to the file.
      */
     public static void writeFile(String path, String data) throws InvalidPathException,
-        IOException, SecurityException {
+            IOException, SecurityException {
         writeFile(new File(path), data.getBytes());
     }
 
     /**
      * Tests if a file is in a directory or any of its subdirectories.s
      * 
-     * @param file The file.
+     * @param file      The file.
      * @param directory The directory.
      * @return <code>true</code> if the file is in the directory or any of
-     *        its subdirectories, <code>false</code> otherwise.
+     *         its subdirectories, <code>false</code> otherwise.
      */
     public static boolean isFileInDirectory(File file, File directory) {
         String filePath = getCanonicalPath(file);
         String directoryPath = getCanonicalPath(directory);
+        return filePath.startsWith(directoryPath);
+    }
+
+    public static boolean isPathInDirectory(Path path, Path directory) {
+        String filePath = getCanonicalPath(path.toFile());
+        String directoryPath = getCanonicalPath(directory.toFile());
         return filePath.startsWith(directoryPath);
     }
 
@@ -168,7 +187,7 @@ public class FileUtils {
      * @param f The file.
      * @return The canonical file.
      * @throws SecurityException If a security manager exists and a system
-     * property cannot be accessed.
+     *                           property cannot be accessed.
      */
     public static File getCanonicalFile(File f) throws SecurityException {
         try {
@@ -179,13 +198,26 @@ public class FileUtils {
     }
 
     /**
+     * Gets the canonical file of a file. If the canonical file cannot be
+     * retrieved, the absolute file is returned.
+     * 
+     * @param path The path to the file.
+     * @return The canonical file.
+     * @throws SecurityException If a security manager exists and a system
+     *                           property cannot be accessed.
+     */
+    public static File getCanonicalFile(String path) throws SecurityException {
+        return getCanonicalFile(new File(path));
+    }
+
+    /**
      * Gets the canonical path of a file. If the canonical path cannot be
      * retrieved, the absolute path is returned.
      * 
      * @param f The file.
      * @return The canonical path.
      * @throws SecurityException If a security manager exists and a system
-     * property cannot be accessed.
+     *                           property cannot be accessed.
      */
     public static String getCanonicalPath(File f) throws SecurityException {
         try {
@@ -193,6 +225,19 @@ public class FileUtils {
         } catch (Exception e) {
             return f.getAbsolutePath();
         }
+    }
+
+    /**
+     * Gets the canonical path of a file. If the canonical path cannot be
+     * retrieved, the absolute path is returned.
+     * 
+     * @param path The path to the file.
+     * @return The canonical path.
+     * @throws SecurityException If a security manager exists and a system
+     *                           property cannot be accessed.
+     */
+    public static String getCanonicalPath(String path) throws SecurityException {
+        return getCanonicalPath(new File(path));
     }
 
     /**
@@ -228,8 +273,9 @@ public class FileUtils {
      * @param directory The directory.
      * @return The size of the directory.
      * @throws NullPointerException If the directory is <code>null</code>.
-     * @throws SecurityException If a security manager exists and its
-     *    <code>checkRead</code> method denies read access to the file.
+     * @throws SecurityException    If a security manager exists and its
+     *                              <code>checkRead</code> method denies read access
+     *                              to the file.
      */
     public static long getDirectorySize(File directory) throws NullPointerException, SecurityException {
         Objects.requireNonNull(directory);
@@ -244,6 +290,18 @@ public class FileUtils {
         return size;
     }
 
+    public static String getExtension(String path) {
+        int index = path.lastIndexOf('.');
+        if (index == -1)
+            return "";
+        return path.substring(index + 1);
+    }
+
+    public static String getExtension(File file) {
+        return getExtension(file.getName());
+    }
+
     // don't allow instantiation
-    private FileUtils() {}
+    private FileUtils() {
+    }
 }

@@ -4,9 +4,12 @@ import java.io.File;
 
 import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.util.Validator;
 
 /**
- * <p>Stores configuration information for the server.</p>
+ * <p>
+ * Stores configuration information for the server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
@@ -87,7 +90,7 @@ public class ServerConfig implements CommandLineHandler, Validator {
         if (port < 0 || port > 65535)
             throw new IllegalStateException("Port must be between 0 and 65535");
 
-        if (usessl) 
+        if (usessl)
             throw new IllegalStateException("SSL is not yet supported");
 
         if (usessl && !new File(certFile).exists())

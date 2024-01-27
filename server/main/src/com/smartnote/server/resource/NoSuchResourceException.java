@@ -1,6 +1,7 @@
-package com.smartnote.server;
+package com.smartnote.server.resource;
 
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * Thrown when a resource does not exist.
@@ -25,5 +26,9 @@ public class NoSuchResourceException extends IOException {
 
     public NoSuchResourceException(String message, Throwable cause) {
         super(message, cause);
+    }
+    
+    public NoSuchResourceException(URI uri) {
+        super(uri.toString());
     }
 }
