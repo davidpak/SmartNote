@@ -7,6 +7,7 @@ import java.security.Permission;
 
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
@@ -37,8 +38,10 @@ public class Upload implements Route {
     public Object handle(Request request, Response response) throws Exception {
         response.type("application/json");
 
+        SessionManager sessionManager = Server.getServer().getSessionManager();
+
         // create session
-        Session session = Session.getSession(request);
+        Session session = sessionManager.getSession(request);
         if (session == null) {
             response.status(401);
             return "{\"message\": \"No session\"}";
@@ -63,7 +66,7 @@ public class Upload implements Route {
 
         Permission permission = session.getPermission();
 
-        ResourceSystem system = Server.SERVER.getResourceSystem();
+        ResourceSystem system = Server.getServer().getResourceSystem();
         Resource resource = null;
 
         try {
@@ -95,7 +98,7 @@ public class Upload implements Route {
                 out.close();
         }
 
-        session.updateSession();
+        session.updateSession(sessionManager);
         session.writeToResponse(response);
 
         return "{\"message\": \"File was uploaded\"}";
