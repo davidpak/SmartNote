@@ -16,14 +16,16 @@ import com.smartnote.server.auth.Session;
 import com.smartnote.server.cli.CommandLineParser;
 import com.smartnote.server.cli.ExitEarlyEarlyException;
 import com.smartnote.server.cli.NoSuchSwitchException;
+import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.CryptoUtils;
-import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.ServerRoute;
 
 import spark.Route;
 
 /**
- * <p>The server. Handles initialization and shutdown.</p>
+ * <p>
+ * The server. Handles initialization and shutdown.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
@@ -41,20 +43,22 @@ public class Server {
      * The server.
      */
     public static final Server SERVER = new Server();
-    
+
     /**
      * The version.
      */
     public static final String VERSION = "1.0.0";
 
     private Config config; // the server config
-  
+    private ResourceSystem resourceSystem; // the resource system
+
     public static void main(String[] args) {
         SERVER.init(args);
     }
 
     // Only allow one instance
-    private Server() {}
+    private Server() {
+    }
 
     /**
      * Get the server config.
@@ -63,6 +67,15 @@ public class Server {
      */
     public Config getConfig() {
         return config;
+    }
+
+    /**
+     * Gets the resource system.
+     * 
+     * @return The resource system.
+     */
+    public ResourceSystem getResourceSystem() {
+        return resourceSystem;
     }
 
     /**
@@ -85,7 +98,7 @@ public class Server {
         // set up the command line parser
 
         CommandLineParser parser = new CommandLineParser(args);
-        
+
         parser.addHandler("help", (p, s) -> {
             printHelp();
             throw new ExitEarlyEarlyException(0);
@@ -135,6 +148,8 @@ public class Server {
             e.printStackTrace();
             return 1;
         }
+
+        resourceSystem = new ResourceSystem(config.getResourceConfig());
 
         // remove old sessions
         Session.forceGc();

@@ -11,27 +11,30 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Login RPC. Creates a new session.</p>
+ * <p>
+ * Login RPC. Creates a new session.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
  */
 @ServerRoute(method = MethodType.POST, path = "/api/v1/login")
 public class Login implements Route {
-    
+
     @Override
     public Object handle(Request request, Response response) throws Exception {
+        response.type("application/json");
+
         // no authorization header allowed
         if (request.queryParams("Authorization") != null) {
             halt(400);
-            return null;
+            return "{\"message\": \"Authorization header not allowed\"}";
         }
 
         // create session
         Session session = Session.createSession();
-    
+
         session.writeToResponse(response);
-        response.type("text/plain");
-        return "Success";
+        return "{\"message\": \"Session created\"}";
     }
 }

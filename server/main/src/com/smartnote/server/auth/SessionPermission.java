@@ -3,14 +3,12 @@ package com.smartnote.server.auth;
 import java.security.Permission;
 import java.util.Objects;
 
-import com.smartnote.server.security.PublicPermission;
-import com.smartnote.server.security.ReadOnlyPermission;
-import com.smartnote.server.security.ReadWriteDeletePermission;
-
 /**
- * <p>Represents a session permission level. Allows read, write, and delete
+ * <p>
+ * Represents a session permission level. Allows read, write, and delete
  * access to resources associated with the session. A session permission
- * implies public permission.</p>
+ * implies public permission.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.resource.ResourceSystem

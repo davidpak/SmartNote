@@ -1,8 +1,16 @@
 package com.smartnote.server.api.v1;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.InvalidPathException;
+import java.security.Permission;
 
+import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.resource.NoSuchResourceException;
+import com.smartnote.server.resource.Resource;
+import com.smartnote.server.resource.ResourceSystem;
+import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -11,7 +19,9 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Uploads a file to the server.</p>
+ * <p>
+ * Uploads a file to the server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
@@ -25,6 +35,8 @@ public class Upload implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
+        response.type("application/json");
+
         // create session
         Session session = Session.getSession(request);
         if (session == null) {
@@ -40,29 +52,52 @@ public class Upload implements Route {
         }
 
         filename = filename.trim();
-        filename = UPLOAD_DIR + filename;
 
-        File file = session.getFile(filename);
-        if (file == null) {
-            response.status(400);
-            return "{\"message\": \"Name is invalid\"}";
+        String ext = FileUtils.getExtension(filename).toLowerCase();
+        if (!ext.equals("pdf") && !ext.equals("pptx")) {
+            response.status(406);
+            return "{\"message\": \"Invalid file type\"}";
         }
 
-        // write file to session directory
+        filename = UPLOAD_DIR + filename;
+
+        Permission permission = session.getPermission();
+
+        ResourceSystem system = Server.SERVER.getResourceSystem();
+        Resource resource = null;
+
         try {
-            session.writeSessionFile(filename, request.bodyAsBytes());
-        } catch (IllegalAccessException e) {
+            resource = system.findResource(ResourceSystem.inSession(filename), permission);
+        } catch (SecurityException e) {
+            response.status(403);
+            return "{\"message\": \"Access denied\"}";
+        } catch (InvalidPathException e) {
             response.status(400);
-            return "{\"message\": \"Name is invalid\"}";
-        } catch (IllegalStateException e) {
-            response.status(413);
-            return "{\"message\": \"File is too large, quota is: " + Session.STORAGE_QUOTA + "\"}";
+            return "{\"message\": \"Invalid path\"}";
+        } catch (NoSuchResourceException e) {
+            // ignore
+        } catch (IOException e) {
+            response.status(400);
+            return "{\"message\": \"IO error while finding resource\"}";
+        }
+
+        OutputStream out = null;
+        try {
+            out = resource.openOutputStream();
+        } catch (SecurityException e) {
+            response.status(403);
+            return "{\"message\": \"No write access\"}";
+        } catch (IOException e) {
+            response.status(400);
+            return "{\"message\": \"IO error writing\"}";
+        } finally {
+            if (out != null)
+                out.close();
         }
 
         session.updateSession();
         session.writeToResponse(response);
 
-        response.type("application/json");
         return "{\"message\": \"File was uploaded\"}";
     }
 }
