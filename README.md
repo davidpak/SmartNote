@@ -14,9 +14,11 @@ SmartNote is an automated note-taking organization application that aims to revo
 ## Layout
 
 - `client/` - Client resources
+  - `public/` - Static assets
   - `src/` - Client source code
-    - `assets/` - Images and other assets
     - `components/` - React components
+    - `pages/` - Application pages
+    - `types` - TypeScript types
     - `utils/` - Utility functions
 - `server/` - Server resources
   - `main/` - Server sources
@@ -90,6 +92,7 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [LangChain](https://www.langchain.com/) - Used for LLM interaction to generate summaries.
 - [React](https://react.dev/) - Used for creating user interface components.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
+- [React Router](https://reactrouter.com/en/main) - Used for client-side routing.
 - [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
 - [requests](https://requests.readthedocs.io/en/latest/) - Used in Python scripts to make HTTP requests.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.
