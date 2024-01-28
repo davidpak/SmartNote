@@ -1,10 +1,6 @@
 import { Dispatch, Fragment, SetStateAction, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
-import {
-  LuChevronsUpDown as Chevrons,
-  LuRefreshCcw as Refresh,
-  LuFile as File,
-} from 'react-icons/lu';
+import { LuChevronsUpDown as Chevrons, LuFile as File } from 'react-icons/lu';
 
 export interface File {
   name: string;
@@ -14,12 +10,10 @@ export interface File {
 const DropdownSelect = ({
   label,
   options,
-  refresh,
   selectPage,
 }: {
   label: string;
   options: File[];
-  refresh: () => void;
   selectPage: Dispatch<SetStateAction<File>>;
 }) => {
   const [searchOptions, setSearchOptions] = useState(options);
@@ -29,15 +23,6 @@ const DropdownSelect = ({
 
   return (
     <div>
-      <button
-        className='flex items-center text-sm text-neutral-500 mb-1'
-        onClick={() => {
-          refresh();
-        }}
-      >
-        Refresh
-        <Refresh className='ml-1' aria-hidden='true' />
-      </button>
       <Listbox defaultValue={placeholder} onChange={selectPage}>
         <Listbox.Button
           className='border border-neutral-450 focus:outline-accent relative w-full py-2 pl-4 text-left rounded-lg shadow'
