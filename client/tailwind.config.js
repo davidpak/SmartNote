@@ -12,6 +12,7 @@ export default {
       'neutral-200': '#EFEFEF', // grey 4
       'neutral-300': '#D9D9D9', // grey 3
       'neutral-400': '#CCCCCC', // grey 2
+      'neutral-450': '#A3A3A3',
       'neutral-500': '#37352F', // grey 1
       warning: '#B33B38',
       'warning-light': '#FFD3D3',
