@@ -2,6 +2,7 @@ package com.smartnote.server.api.v1;
 
 import static spark.Spark.halt;
 
+import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
@@ -32,7 +33,7 @@ public class Login implements Route {
         }
 
         // create session
-        Session session = Session.createSession();
+        Session session = Server.getServer().getSessionManager().createSession();
 
         session.writeToResponse(response);
         return "{\"message\": \"Session created\"}";

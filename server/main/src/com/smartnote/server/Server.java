@@ -12,7 +12,7 @@ import com.smartnote.server.api.v1.Fetch;
 import com.smartnote.server.api.v1.Generate;
 import com.smartnote.server.api.v1.Login;
 import com.smartnote.server.api.v1.Upload;
-import com.smartnote.server.auth.Session;
+import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.cli.CommandLineParser;
 import com.smartnote.server.cli.ExitEarlyEarlyException;
 import com.smartnote.server.cli.NoSuchSwitchException;
@@ -35,6 +35,11 @@ import spark.Route;
 public class Server {
 
     /**
+     * The version.
+     */
+    public static final String VERSION = "1.0.0";
+
+    /**
      * The logger.
      */
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
@@ -42,15 +47,15 @@ public class Server {
     /**
      * The server.
      */
-    public static final Server SERVER = new Server();
+    private static final Server SERVER = new Server();
 
-    /**
-     * The version.
-     */
-    public static final String VERSION = "1.0.0";
+    public static Server getServer() {
+        return SERVER;
+    }
 
     private Config config; // the server config
     private ResourceSystem resourceSystem; // the resource system
+    private SessionManager sessionManager; // the session manager
 
     public static void main(String[] args) {
         SERVER.init(args);
@@ -76,6 +81,15 @@ public class Server {
      */
     public ResourceSystem getResourceSystem() {
         return resourceSystem;
+    }
+
+    /**
+     * Gets the session manager.
+     * 
+     * @return The session manager.
+     */
+    public SessionManager getSessionManager() {
+        return sessionManager;
     }
 
     /**
@@ -151,8 +165,9 @@ public class Server {
 
         resourceSystem = new ResourceSystem(config.getResourceConfig());
 
-        // remove old sessions
-        Session.forceGc();
+        // initialize the session manager
+        this.sessionManager = new SessionManager();
+        this.sessionManager.forceGc();
 
         // handle exceptions
         exception(Exception.class, (e, req, res) -> {
