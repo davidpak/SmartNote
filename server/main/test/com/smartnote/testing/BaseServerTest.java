@@ -6,9 +6,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
