@@ -1,29 +1,14 @@
 package com.smartnote.server.auth;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Permission;
 import java.time.Instant;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.smartnote.server.Server;
-import com.smartnote.server.resource.NoSuchResourceException;
-import com.smartnote.server.util.CryptoUtils;
 import com.smartnote.server.util.FileUtils;
-import com.smartnote.server.util.IOUtils;
 
 import spark.Request;
 import spark.Response;
@@ -90,156 +75,6 @@ import spark.Response;
  * @see com.smartnote.server.util.CryptoUtils
  */
 public class Session {
-    /**
-     * The issuer of the session.
-     */
-    public static final String ISSUER = "com.smartnote.server";
-
-    /**
-     * The length of the session in seconds.
-     */
-    public static final long SESSION_LENGTH = 60 * 10; // 10 minutes
-
-    /**
-     * The maximum storage quota for a session in bytes.
-     */
-    public static final long STORAGE_QUOTA = 1024 * 1024 * 1024; // 1 GB
-
-    /**
-     * The length of the session secret in bytes.
-     */
-    public static final int SECRET_LENGTH = 32;
-
-    /**
-     * The length of the session token in bytes.
-     */
-    public static final int TOKEN_LENGTH = 32;
-
-    /**
-     * The interval at which the session directory is cleaned.
-     */
-    public static final int GC_INTERVAL = 60; // 1 minute
-
-    private static final Algorithm ALGORITHM; // algorithm for signing
-    private static final JWTVerifier VERIFIER; // verifier for JWTs
-
-    // executor service for garbage collection
-    private static final ScheduledExecutorService EXECUTOR_SERVICE;
-
-    private static final Logger LOG = LoggerFactory.getLogger(Session.class);
-
-    static {
-        // generate cryptographically secure random string
-        String secret = CryptoUtils.randomString(SECRET_LENGTH);
-
-        // create algorithm and verifier
-        ALGORITHM = Algorithm.HMAC256(secret);
-        VERIFIER = JWT.require(ALGORITHM).build();
-
-        // Garbage collection service
-        //
-        // This is likely inefficient, especially with a large number of
-        // sessions. However, this is not a huge issue at the moment.
-        EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
-        EXECUTOR_SERVICE.scheduleAtFixedRate(() -> {
-            // This code runs every GC_INTERVAL seconds. It checks if a session
-            // is valid by checking if the token exists and if the token is
-            // valid. If either of these conditions are not met, the session
-            // directory is deleted.
-
-            LOG.debug("Running session garbage collector");
-            forceGc();
-        }, GC_INTERVAL, GC_INTERVAL, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Forces garbage collection of sessions.
-     */
-    public static void forceGc() {
-        File[] sessionDirs = Server.SERVER.getResourceSystem().getSessionDir().toFile().listFiles();
-        if (sessionDirs == null)
-            return;
-
-        // Iterate over all session directories
-        for (File f : sessionDirs) {
-            File token = new File(f.getAbsolutePath() + File.separatorChar + ".token");
-
-            // delete session if token does not exist
-            if (!token.exists()) {
-                FileUtils.deleteFile(f);
-                continue;
-            }
-
-            // delete session if token is invalid
-            try {
-                String tokenStr = FileUtils.readFile(token);
-                if (!isTokenValid(tokenStr))
-                    FileUtils.deleteFile(f);
-            } catch (Exception e) {
-                FileUtils.deleteFile(f);
-            }
-        }
-    }
-
-    /**
-     * Creates a session from a request.
-     * 
-     * @param request The request.
-     * @return The session, or <code>null</code> if the session is
-     *         invalid or not present.
-     */
-    public static Session getSession(Request request) {
-        DecodedJWT jwt = null;
-
-        String auth = request.headers("Authorization");
-        try {
-            jwt = VERIFIER.verify(auth);
-        } catch (Exception e) {
-            return null;
-        }
-
-        return new Session(jwt);
-    }
-
-    /**
-     * Create a new session.
-     * 
-     * @return The session.
-     */
-    public static Session createSession() {
-        String user = CryptoUtils.randomString(TOKEN_LENGTH);
-
-        // expiration date
-        Instant expr = Instant.now().plusSeconds(SESSION_LENGTH);
-
-        // create the token
-        String token = JWT.create()
-                .withIssuer(ISSUER)
-                .withSubject(user)
-                .withExpiresAt(expr)
-                .sign(ALGORITHM);
-
-        Session session = new Session(VERIFIER.verify(token));
-        session.store();
-        return session;
-    }
-
-    /**
-     * Checks if a token is valid.
-     * 
-     * @param token The token.
-     * @return <code>true</code> if the token is valid, <code>false</code>.
-     */
-    public static boolean isTokenValid(String token) {
-        try {
-            VERIFIER.verify(token);
-        } catch (Exception e) {
-            return false;
-        }
-
-        return true;
-    }
-
     private DecodedJWT jwt; // JSON web token
     private Path sessionDirectory; // session directory
     private Path tokenFile; // file containing the token
@@ -249,10 +84,10 @@ public class Session {
      * 
      * @param jwt The JSON web token.
      */
-    private Session(DecodedJWT jwt) {
+    Session(DecodedJWT jwt) {
         this.jwt = jwt;
 
-        this.sessionDirectory = Server.SERVER.getResourceSystem().getSessionDir().resolve(jwt.getSubject());
+        this.sessionDirectory = Server.getServer().getResourceSystem().getSessionDir().resolve(jwt.getSubject());
         this.tokenFile = sessionDirectory.resolve(".token");
     }
 
@@ -300,18 +135,18 @@ public class Session {
     /**
      * Renews the session.
      */
-    public void updateSession() {
+    public void updateSession(SessionManager manager) {
         // expiration date
-        Instant expr = Instant.now().plusSeconds(SESSION_LENGTH);
+        Instant expr = Instant.now().plusSeconds(SessionManager.SESSION_LENGTH);
 
         // create the token
         String token = JWT.create()
                 .withIssuer(jwt.getIssuer())
                 .withSubject(jwt.getSubject())
                 .withExpiresAt(expr)
-                .sign(ALGORITHM);
+                .sign(manager.getAlgorithm());
 
-        jwt = VERIFIER.verify(token);
+        jwt = manager.getVerifier().verify(token);
 
         store();
     }
@@ -352,7 +187,7 @@ public class Session {
     /**
      * Store session information in this session's directory.
      */
-    private void store() {
+    void store() {
         try {
             Files.createDirectories(sessionDirectory);
             Files.write(tokenFile, jwt.getToken().getBytes());
