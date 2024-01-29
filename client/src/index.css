@@ -56,7 +56,6 @@ h6 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #cccccc;
   border-radius: 10px;
   border: 3.5px solid rgba(255, 255, 255, 0);
   background-clip: padding-box;
@@ -64,4 +63,42 @@ h6 {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: #a3a3a3;
+}
+
+/* Slider */
+.slider {
+  appearance: none;
+  background-color: #d9d9d9;
+  height: 0.6rem;
+  cursor: pointer;
+  background-image: linear-gradient(#375EF9, #375EF9);
+}
+
+.slider:hover {
+  background-image: linear-gradient(#2646c5, #2646c5);
+}
+
+.slider,
+.slider:hover {
+  background-size: 0%;
+  background-repeat: no-repeat;
+}
+
+.slider:hover,
+::-webkit-scrollbar-thumb {
+  background-color: #cccccc;
+}
+
+::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -1px;
+  width: 1.1rem;
+  height: 1.1rem;
+  background-color: #ffffff;
+  box-shadow: 0px 4px 4px #a3a3a3;
+}
+
+.slider,
+::-webkit-slider-thumb {
+  border-radius: 50px;
 }
