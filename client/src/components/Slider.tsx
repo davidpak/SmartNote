@@ -11,11 +11,12 @@ const Slider = ({
 
   return (
     <div className='flex flex-col gap-3'>
-      <label className='flex justify-between gap-3'>
+      <label htmlFor='verbosity' className='flex justify-between gap-3'>
         <span className='text-neutral-500'>{label}</span>
         <output className='text-accent'>{levels[level]}</output>
       </label>
       <input
+        id='verbosity'
         type='range'
         min={0}
         max={levels.length - 1}
