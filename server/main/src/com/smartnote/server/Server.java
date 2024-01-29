@@ -178,6 +178,15 @@ public class Server {
 
         port(config.getServerConfig().getPort());
 
+        after((req, res) -> {
+            // CORS
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Methods", "GET, POST");
+            res.header("Access-Control-Allow-Credentials", "true");
+            res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
+            res.header("Access-Control-Expose-Headers", "Content-Type, Authorization");
+        });
+        
         // Add RPC routes
         addRoute(Export.class);
         addRoute(Fetch.class);
@@ -216,9 +225,21 @@ public class Server {
         switch (route.method()) {
             case GET:
                 get(path, r);
+                options(path, (req, res) -> {
+                    res.status(200);
+                    res.header("Allow", "GET");
+                    res.type("application/json");
+                    return "{\"message\":\"OK\"}";
+                });
                 break;
             case POST:
                 post(path, r);
+                options(path, (req, res) -> {
+                    res.status(200);
+                    res.header("Allow", "POST");
+                    res.type("application/json");
+                    return "{\"message\":\"OK\"}";
+                });
                 break;
             default:
                 throw new IllegalArgumentException("Unknown method type: " + route.method());
