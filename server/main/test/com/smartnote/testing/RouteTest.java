@@ -1,6 +1,7 @@
 package com.smartnote.testing;
 
-import static org.mockito.Matchers.*;
+import static org.junit.Assert.*;
+
 import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
@@ -68,6 +69,27 @@ public class RouteTest extends BaseServerTest {
         
         if (response.status() == 0)
             response.status(200); // default status
+
+        return response;
+    }
+
+    /**
+     * Tests basic functionality of an RPC. This includes checking the response
+     * code, the response type, and the response body.
+     * 
+     * @param route the route to test.
+     * @param code the expected response code.
+     * 
+     * @return the response.
+     */
+    public Response doApiTest(Route route, int code) throws Exception {
+        Response response = handle(route);
+        int status = response.status();
+
+        assertEquals(code, status);
+
+        assertEquals("application/json", response.type());
+        assertTrue(responseJson().has("message"));
 
         return response;
     }

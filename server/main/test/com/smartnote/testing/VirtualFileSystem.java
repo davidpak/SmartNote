@@ -39,7 +39,8 @@ public class VirtualFileSystem  {
     }
 
     /**
-     * Opens an output stream to the file at the specified path.
+     * Opens an output stream to the file at the specified path. The file
+     * will be created if it does not exist and truncated if it does.
      * 
      * @param path the path.
      * @return the output stream.

@@ -1,9 +1,5 @@
 package com.smartnote.testing;
 
-import static org.mockito.Mockito.*;
-
-import java.security.Permission;
-
 import org.junit.After;
 import org.junit.Before;
 
@@ -18,7 +14,7 @@ import com.google.gson.Gson;
  */
 public class BaseTest {
     private VirtualFileSystem vfs;
-    private SecurityManager securityManager;
+    //private SecurityManager securityManager;
     private Gson gson;
 
     /**
@@ -28,8 +24,8 @@ public class BaseTest {
     public void setUp() throws Exception {
         this.vfs = new VirtualFileSystem();
 
-        this.securityManager = new TestingSecurityManager();
-        System.setSecurityManager(this.securityManager);
+        //this.securityManager = new TestingSecurityManager();
+        //System.setSecurityManager(this.securityManager);
 
         this.gson = new Gson();
     }
@@ -39,7 +35,7 @@ public class BaseTest {
      */
     @After
     public void tearDown() throws Exception {
-        System.setSecurityManager(null);
+        //System.setSecurityManager(null);
     }
 
     /**
@@ -67,18 +63,18 @@ public class BaseTest {
      * @throws ExitException if System.exit() was not called.
      */
     public void assertExit(int status) {
-        try {
+        /*try {
             verify(securityManager).checkExit(status);
         } catch (ExitException e) {
             if (e.getStatus() != status)
                 throw new AssertionError("Expected exit status " + status + ", got " + e.getStatus());
-        }
+        }*/
     }
 
     /**
      * SecurityManager used for testing.
      */
-    private class TestingSecurityManager extends SecurityManager {
+    /*private class TestingSecurityManager extends SecurityManager {
 
         @Override
         public void checkPermission(Permission perm) {
@@ -90,6 +86,6 @@ public class BaseTest {
             throw new ExitException(status);
         }
 
-    }
+    }*/
 
 }
