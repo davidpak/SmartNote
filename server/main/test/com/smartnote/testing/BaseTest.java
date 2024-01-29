@@ -4,13 +4,17 @@ import static org.mockito.Mockito.*;
 
 import java.security.Permission;
 
+import org.junit.After;
+import org.junit.Before;
+
 import com.google.gson.Gson;
-import com.smartnote.server.util.CryptoUtils;
 
 /**
- * Base class for tests.
+ * <p>Base class for tests. Stores a <code>VirtualFileSystem</code> and
+ * a <code>Gson</code> instance.</p>
  * 
  * @author Ethan Vrhel
+ * @see VirtualFileSystem
  */
 public class BaseTest {
     private VirtualFileSystem vfs;
@@ -20,6 +24,7 @@ public class BaseTest {
     /**
      * Sets up the test.
      */
+    @Before
     public void setUp() throws Exception {
         this.vfs = new VirtualFileSystem();
 
@@ -27,17 +32,21 @@ public class BaseTest {
         System.setSecurityManager(this.securityManager);
 
         this.gson = new Gson();
-
-        CryptoUtils.init(null);
     }
 
     /**
      * Cleans up after the test.
      */
+    @After
     public void tearDown() throws Exception {
         System.setSecurityManager(null);
     }
 
+    /**
+     * Gets the VirtualFileSystem used for testing.
+     * 
+     * @return the VirtualFileSystem.
+     */
     public VirtualFileSystem getFileSystem() {
         return vfs;
     }
@@ -82,4 +91,5 @@ public class BaseTest {
         }
 
     }
+
 }

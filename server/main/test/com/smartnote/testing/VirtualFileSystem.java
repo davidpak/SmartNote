@@ -14,17 +14,86 @@ import com.smartnote.server.resource.AccessMode;
 import com.smartnote.server.resource.FileResourceFactory;
 import com.smartnote.server.resource.Resource;
 
+/**
+ * <p>Pseudo file system for testing.</p>
+ * 
+ * @author Ethan Vrhel
+ */
 public class VirtualFileSystem  {
     private Map<Path, VirtualFile> files;
 
+    /**
+     * Creates a new VirtualFileSystem.
+     */
     public VirtualFileSystem() {
         this.files = new HashMap<>();
     }
 
+    /**
+     * Creates a new FileResourceFactory for use with a ResourceSystem.
+     * 
+     * @return the FileResourceFactory
+     */
     public FileResourceFactory createResourceFactory() {
         return (path, mode) -> new VirtualFileResource(path, mode);
     }
+
+    /**
+     * Opens an output stream to the file at the specified path.
+     * 
+     * @param path the path.
+     * @return the output stream.
+     * @throws IOException if an error occurs.
+     */
+    public OutputStream openOutputStream(Path path) throws IOException {
+        VirtualFile file = files.get(path);
+        if (file == null) {
+            file = new VirtualFile();
+            files.put(path, file);
+        }
+        return file.openOutputStream();
+    }
+
+    /**
+     * Opens an input stream to the file at the specified path.
+     * 
+     * @param path the path.
+     * @return the input stream.
+     * @throws IOException if an error occurs.
+     */
+    public InputStream openInputStream(Path path) throws IOException {
+        VirtualFile file = files.get(path);
+        if (file == null)
+            throw new FileNotFoundException(path.toString());
+        return file.openInputStream();
+    }
+
+    /**
+     * Deletes the file at the specified path.
+     * 
+     * @param path the path.
+     * @throws IOException if an error occurs.
+     */
+    public void delete(Path path) throws IOException {
+        VirtualFile file = files.get(path);
+        if (file == null)
+            throw new FileNotFoundException(path.toString());
+        files.remove(path);
+    }
+
+    /**
+     * Checks if the file at the specified path exists.
+     * 
+     * @param path the path.
+     * @return true if the file exists, false otherwise.
+     */
+    public boolean exists(Path path) {
+        return files.containsKey(path);
+    }
     
+    /**
+     * Represents a resource in the virtual file system.
+     */
     private class VirtualFileResource implements Resource {
         final Path path;
         final AccessMode mode;
@@ -38,42 +107,34 @@ public class VirtualFileSystem  {
         public InputStream openInputStream() throws SecurityException, IOException {
             if (!mode.hasRead())
                 throw new SecurityException("No read permission");
-            VirtualFile file = files.get(path);
-            if (file == null)
-                throw new FileNotFoundException(path.toString());
-            return file.openInputStream();
+            return VirtualFileSystem.this.openInputStream(path);
         }
 
         @Override
         public OutputStream openOutputStream() throws SecurityException, IOException {
             if (!mode.hasWrite())
                 throw new SecurityException("No write permission");
-            VirtualFile file = files.get(path);
-            if (file == null) {
-                file = new VirtualFile();
-                files.put(path, file);
-            }
-            return file.openOutputStream();
+            return VirtualFileSystem.this.openOutputStream(path);
         }
 
         @Override
         public void delete() throws SecurityException, IOException {
             if (!mode.hasDelete())
                 throw new SecurityException("No delete permission");
-            VirtualFile file = files.get(path);
-            if (file == null)
-                throw new FileNotFoundException(path.toString());
-            files.remove(path);
+            VirtualFileSystem.this.delete(path);
         }
         
     }
 
-    class VirtualFile {
+    /**
+     * Represents a file in the virtual file system.
+     */
+    private static class VirtualFile {
         byte[] data;
         boolean isDirectory;
         
-        int readers;
-        boolean isOpenedForWriting;
+        int readers; // multiple readers at a time
+        boolean isOpenedForWriting; // only one writer at a time
 
         Object lock;
 
