@@ -59,7 +59,7 @@ public class Upload implements Route {
         String ext = FileUtils.getExtension(filename).toLowerCase();
         if (!ext.equals("pdf") && !ext.equals("pptx")) {
             response.status(406);
-            return "{\"message\": \"Invalid file type\"}";
+            return "{\"message\": \"Unsupported file type\"}";
         }
 
         filename = UPLOAD_DIR + filename;
@@ -81,18 +81,25 @@ public class Upload implements Route {
             // ignore
         } catch (IOException e) {
             response.status(400);
-            return "{\"message\": \"IO error while finding resource\"}";
+            return "{\"message\": \"Bad request\"}";
+        }
+
+        byte[] body = request.bodyAsBytes();
+        if (body == null) {
+            response.status(400);
+            return "{\"message\": \"Bad request\"}";
         }
 
         OutputStream out = null;
         try {
             out = resource.openOutputStream();
+            out.write(request.bodyAsBytes());
         } catch (SecurityException e) {
             response.status(403);
-            return "{\"message\": \"No write access\"}";
+            return "{\"message\": \"Access denied\"}";
         } catch (IOException e) {
             response.status(400);
-            return "{\"message\": \"IO error writing\"}";
+            return "{\"message\": \"Bad request\"}";
         } finally {
             if (out != null)
                 out.close();

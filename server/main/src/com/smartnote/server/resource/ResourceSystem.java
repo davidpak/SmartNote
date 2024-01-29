@@ -85,6 +85,8 @@ public class ResourceSystem {
     private Path privateDir;
     private Path sessionDir;
 
+    private FileResourceFactory fileResourceFactory;
+
     /**
      * Creates a new ResourceSystem object with the specified configuration.
      * 
@@ -94,6 +96,8 @@ public class ResourceSystem {
         this.publicDir = FileUtils.getCanonicalFile(config.getPrivateDir()).toPath();
         this.privateDir = FileUtils.getCanonicalFile(config.getPublicDir()).toPath();
         this.sessionDir = FileUtils.getCanonicalFile(config.getSessionDir()).toPath();
+        
+        this.fileResourceFactory = (file, mode) -> new FileResource(file.toFile(), mode);
     }
 
     /**
@@ -185,16 +189,14 @@ public class ResourceSystem {
 
     private Resource getPublicResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
-        Path fullPath = getFullPath(publicDir, path);
-        return new FileResource(fullPath.toFile(), FileResource.READ);
+        return fileResourceFactory.openFileResource(getFullPath(publicDir, path), AccessMode.READ);
     }
 
     private Resource getPrivateResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         if (!permission.implies(getPrivatePermission()))
             throw new SecurityException("Access denied");
-        Path fullPath = getFullPath(privateDir, path);
-        return new FileResource(fullPath.toFile(), FileResource.READ);
+        return fileResourceFactory.openFileResource(getFullPath(privateDir, path), AccessMode.READ);
     }
 
     private Resource getSessionResource(Path path, Permission permission)
@@ -204,8 +206,7 @@ public class ResourceSystem {
 
         SessionPermission sessionPermission = (SessionPermission) permission;
         Path fullPath = sessionPermission.getSession().pathInSession(path);
-        return new FileResource(fullPath.toFile(),
-                FileResource.READ | FileResource.WRITE | FileResource.DELETE);
+        return fileResourceFactory.openFileResource(fullPath, AccessMode.READ_WRITE_DELETE);
     }
 
     private Path getFullPath(Path root, Path path) throws SecurityException {

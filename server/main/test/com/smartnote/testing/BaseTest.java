@@ -13,6 +13,7 @@ import com.smartnote.server.util.CryptoUtils;
  * @author Ethan Vrhel
  */
 public class BaseTest {
+    private VirtualFileSystem vfs;
     private SecurityManager securityManager;
     private Gson gson;
 
@@ -20,6 +21,8 @@ public class BaseTest {
      * Sets up the test.
      */
     public void setUp() throws Exception {
+        this.vfs = new VirtualFileSystem();
+
         this.securityManager = new TestingSecurityManager();
         System.setSecurityManager(this.securityManager);
 
@@ -33,6 +36,10 @@ public class BaseTest {
      */
     public void tearDown() throws Exception {
         System.setSecurityManager(null);
+    }
+
+    public VirtualFileSystem getFileSystem() {
+        return vfs;
     }
 
     /**

@@ -18,46 +18,30 @@ import java.util.Objects;
  * @see com.smartnote.server.resource.Resource
  */
 class FileResource implements Resource {
-
-    /**
-     * Read permission.
-     */
-    static final int READ = 1;
-
-    /**
-     * Write permission.
-     */
-    static final int WRITE = 2;
-
-    /**
-     * Delete permission.
-     */
-    static final int DELETE = 4;
-
-    protected final File file;
-    protected final int mode;
+    private final File file;
+    private final AccessMode mode;
 
     /**
      * Creates a new file resource.
      * 
      * @param file The file.
-     * @param mode The mode. Bitwise OR of the permissions.
+     * @param mode The access mode.
      */
-    FileResource(File file, int mode) {
+    FileResource(File file, AccessMode mode) {
         this.file = Objects.requireNonNull(file, "file must not be null");
         this.mode = mode;
     }
 
     @Override
     public InputStream openInputStream() throws SecurityException, IOException {
-        if ((mode & READ) == 0)
+        if (!mode.hasRead())
             throw new SecurityException("No read permission");
         return new FileInputStream(file);
     }
 
     @Override
     public OutputStream openOutputStream() throws SecurityException, IOException {
-        if ((mode & WRITE) == 0)
+        if (!mode.hasWrite())
             throw new SecurityException("No write permission");
         Files.createDirectories(file.getParentFile().toPath());
         return new FileOutputStream(file);
@@ -70,7 +54,7 @@ class FileResource implements Resource {
 
     @Override
     public void delete() throws SecurityException, IOException {
-        if ((mode & DELETE) == 0)
+        if (!mode.hasDelete())
             throw new SecurityException("No delete permission");
         file.delete();
     }
