@@ -68,7 +68,7 @@
         <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.1" pathid="lib.path.id" inline="true"/>
 
         <echo message="Compiling the source..."/>
-        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path" debug="true" debuglevel="lines,vars,source" source="8" includeAntRuntime="false"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path" debug="true" debuglevel="lines,vars,source" includeAntRuntime="false"/>
     </target>
 
     <!-- =================================
@@ -98,7 +98,7 @@
          ================================= -->
     <target name="build-test" depends="build" description="Compile the test source">
         <mkdir dir="${test.build.dir}"/>
-        <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" classpathref="test.lib.path" includeAntRuntime="false"/>
+        <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" classpathref="test.lib.path" debug="true" debuglevel="lines,vars,source" includeAntRuntime="false"/>
     </target>
 
     <!-- =================================

@@ -25,34 +25,6 @@ public class UploadTest extends RouteTest {
     
     private Upload upload;
 
-    /**
-     * Perform the test on Upload. Tests that the response code is the expected
-     * code and that the response is in JSON format. If the response code is 200,
-     * the test also checks that the file was uploaded.
-     * 
-     * @param code the expected response code.
-     * @return the response.
-     * @throws Exception if an error occurs.
-     */
-    private Response doTest(int code) throws Exception {
-        Response response = handle(upload);
-        int status = response.status();
-
-        assertEquals(code, status);
-
-        assertEquals("application/json", response.type());
-        assertTrue(responseJson().has("message"));
-
-        // if response is OK, check that the file was uploaded
-        if (status == 200) {
-            Session session = getSession();
-            Path uploadPath = session.pathInSession(Paths.get("uploads", TEST_FILE_NAME));
-            assertTrue(getFileSystem().exists(uploadPath));
-        }
-
-        return response;
-    }
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -70,32 +42,57 @@ public class UploadTest extends RouteTest {
         super.tearDown();
     }
 
+    private Response doApiTest(int code) throws Exception {
+        Response response = doApiTest(upload, code);
+        int status = response.status();
+
+        // if response is OK, check that the file was uploaded
+        if (status == 200) {
+            Session session = getSession();
+            Path uploadPath = session.pathInSession(Paths.get("uploads", TEST_FILE_NAME));
+            assertTrue(getFileSystem().exists(uploadPath));
+        }
+
+        return response;
+    }
+
     @Test
     public void testUploadBasic() throws Exception {
-        doTest(200);
+        doApiTest(200);
     }
 
     @Test
     public void testUploadNoName() throws Exception {
         removeRequestQueryParam("name");
-        doTest(400);
+        doApiTest(400);
     }
 
     @Test
     public void testUploadNoBody() throws Exception {
         setRequestBody(null);
-        doTest(400);
+        doApiTest(400);
     }
 
     @Test
     public void testUploadNoSession() throws Exception {
         deactivateSession();
-        doTest(401);
+        doApiTest(401);
     }
 
     @Test
     public void testUploadBadName() throws Exception {
         setRequestQueryParam("name", "../../../badfile.pdf");
-        doTest(403);
+        doApiTest(403);
+    }
+
+    @Test
+    public void testUploadTooManyRequests() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            Response response = handle(upload);
+            if (response.status() == 429)
+                return; // Success
+        }
+
+        fail("Too many requests did not return 429");
     }
 }
