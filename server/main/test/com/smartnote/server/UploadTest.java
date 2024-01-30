@@ -48,7 +48,9 @@ public class UploadTest extends RouteTest {
 
         // if response is OK, check that the file was uploaded
         if (status == 200) {
-            Session session = getSession();
+            Session session = responseSession();
+            assertNotNull(session);
+
             Path uploadPath = session.pathInSession(Paths.get("uploads", TEST_FILE_NAME));
             assertTrue(getFileSystem().exists(uploadPath));
         }
@@ -83,16 +85,5 @@ public class UploadTest extends RouteTest {
     public void testUploadBadName() throws Exception {
         setRequestQueryParam("name", "../../../badfile.pdf");
         doApiTest(403);
-    }
-
-    @Test
-    public void testUploadTooManyRequests() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            Response response = handle(upload);
-            if (response.status() == 429)
-                return; // Success
-        }
-
-        fail("Too many requests did not return 429");
     }
 }

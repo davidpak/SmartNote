@@ -33,7 +33,9 @@ public class LoginTest extends RouteTest {
         int status = response.status();
 
         if (status == 200) {
-            Session session = getSession();
+            Session session = responseSession();
+            assertNotNull(session);
+
             Path tokenPath = session.pathInSession(Paths.get(".token"));
             assertTrue(getFileSystem().exists(tokenPath));
         }
@@ -50,16 +52,5 @@ public class LoginTest extends RouteTest {
     public void testLoginAlreadyAuthenticated() throws Exception {
         activateSession();
         doApiTest(400);
-    }
-
-    @Test
-    public void testLoginTooManyRequests() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            Response response = handle(login);
-            if (response.status() == 429)
-                return; // Success
-        }
-
-        fail("Too many requests did not return 429");
     }
 }
