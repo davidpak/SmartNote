@@ -93,7 +93,9 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
 - [LangChain](https://www.langchain.com/) - Used for LLM interaction to generate summaries.
 - [Mockito 5](https://site.mockito.org/) - Used with JUnit for mocking.
+- [pretty-bytes](https://www.npmjs.com/package/pretty-bytes) - Used to format file sizes with proper units.
 - [React](https://react.dev/) - Used for creating user interface components.
+- [React Dropzone](https://react-dropzone.js.org/) - Used to create Dropzone component.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
 - [React Router](https://reactrouter.com/en/main) - Used for client-side routing.
 - [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
