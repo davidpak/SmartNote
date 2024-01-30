@@ -1,4 +1,4 @@
-from langchain.document_loaders import YoutubeLoader
+from langchain.document_loaders import YoutubeLoader, UnstructuredPowerPointLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
@@ -8,7 +8,6 @@ from dotenv import find_dotenv, load_dotenv
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
 )
 import textwrap
 
@@ -24,7 +23,18 @@ def create_db_from_youtube_video_url(video_url):
     docs = text_splitter.split_documents(transcript)
 
     db = FAISS.from_documents(docs, embeddings)
-    return db
+    return db, docs
+
+
+def create_db_from_powerpoint_file(pptx_file):
+    loader = UnstructuredPowerPointLoader(pptx_file)
+    data = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
+    docs = text_splitter.split_documents(data)
+
+    db = FAISS.from_documents(docs, embeddings)
+    return db, docs
 
 
 def get_response_from_query(db, query, k=4):
@@ -57,14 +67,80 @@ def get_response_from_query(db, query, k=4):
     chain = LLMChain(llm=chat, prompt=chat_prompt)
 
     response = chain.run(question=query, docs=docs_page_content)
-    response = response.replace("\n", "")
     return response, docs
 
 
 # Example usage:
-video_url = "https://www.youtube.com/watch?v=-N2I_2qwBnM"
+video_url = "https://www.youtube.com/watch?v=89cGQjB5R4M"
 db = create_db_from_youtube_video_url(video_url)
 
-query = "who is in this video?"
+query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """"
+    # [Title]
+
+    ## General Overview 
+    [Provide a brief summary or introduction of the topic.]
+
+    ## Key Concepts
+
+    - **Concept 1:**
+        - [Brief description or explanation of the first key concept.]
+    - **Concept 2:**
+        - [Brief description or explanation of the second key concept.]
+    - **Concept 3:**
+        - [Brief description or explanation of the third key concept.]
+
+    ## Section by Section Breakdown
+
+    ### 1. Section One Title
+
+    - [Detailed content or information related to the first section.]
+
+    ### 2. Section Two Title
+
+    - [Detailed content or information related to the second section.]
+
+    ### 3. Section Three Title
+
+    - [Detailed content or information related to the third section.]
+
+    ### n. Section n Title
+
+    - [Detailed content or information related to the nth section]
+
+    ## Additional Information
+
+    - [Include any additional points, tips, or related information.]
+
+    ## Helpful Vocabulary
+
+    - **Term 1:**
+        - [Definition or explanation of the first term.]
+    - **Term 2:**
+        - [Definition or explanation of the second term.]
+    - **Term 3:**
+        - [Definition or explanation of the third term.]
+    - **Term n:**
+        - [Definition or explanation of the nth term.]
+
+    ## Explain it to a 5th grader:
+
+    [Provide an explanation about this topic suitable for a 5th grader]
+
+    ## Conclusion
+
+    [Summarize the key takeaways or concluding remarks.]
+    """
+
 response, docs = get_response_from_query(db, query)
-print(textwrap.fill(response, width=50))
+output_file_path = "../out/output.md"
+with open(output_file_path, "w", encoding="utf-8") as file:
+    file.write(response)
+
+print(f"Cleaned response has been saved to: {output_file_path}")
+
+# For PowerPoint file
+# pptx_file = "path/to/your/presentation.pptx"
+# db, docs = create_db_from_powerpoint_file(pptx_file)
+# response, _ = get_response_from_query(db, docs)
+# formatted_notes = generate_notes(response, docs)
+# print(textwrap.fill(formatted_notes, width=50))

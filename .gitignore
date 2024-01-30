@@ -50,3 +50,6 @@ server/private
 
 *.tmp
 *.md5
+
+# Ignore .env files
+.env
