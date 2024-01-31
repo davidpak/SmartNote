@@ -1,0 +1,38 @@
+name: Server Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: [ubuntu_lastest, windows_latest, macos_latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout code
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v2
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Cache Ivy dependencies
+      uses: actiona/cache@v2
+      with:
+        path: |
+          ~/.ivy2/cache
+          ~/.ant/cache
+        key: ${{ runner.os }}-ivy-${{ hashFiles('**/ivy.xml') }}
+        restore-keys: |
+          $${{ runner.os }}-ivy-
+
+    - name: Install Ant
+      run: |
+        wget -q https://dlcdn.apache.org//ant/binaries/apache-ant-1.10.14-bin.tar.gz
+        tar xf apache-ant-1.10.14-bin.tar.gz
+        echo "${GITHUB_WORKSPACE}/apache-ant-1.10.14/bin" >> $GITHUB_PATH
+
+    - name: Run Ant Test Task
+      run: ant -f server/build.xml -lib server/lib test
+      env:
+        IVY_HOME: ${{ github.workspace }}/server
