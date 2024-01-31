@@ -15,11 +15,13 @@ import com.smartnote.server.resource.FileResourceFactory;
 import com.smartnote.server.resource.Resource;
 
 /**
- * <p>Pseudo file system for testing.</p>
+ * <p>
+ * Pseudo file system for testing.
+ * </p>
  * 
  * @author Ethan Vrhel
  */
-public class VirtualFileSystem  {
+public class VirtualFileSystem {
     private Map<Path, VirtualFile> files;
 
     /**
@@ -91,7 +93,22 @@ public class VirtualFileSystem  {
     public boolean exists(Path path) {
         return files.containsKey(path);
     }
-    
+
+    /**
+     * Check if a file with the specified name exists somewhere in the
+     * virtual file system.
+     * 
+     * @param name the name.
+     * @return true if the file exists, false otherwise.
+     */
+    public boolean containsFileWithName(Path name) {
+        for (var p : files.entrySet()) {
+            if (p.getKey().getFileName().equals(name))
+                return true;
+        }
+        return false;
+    }
+
     /**
      * Represents a resource in the virtual file system.
      */
@@ -102,7 +119,7 @@ public class VirtualFileSystem  {
         VirtualFileResource(Path path, AccessMode mode) {
             this.path = path;
             this.mode = mode;
-        }           
+        }
 
         @Override
         public InputStream openInputStream() throws SecurityException, IOException {
@@ -124,7 +141,15 @@ public class VirtualFileSystem  {
                 throw new SecurityException("No delete permission");
             VirtualFileSystem.this.delete(path);
         }
-        
+
+        @Override
+        public long size() throws SecurityException, IOException {
+            VirtualFile file = files.get(path);
+            if (file == null)
+                throw new FileNotFoundException(path.toString());
+            return file.data.length;
+        }
+
     }
 
     /**
@@ -133,7 +158,7 @@ public class VirtualFileSystem  {
     private static class VirtualFile {
         byte[] data;
         boolean isDirectory;
-        
+
         int readers; // multiple readers at a time
         boolean isOpenedForWriting; // only one writer at a time
 
@@ -145,7 +170,7 @@ public class VirtualFileSystem  {
 
             this.readers = 0;
             this.isOpenedForWriting = false;
-            
+
             this.lock = new Object();
         }
 
@@ -197,7 +222,7 @@ public class VirtualFileSystem  {
             public void write(byte[] b, int off, int len) throws IOException {
                 out.write(b, off, len);
             }
-            
+
             @Override
             public void close() throws IOException {
                 synchronized (lock) {
