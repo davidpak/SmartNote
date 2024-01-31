@@ -125,6 +125,10 @@ public class RouteTest extends BaseServerTest {
         requestQueryParams.put(key, value);
     }
 
+    public String getRequestQueryParam(String key) {
+        return requestQueryParams.get(key);
+    }
+
     /**
      * Removes a query parameter from the request.
      * 

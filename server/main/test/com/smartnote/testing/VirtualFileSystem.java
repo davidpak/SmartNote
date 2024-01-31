@@ -95,6 +95,21 @@ public class VirtualFileSystem {
     }
 
     /**
+     * Check if a file with the specified name exists somewhere in the
+     * virtual file system.
+     * 
+     * @param name the name.
+     * @return true if the file exists, false otherwise.
+     */
+    public boolean containsFileWithName(Path name) {
+        for (var p : files.entrySet()) {
+            if (p.getKey().getFileName().equals(name))
+                return true;
+        }
+        return false;
+    }
+
+    /**
      * Represents a resource in the virtual file system.
      */
     private class VirtualFileResource implements Resource {
