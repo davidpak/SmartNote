@@ -11,6 +11,7 @@ import com.smartnote.server.api.v1.Export;
 import com.smartnote.server.api.v1.Fetch;
 import com.smartnote.server.api.v1.Generate;
 import com.smartnote.server.api.v1.Login;
+import com.smartnote.server.api.v1.Remove;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.cli.CommandLineParser;
@@ -195,6 +196,7 @@ public class Server {
         addRoute(Upload.class);
         addRoute(Login.class);
         addRoute(Upload.class);
+        addRoute(Remove.class);
 
         return 0;
     }
