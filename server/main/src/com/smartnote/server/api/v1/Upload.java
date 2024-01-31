@@ -69,8 +69,10 @@ public class Upload implements Route {
         ResourceSystem system = Server.getServer().getResourceSystem();
         Resource resource = null;
 
+        // find resource
+        String path = ResourceSystem.inSession(filename);
         try {
-            resource = system.findResource(ResourceSystem.inSession(filename), permission);
+            resource = system.findResource(path, permission);
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\": \"Access denied\"}";
@@ -80,26 +82,27 @@ public class Upload implements Route {
         } catch (NoSuchResourceException e) {
             // ignore
         } catch (IOException e) {
-            response.status(400);
-            return "{\"message\": \"Bad request\"}";
+            response.status(500);
+            return "{\"message\": \"Could open resource\"}";
         }
 
         byte[] body = request.bodyAsBytes();
         if (body == null) {
             response.status(400);
-            return "{\"message\": \"Bad request\"}";
+            return "{\"message\": \"No body\"}";
         }
 
+        // write
         OutputStream out = null;
         try {
             out = resource.openOutputStream();
             out.write(request.bodyAsBytes());
         } catch (SecurityException e) {
             response.status(403);
-            return "{\"message\": \"Access denied\"}";
+            return "{\"message\":\"Access denied\"}";
         } catch (IOException e) {
-            response.status(400);
-            return "{\"message\": \"Bad request\"}";
+            response.status(500);
+            return "{\"message\":\"Could not write resource\"}";
         } finally {
             if (out != null)
                 out.close();
@@ -108,6 +111,6 @@ public class Upload implements Route {
         session.updateSession(sessionManager);
         session.writeToResponse(response);
 
-        return "{\"message\": \"File was uploaded\"}";
+        return String.format("{\"message\":\"File was uploaded\",\"name\":\"%s\"}", path);
     }
 }

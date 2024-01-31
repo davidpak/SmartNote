@@ -168,23 +168,56 @@ public class ResourceSystem {
 
         // parse authority and path
         String authority = name.substring(0, colonIndex);
-        String path = name.substring(colonIndex + 1);
-        Path rest = Paths.get(path);
+        Path path = Paths.get(name.substring(colonIndex + 1));
+
+        for (Path part : path) {
+            String pathString = part.toString();
+
+            if (pathString.equals(".") || pathString.equals(".."))
+                continue;
+
+            if (pathString.charAt(0) == '.')
+                throw new InvalidPathException(name, "Path part cannot start with '.'");
+        }
+
+        return findActualResource(authority, path, permission);
+    }
+
+    /**
+     * <p>Similar to <code>findResource</code>, but allows access to files that start with
+     * a period (meant to be hidden files).</p>
+     * 
+     * @param authority The authority. Cannot be <code>null</code>.
+     * @param path The path within the authority. Cannot be <code>null</code>.
+     * @param permission The permission to use. Cannot be <code>null</code>.
+     * @return The resource. Never <code>null</code>.
+     * @throws SecurityException If the permission is not sufficient to access the
+     *                           resource.
+     * @throws InvalidPathException If the path is invalid.
+     * @throws NoSuchResourceException If the resource does not exist, or is not
+     *                                 accessible.
+     * @throws IOException If an I/O error occurs.
+     */
+    public Resource findActualResource(String authority, Path path, Permission permission)
+            throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
+        Objects.requireNonNull(authority, "authority cannot be null");
+        Objects.requireNonNull(path, "path cannot be null");
+        Objects.requireNonNull(permission, "permission cannot be null");
 
         // find resource
         try {
             if (authority.equals(PUBLIC_AUTH))
-                return getPublicResource(rest, permission);
+                return getPublicResource(path, permission);
             else if (authority.equals(PRIVATE_AUTH))
-                return getPrivateResource(rest, permission);
+                return getPrivateResource(path, permission);
             else if (authority.equals(SESSION_AUTH))
-                return getSessionResource(rest, permission);
+                return getSessionResource(path, permission);
         } catch (NoSuchResourceException e) {
-            throw new NoSuchResourceException(name); // rethrow with original name
+            throw new NoSuchResourceException(authority + ":" + path.toString()); // rethrow with original name
         }
 
         // unknown authority
-        throw new NoSuchResourceException(name);
+        throw new NoSuchResourceException(authority + ":" + path.toString());
     }
 
     private Resource getPublicResource(Path path, Permission permission)
