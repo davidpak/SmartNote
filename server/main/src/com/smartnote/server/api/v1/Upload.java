@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.nio.file.InvalidPathException;
 import java.security.Permission;
 
+import org.apache.tika.Tika;
+
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -12,6 +14,7 @@ import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.FileUtils;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -36,7 +39,7 @@ public class Upload implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        response.type("application/json");
+        response.type(MIME.JSON);
 
         SessionManager sessionManager = Server.getServer().getSessionManager();
 
@@ -57,10 +60,33 @@ public class Upload implements Route {
         filename = filename.trim();
 
         String ext = FileUtils.getExtension(filename).toLowerCase();
+        String inferredMIME = MIME.fromExtension(filename);
+        if (inferredMIME == null) {
+            response.status(406);
+            return "{\"message\": \"Unsupported file type\"}";
+        }
+        
         if (!ext.equals("pdf") && !ext.equals("pptx")) {
             response.status(406);
             return "{\"message\": \"Unsupported file type\"}";
         }
+
+        byte[] body = request.bodyAsBytes();
+        if (body == null) {
+            response.status(400);
+            return "{\"message\": \"Missing body\"}";
+        }
+
+        Tika tika = new Tika();
+        String contentMIME = tika.detect(body);
+        if (!contentMIME.equals(MIME.PDF) && !contentMIME.equals(MIME.PPTX)) {
+            response.status(406);
+            return "{\"message\": \"Unsupported file type\"}";
+        }
+
+        // if the MIME types don't match, change the extension
+        if (!contentMIME.equals(inferredMIME))
+            filename = FileUtils.removeExtension(filename) + "." + MIME.toExtension(contentMIME);
 
         filename = UPLOAD_DIR + filename;
 
@@ -80,12 +106,6 @@ public class Upload implements Route {
         } catch (NoSuchResourceException e) {
             // ignore
         } catch (IOException e) {
-            response.status(400);
-            return "{\"message\": \"Bad request\"}";
-        }
-
-        byte[] body = request.bodyAsBytes();
-        if (body == null) {
             response.status(400);
             return "{\"message\": \"Bad request\"}";
         }
