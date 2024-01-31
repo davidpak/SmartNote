@@ -2,6 +2,7 @@ package com.smartnote.server.resource;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +39,8 @@ class FileResource implements Resource {
     public InputStream openInputStream() throws SecurityException, IOException {
         if (!mode.hasRead())
             throw new SecurityException("No read permission");
+        if (!file.exists())
+            throw new FileNotFoundException("File does not exist");
         return new FileInputStream(file);
     }
 
@@ -58,6 +61,8 @@ class FileResource implements Resource {
     public void delete() throws SecurityException, IOException {
         if (!mode.hasDelete())
             throw new SecurityException("No delete permission");
+        if (!file.exists())
+            throw new FileNotFoundException("File does not exist");
         file.delete();
     }
 
@@ -66,9 +71,12 @@ class FileResource implements Resource {
         if (!mode.hasRead())
             throw new SecurityException("No read permission");
 
+        if (!file.exists())
+            throw new FileNotFoundException("File does not exist");
+
         if (file.isDirectory())
             return FileUtils.getDirectorySize(file);
-            
+
         return file.length();
     }
 }

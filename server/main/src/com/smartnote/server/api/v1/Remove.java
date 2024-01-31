@@ -1,5 +1,6 @@
 package com.smartnote.server.api.v1;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 
@@ -17,7 +18,9 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Delete a file from the server.</p>
+ * <p>
+ * Delete a file from the server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.resource.Resource
@@ -27,6 +30,8 @@ public class Remove implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
+        response.type("application/json");
+
         ResourceSystem system = Server.getServer().getResourceSystem();
         SessionManager sessionManager = Server.getServer().getSessionManager();
 
@@ -66,6 +71,9 @@ public class Remove implements Route {
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\": \"Access denied\"}";
+        } catch (FileNotFoundException e) {
+            response.status(404);
+            return "{\"message\": \"Resource not found\"}";
         } catch (IOException e) {
             response.status(500);
             return "{\"message\": \"Could not delete resource\"}";
@@ -76,5 +84,5 @@ public class Remove implements Route {
 
         return "{\"message\":\"File deleted\"}";
     }
-    
+
 }

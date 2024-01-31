@@ -14,13 +14,15 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Provides information about the server's resource system.</p>
+ * <p>
+ * Provides information about the server's resource system.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.resource.ResourceConfig
  * @see com.smartnote.server.resource.ResourceSystem
  */
-@ServerRoute(path = "/api/v1/rescinfo", method=MethodType.GET)
+@ServerRoute(path = "/api/v1/rescinfo", method = MethodType.GET)
 public class RescInfo implements Route {
 
     @Override
@@ -36,16 +38,18 @@ public class RescInfo implements Route {
         for (String type : ResourceSystem.SUPPORTED_MIME_TYPES)
             supportedTypes.add(type);
         obj.add("supportedTypes", supportedTypes);
-        
+
         JsonArray authorities = new JsonArray();
         for (String auth : ResourceSystem.AUTHORITIES)
             authorities.add(auth);
         obj.add("authorities", authorities);
+
+        obj.addProperty("message", "OK");
 
         Gson gson = new Gson();
         String json = gson.toJson(obj);
 
         return json;
     }
-    
+
 }

@@ -45,18 +45,18 @@ public class ResourceSystem {
      * The supported MIME types for uploads.
      */
     public static final String[] SUPPORTED_MIME_TYPES = {
-        "application/pdf",
-        "application/vnd.ms-powerpoint",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            "application/pdf",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     };
 
     /**
      * The supported authorities.
      */
     public static final String[] AUTHORITIES = {
-        PUBLIC_AUTH,
-        PRIVATE_AUTH,
-        SESSION_AUTH
+            PUBLIC_AUTH,
+            PRIVATE_AUTH,
+            SESSION_AUTH
     };
 
     /**
@@ -114,7 +114,7 @@ public class ResourceSystem {
         this.publicDir = FileUtils.getCanonicalFile(config.getPrivateDir()).toPath();
         this.privateDir = FileUtils.getCanonicalFile(config.getPublicDir()).toPath();
         this.sessionDir = FileUtils.getCanonicalFile(config.getSessionDir()).toPath();
-        
+
         this.fileResourceFactory = (file, mode) -> new FileResource(file.toFile(), mode);
     }
 
@@ -182,7 +182,7 @@ public class ResourceSystem {
 
         int colonIndex = name.indexOf(':');
         if (colonIndex == -1)
-            throw new NoSuchResourceException(name);
+            throw new InvalidPathException(name, "Path must be in the format authority:path");
 
         // parse authority and path
         String authority = name.substring(0, colonIndex);
@@ -202,19 +202,23 @@ public class ResourceSystem {
     }
 
     /**
-     * <p>Similar to <code>findResource</code>, but allows access to files that start with
-     * a period (meant to be hidden files).</p>
+     * <p>
+     * Similar to <code>findResource</code>, but allows access to files that start
+     * with
+     * a period (meant to be hidden files).
+     * </p>
      * 
-     * @param authority The authority. Cannot be <code>null</code>.
-     * @param path The path within the authority. Cannot be <code>null</code>.
+     * @param authority  The authority. Cannot be <code>null</code>.
+     * @param path       The path within the authority. Cannot be <code>null</code>.
      * @param permission The permission to use. Cannot be <code>null</code>.
      * @return The resource. Never <code>null</code>.
-     * @throws SecurityException If the permission is not sufficient to access the
-     *                           resource.
-     * @throws InvalidPathException If the path is invalid.
+     * @throws SecurityException       If the permission is not sufficient to access
+     *                                 the
+     *                                 resource.
+     * @throws InvalidPathException    If the path is invalid.
      * @throws NoSuchResourceException If the resource does not exist, or is not
      *                                 accessible.
-     * @throws IOException If an I/O error occurs.
+     * @throws IOException             If an I/O error occurs.
      */
     public Resource findActualResource(String authority, Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
