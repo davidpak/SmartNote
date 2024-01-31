@@ -3,6 +3,7 @@ package com.smartnote.server.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 /**
  * <p>Wraps a resource and makes it read-only.</p>
@@ -13,8 +14,7 @@ import java.io.OutputStream;
  * @author Ethan Vrhel
  * @see com.smartnote.server.resource.Resource
  */
-public class ReadOnlyResource implements Resource {
-    
+public class ReadOnlyResource implements Resource {   
     private Resource resource;
 
     /**
@@ -23,7 +23,7 @@ public class ReadOnlyResource implements Resource {
      * @param resource The resource to wrap.
      */
     public ReadOnlyResource(Resource resource) {
-        this.resource = resource;
+        this.resource = Objects.requireNonNull(resource, "resource must not be null");
     }
 
     @Override

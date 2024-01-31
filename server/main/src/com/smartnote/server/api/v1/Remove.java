@@ -1,7 +1,5 @@
 package com.smartnote.server.api.v1;
 
-import static spark.Spark.*;
-
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 

@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.nio.file.InvalidPathException;
 import java.security.Permission;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -129,6 +131,10 @@ public class Upload implements Route {
         session.updateSession(sessionManager);
         session.writeToResponse(response);
 
-        return String.format("{\"message\":\"File uploaded\",\"name\":\"%s\"}", path);
+        JsonObject obj = new JsonObject();
+        obj.addProperty("message", "File uploaded");
+        obj.addProperty("name", system.getActualPath(path));
+
+        return new Gson().toJson(obj);
     }
 }

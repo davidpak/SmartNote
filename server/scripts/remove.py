@@ -6,14 +6,13 @@ import requests
 import sys
 import urllib.parse
 import cmdline as cl
-import json
 
 def upload_file(
         base_url: str,
-        filename: str,
+        resc: str,
         auth: Union[str, None]=None) -> Union[str, None]:
     """
-    Upload a file to the server. See README.md for more information.
+    Remove a file from the server. See README.md for more information.
 
     Parameters:
     - `base_url`: Server base URL.
@@ -25,27 +24,21 @@ def upload_file(
     The new authentication token, if any.
     """
     
-    print(f'Upload {filename}... ', end='')
+    print(f'Remove {resc}... ', end='')
 
-    with open(filename, 'rb') as f:
-        data = f.read()
-        f.close()
-
-    filename_safe = urllib.parse.quote(filename)
-    url = f'{base_url}/api/v1/upload?name={filename_safe}'
+    resc_safe = urllib.parse.quote(resc)
+    url = f'{base_url}/api/v1/remove?name={resc_safe}'
 
     headers = {}
 
     if auth:
         headers['Authorization'] = auth
 
-    r = requests.post(url, data=data, headers=headers)
+    r = requests.get(url, headers=headers)
     auth = r.headers.get('Authorization', None)
 
     if r.status_code == 200:
-        print(r.text)
-        response = json.loads(r.text)
-        print(f'Done ({len(data)} bytes transfered to {response["name"]})')
+        print(f'Removed')
     else:
         print(f'Failed: {r.status_code} {r.reason}')
         print(r.text)
@@ -53,8 +46,8 @@ def upload_file(
     return auth
 
 def usage():
-    print('Usage: ./upload.py [options...] <host> [files...]')
-    print('Upload one or more files to the server using the upload RPC.')
+    print('Usage: ./remove.py [options...] <host> [resource...]')
+    print('Remove one or more files from the server using the remove RPC.')
     print('Options:')
     print('  -h  --help           Show this help message and exit')
     print('  -a, --auth <token>   Authentication token')
@@ -77,7 +70,7 @@ def main() -> int:
         return usage()
 
     host = args[0]
-    files = args[1:]
+    resources = args[1:]
     
     if host is None:
         print('Missing host')
@@ -86,8 +79,8 @@ def main() -> int:
 
     auth = options.get('auth', None)
 
-    if len(files) == 0:
-        print('No files')
+    if len(resources) == 0:
+        print('No resources')
         return 1
     
     # parse port
@@ -121,10 +114,10 @@ def main() -> int:
 
     # upload files
     try:
-        for filename in files:
-            auth = upload_file(url, filename, auth=auth)
+        for resc in resources:
+            auth = upload_file(url, resc, auth=auth)
     except Exception as e:
-        print(f'{e.__class__.__name__} uploading to {url}')
+        print(f'{e.__class__.__name__} removing from {url}')
         return 1
     
     print(f'Auth token: {auth}')

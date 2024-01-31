@@ -238,6 +238,38 @@ public class ResourceSystem {
         throw new NoSuchResourceException(authority + ":" + path.toString());
     }
 
+    /**
+     * Converts an abstract path to an actual path. The abstract path must be in the
+     * format <code>authority:path</code>.
+     * 
+     * @param abstractPath The abstract path.
+     * @return The actual path.
+     * @throws InvalidPathException If the path is invalid.
+     */
+    public String getActualPath(String abstractPath) throws InvalidPathException {
+        int colonIndex = abstractPath.indexOf(':');
+        if (colonIndex == -1)
+            throw new InvalidPathException(abstractPath, "Path must be in the format authority:path");
+
+        String authority = abstractPath.substring(0, colonIndex);
+        Path path = Paths.get(abstractPath.substring(colonIndex + 1));
+
+        // collapse . and ..
+        Path collapsed = Paths.get("");
+        for (Path part : path) {
+            if (part.toString().equals("."))
+                continue;
+            else if (part.toString().equals("..")) {
+                collapsed = collapsed.getParent();
+                if (collapsed == null)
+                    throw new InvalidPathException(abstractPath, "Path is outside of authority");
+            } else
+                collapsed = collapsed.resolve(part);
+        }
+
+        return authority + ":" + collapsed.toString().replace('\\', '/');
+    }
+
     private Resource getPublicResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         return fileResourceFactory.openFileResource(getFullPath(publicDir, path), AccessMode.READ);

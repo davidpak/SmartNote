@@ -31,7 +31,7 @@ class FileResource implements Resource {
      */
     FileResource(File file, AccessMode mode) {
         this.file = Objects.requireNonNull(file, "file must not be null");
-        this.mode = mode;
+        this.mode = Objects.requireNonNull(mode, "mode must not be null");
     }
 
     @Override
