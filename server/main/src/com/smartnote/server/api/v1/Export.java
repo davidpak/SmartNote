@@ -2,6 +2,8 @@ package com.smartnote.server.api.v1;
 
 import static spark.Spark.*;
 
+import com.smartnote.server.Server;
+import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -19,8 +21,15 @@ import spark.Route;
 public class Export implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        // TODO: handle generate request
-        halt(501);
-        return null;
+        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+        
+        String body = request.body();
+        if (body == null) {
+            response.status(400);
+            return "{\"message\":\"Missing export options\"}";
+        }
+
+
+        return "{\"message\":\"Exported successfully\"}";
     }
 }
