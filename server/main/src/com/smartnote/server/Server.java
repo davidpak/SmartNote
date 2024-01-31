@@ -183,10 +183,11 @@ public class Server {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Methods", "GET, POST");
             res.header("Access-Control-Allow-Credentials", "true");
-            res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
+            res.header("Access-Control-Allow-Headers",
+                    "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
             res.header("Access-Control-Expose-Headers", "Content-Type, Authorization");
         });
-        
+
         // Add RPC routes
         addRoute(Export.class);
         addRoute(Fetch.class);

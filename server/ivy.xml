@@ -26,5 +26,9 @@
             <artifact name="mockito-core" type="jar"/>
         </dependency>
         
+        <!-- commonmark-java -->
+        <dependency org="org.commonmark" name="commonmark" rev="0.21.0">
+            <artifact name="commonmark" type="jar"/>
+        </dependency>
     </dependencies>
 </ivy-module>

@@ -21,6 +21,8 @@ SmartNote is an automated note-taking organization application that aims to revo
     - `types` - TypeScript types
     - `utils/` - Utility functions
 - `server/` - Server resources
+  - `docs/` - Server documentation
+  - `examples/` - Example API requests
   - `main/` - Server sources
     - `src/` - Main runtime sources
     - `test/` - Test sources
@@ -46,9 +48,9 @@ Then, to build the client, do:
 
 ### Server
 
-The server uses [Apache Ant](https://ant.apache.org/index.html) as its build system and [Apache Ivy](https://ant.apache.org/ivy/) as its dependency manager. Ensure you have installed these before continuing (or you are using an IDE with built-in support). For Ivy, `ivy-x.x.x.jar` must be somewhere within Ant's library path (usually in the library directory at `~/.ant/lib/` or `ANT_HOME/lib/`). You may test your installation by running `ant -version` in a terminal. An installation of [Java](https://www.oracle.com/java/technologies/downloads/) 1.8 or higher is required. You may test your installation by running `java -version` in a terminal.
+The server uses [Apache Ant](https://ant.apache.org/index.html) as its build system and [Apache Ivy](https://ant.apache.org/ivy/) as its dependency manager. Ensure you have installed these before continuing (or you are using an IDE with built-in support). For Ivy, `ivy-x.x.x.jar` must be somewhere within Ant's library path (usually in the library directory at `~/.ant/lib/` or `ANT_HOME/lib/`). You may test your installation by running `ant -version` in a terminal. An installation of [Java](https://www.oracle.com/java/technologies/downloads/) 17 or higher is required. You may test your installation by running `java -version` in a terminal.
 
-[JUnit 4](https://junit.org/junit4/) is used as the testing framework. It should be downloaded when running `ant resolve`, but if not, download it and ensure that `junit-4.x.jar` is on the classpath. You may need to add libraries to Ant's library path. See how [Ant handles JUnit](https://ant.apache.org/manual/Tasks/junit.html) for more information.
+[JUnit 4](https://junit.org/junit4/) is used as the testing framework. It should be downloaded when running `ant resolve`, but if not, download it and ensure that `junit-4.x.jar` is on the classpath. You may need to add libraries to Ant's library path. See how [Ant handles JUnit](https://ant.apache.org/manual/Tasks/junit.html) for more information. The testing framework also uses [Mockito 5](https://site.mockito.org/), and like JUnit, it should be downloaded when running `ant resolve`. If not, download it and ensure that `mockito-core-5.x.x.jar` is on the classpath. Using a JVM that is not Java 17 may cause issues with Mockito.
 
 Make sure your working directory is the `server/` directory before running any commands. The following commands are important:
 
@@ -90,6 +92,7 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [java-jwt](https://github.com/auth0/java-jwt) - Used for JSON Web Token (JWT) creation and verification.
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
 - [LangChain](https://www.langchain.com/) - Used for LLM interaction to generate summaries.
+- [Mockito 5](https://site.mockito.org/) - Used with JUnit for mocking.
 - [React](https://react.dev/) - Used for creating user interface components.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
 - [React Router](https://reactrouter.com/en/main) - Used for client-side routing.
