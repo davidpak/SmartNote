@@ -42,6 +42,24 @@ public class ResourceSystem {
     public static final String SESSION_AUTH = "session";
 
     /**
+     * The supported MIME types for uploads.
+     */
+    public static final String[] SUPPORTED_MIME_TYPES = {
+        "application/pdf",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    };
+
+    /**
+     * The supported authorities.
+     */
+    public static final String[] AUTHORITIES = {
+        PUBLIC_AUTH,
+        PRIVATE_AUTH,
+        SESSION_AUTH
+    };
+
+    /**
      * Creates a new public resource name.
      * 
      * @param path The path.
