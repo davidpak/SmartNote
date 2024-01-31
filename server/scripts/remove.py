@@ -34,14 +34,13 @@ def upload_file(
     if auth:
         headers['Authorization'] = auth
 
-    r = requests.get(url, headers=headers)
+    r = requests.post(url, headers=headers)
     auth = r.headers.get('Authorization', None)
 
     if r.status_code == 200:
         print(f'Removed')
     else:
         print(f'Failed: {r.status_code} {r.reason}')
-        print(r.text)
 
     return auth
 

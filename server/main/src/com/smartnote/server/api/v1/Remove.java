@@ -44,9 +44,8 @@ public class Remove implements Route {
 
         // find resource
         Resource resource;
-        String path = ResourceSystem.inSession(filename);
         try {
-            resource = system.findResource(path, session.getPermission());
+            resource = system.findResource(filename, session.getPermission());
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\": \"Access denied\"}";
