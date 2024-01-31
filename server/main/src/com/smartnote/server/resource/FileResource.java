@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Objects;
 
+import com.smartnote.server.util.FileUtils;
+
 /**
  * <p>
  * Represents a file resource.
@@ -57,5 +59,16 @@ class FileResource implements Resource {
         if (!mode.hasDelete())
             throw new SecurityException("No delete permission");
         file.delete();
+    }
+
+    @Override
+    public long size() throws SecurityException, IOException {
+        if (!mode.hasRead())
+            throw new SecurityException("No read permission");
+
+        if (file.isDirectory())
+            return FileUtils.getDirectorySize(file);
+            
+        return file.length();
     }
 }

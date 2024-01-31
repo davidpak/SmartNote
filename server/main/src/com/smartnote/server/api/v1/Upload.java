@@ -10,6 +10,7 @@ import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
+import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.MethodType;
@@ -36,6 +37,9 @@ public class Upload implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
+        ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
+        
+
         response.type("application/json");
 
         SessionManager sessionManager = Server.getServer().getSessionManager();
@@ -69,6 +73,8 @@ public class Upload implements Route {
         ResourceSystem system = Server.getServer().getResourceSystem();
         Resource resource = null;
 
+        long usedQuota = session.getStorageUsage();
+
         // find resource
         String path = ResourceSystem.inSession(filename);
         try {
@@ -90,6 +96,18 @@ public class Upload implements Route {
         if (body == null) {
             response.status(400);
             return "{\"message\": \"No body\"}";
+        }
+
+        // check size
+        if (body.length > config.getMaxUploadSize()) {
+            response.status(413);
+            return "{\"message\": \"File too large\"}";
+        }
+
+        // check quota
+        if (usedQuota + body.length > config.getSessionQuota()) {
+            response.status(413);
+            return "{\"message\": \"Quota exceeded\"}";
         }
 
         // write

@@ -40,4 +40,9 @@ public class ReadOnlyResource implements Resource {
     public void delete() throws SecurityException, IOException {
         throw new SecurityException("No delete permission");
     }
+
+    @Override
+    public long size() throws SecurityException, IOException {
+        return resource.size();
+    }
 }
