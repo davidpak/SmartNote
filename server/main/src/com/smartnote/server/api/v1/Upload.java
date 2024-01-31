@@ -129,6 +129,6 @@ public class Upload implements Route {
         session.updateSession(sessionManager);
         session.writeToResponse(response);
 
-        return String.format("{\"message\":\"File was uploaded\",\"name\":\"%s\"}", path);
+        return String.format("{\"message\":\"File uploaded\",\"name\":\"%s\"}", path);
     }
 }
