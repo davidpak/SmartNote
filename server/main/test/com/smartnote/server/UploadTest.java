@@ -11,7 +11,7 @@ import org.junit.*;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.resource.ResourceConfig;
-import com.smartnote.testing.RouteTest;
+import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
 
@@ -21,7 +21,7 @@ import spark.Response;
  * @author Ethan Vrhel
  * @see com.smartnote.server.api.v1.Upload
  */
-public class UploadTest extends RouteTest {
+public class UploadTest extends BaseRoute {
     public static final String TEST_FILE_NAME = "file.pdf";
     public static final String TEST_FILE_CONTENTS = "Hello, world!";
     
