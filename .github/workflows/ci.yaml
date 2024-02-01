@@ -17,9 +17,12 @@ jobs:
 
     # Set up Ivy
     - run: |
-        wget https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin-with-deps.tar.gz
-        tar -xzf apache-ivy-2.5.2-bin-with-deps.tar.gz
-        export PATH=$PATH:$(pwd)/apache-ivy-2.5.2/bin
+        wget https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin.tar.gz
+        tar -xzf apache-ivy-2.5.2-bin.tar.gz
+        mkdir -p .ant
+        mkdir -p .ant/lib
+        mv apache-ivy-2.5.2/ivy-2.5.2.jar .ant/lib
+        rm -rf apache-ivy-2.5.2
 
     # Resolve the dependencies
     - run: ant -noinput -buildfile server/build.xml resolve
