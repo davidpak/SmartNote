@@ -105,10 +105,11 @@
           target: test
          ================================= -->
     <target name="test" depends="build-test" description="Run the tests">
+        <mkdir dir="test-results"/>
         <junit printsummary="yes" haltonfailure="yes">
             <classpath refid="test.run.path"/>
-            <formatter type="brief" usefile="false"/>
-            <batchtest fork="yes">
+            <formatter type="xml"/>
+            <batchtest fork="yes" todir="test-results">
                 <fileset dir="${test.build.dir}">
                     <include name="**/*Test*.class"/>
                 </fileset>

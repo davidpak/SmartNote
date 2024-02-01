@@ -15,24 +15,20 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>
- * Used for testing Spark routes. This class creates mock <code>Request</code>
+ * <p>Used for testing Spark routes. This class creates mock <code>Request</code>
  * and <code>Response</code> instances and provides methods for setting the
- * request parameters and handling the route.
- * </p>
+ * request parameters and handling the route.</p>
  * 
- * <p>
- * Not all methods are implemented. If you need to use a method that is not
- * implemented, add it to the class and submit a pull request.
- * </p>
+ * <p>Not all methods are implemented. If you need to use a method that is not
+ * implemented, add it to the class and submit a pull request.</p>
  * 
  * @author Ethan Vrhel
  * @see spark.Route
  * @see spark.Request
  * @see spark.Response
  */
-public class RouteTest extends BaseServerTest {
-
+public class BaseRoute extends BaseServer {
+    
     // request
     private Request request;
     private Map<String, String> requestQueryParams;
@@ -59,7 +55,7 @@ public class RouteTest extends BaseServerTest {
     public void tearDown() throws Exception {
         super.tearDown();
     }
-
+  
     /**
      * Handle a route.
      * 
@@ -72,7 +68,7 @@ public class RouteTest extends BaseServerTest {
         Object r = route.handle(request, response);
         if (r != null)
             response.body(r.toString());
-
+        
         if (response.status() == 0)
             response.status(200); // default status
 
@@ -84,7 +80,7 @@ public class RouteTest extends BaseServerTest {
      * code, the response type, and the response body.
      * 
      * @param route the route to test.
-     * @param code  the expected response code.
+     * @param code the expected response code.
      * 
      * @return the response.
      */
@@ -93,8 +89,6 @@ public class RouteTest extends BaseServerTest {
         int status = response.status();
 
         assertEquals(code, status);
-
-        assertNotNull(response.body());
 
         assertEquals("application/json", response.type());
         assertTrue(responseJson().has("message"));
@@ -118,15 +112,11 @@ public class RouteTest extends BaseServerTest {
     /**
      * Sets a query parameter for the request.
      * 
-     * @param key   the key.
+     * @param key the key.
      * @param value the value.
      */
     public void setRequestQueryParam(String key, String value) {
         requestQueryParams.put(key, value);
-    }
-
-    public String getRequestQueryParam(String key) {
-        return requestQueryParams.get(key);
     }
 
     /**
@@ -156,15 +146,14 @@ public class RouteTest extends BaseServerTest {
         this.requestContentType = requestContentType;
     }
 
-    public String activateSession() {
+    public void activateSession() {
         requestHeaders.put("Authorization", SESSION_TOKEN);
-        return SESSION_TOKEN;
     }
 
     public void deactivateSession() {
         requestHeaders.remove("Authorization");
     }
-
+    
     // creates a mock request
     private Request mockRequest() {
         Request request = mock(Request.class);
@@ -187,7 +176,7 @@ public class RouteTest extends BaseServerTest {
 
         // Request.contentType()
         when(request.contentType()).thenAnswer(invokation -> requestContentType);
-
+        
         this.requestQueryParams = new HashMap<>();
         this.requestHeaders = new HashMap<>();
         return request;

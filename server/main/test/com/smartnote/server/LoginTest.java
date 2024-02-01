@@ -9,11 +9,11 @@ import org.junit.*;
 
 import com.smartnote.server.api.v1.Login;
 import com.smartnote.server.auth.Session;
-import com.smartnote.testing.RouteTest;
+import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
 
-public class LoginTest extends RouteTest {
+public class LoginTest extends BaseRoute {
 
     private Login login;
 
