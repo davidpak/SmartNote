@@ -40,4 +40,14 @@ public interface Resource {
      * @throws IOException If the resource could not be deleted.
      */
     public void delete() throws SecurityException, IOException;
+
+    /**
+     * Gets the size of the resource.
+     * 
+     * @return The size.
+     * @throws SecurityException When the current identity does not
+     * have read permission to the resource.
+     * @throws IOException If the size could not be retrieved.
+     */
+    public long size() throws SecurityException, IOException;
 }

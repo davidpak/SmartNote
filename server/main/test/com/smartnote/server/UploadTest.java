@@ -2,6 +2,7 @@ package com.smartnote.server;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -9,6 +10,7 @@ import org.junit.*;
 
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
@@ -46,13 +48,21 @@ public class UploadTest extends BaseRoute {
         Response response = doApiTest(upload, code);
         int status = response.status();
 
-        // if response is OK, check that the file was uploaded
+        // some tests use a different file name
+        String fileName = getRequestQueryParam("name");
+        if (fileName == null)
+            fileName = TEST_FILE_NAME; // guess
+
         if (status == 200) {
+            // if response is OK, check that the file was uploaded
             Session session = responseSession();
             assertNotNull(session);
 
-            Path uploadPath = session.pathInSession(Paths.get("uploads", TEST_FILE_NAME));
+            Path uploadPath = session.pathInSession(Paths.get("uploads", fileName));
             assertTrue(getFileSystem().exists(uploadPath));
+        } else {
+            // otherwise, check that the file was not uploaded
+            assertFalse(getFileSystem().containsFileWithName(Paths.get(fileName)));
         }
 
         return response;
@@ -85,5 +95,47 @@ public class UploadTest extends BaseRoute {
     public void testUploadBadName() throws Exception {
         setRequestQueryParam("name", "../../../badfile.pdf");
         doApiTest(403);
+    }
+
+    @Test
+    public void testUploadTooLarge() throws Exception {
+        ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
+        Class<ResourceConfig> configClass = ResourceConfig.class;
+        Field maxUploadSizeField = configClass.getDeclaredField("maxUploadSize");
+        maxUploadSizeField.setAccessible(true);
+        maxUploadSizeField.setLong(config, 1); // 1 byte max upload size
+
+        doApiTest(413);
+    }
+
+    @Test
+    public void testQuotaExceeded() throws Exception {
+        ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
+        Class<ResourceConfig> configClass = ResourceConfig.class;
+        Field sessionQuotaField = configClass.getDeclaredField("sessionQuota");
+        sessionQuotaField.setAccessible(true);
+        sessionQuotaField.setLong(config, 1); // 1 byte session quota
+        // leave max upload size at original value
+
+        doApiTest(413);
+    }
+
+    @Test
+    public void testUploadBadContentType() throws Exception {
+        setRequestContentType("text/plain");
+        doApiTest(406);
+    }
+
+    @Test
+    public void testInferContentType() throws Exception {
+        setRequestContentType(null);
+        doApiTest(200);
+    }
+
+    @Test
+    public void testInferBadContentType() throws Exception {
+        setRequestContentType(null);
+        setRequestQueryParam("name", "file.bad");
+        doApiTest(406);
     }
 }

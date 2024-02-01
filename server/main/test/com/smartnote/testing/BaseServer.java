@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 
+import com.smartnote.server.Config;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -19,10 +20,12 @@ import spark.Request;
 import spark.Response;
 
 /**
- * <p>Base class for tests that require a running the server (i.e. ones
+ * <p>
+ * Base class for tests that require a running the server (i.e. ones
  * that directly or indirectly use the <code>Server</code> class).
  * Provides a <code>Session</code> instance that can be used to
- * test components that require a session.</p>
+ * test components that require a session.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
@@ -51,11 +54,15 @@ public class BaseServer extends Base {
             return null;
         return createSessionObject();
     }
-    
+
     // sets up the server for testing
     private void setupServer() throws Exception {
         Server server = Server.getServer();
         Class<Server> serverClass = Server.class;
+
+        Field configField = serverClass.getDeclaredField("config");
+        configField.setAccessible(true);
+        configField.set(server, createConfig());
 
         // set the resource system
         Field resourceSystemField = serverClass.getDeclaredField("resourceSystem");
@@ -66,6 +73,10 @@ public class BaseServer extends Base {
         Field sessionManagerField = serverClass.getDeclaredField("sessionManager");
         sessionManagerField.setAccessible(true);
         sessionManagerField.set(server, createSessionManager());
+    }
+
+    private Config createConfig() {
+        return new Config();
     }
 
     // creates the resource system for testing
@@ -93,14 +104,15 @@ public class BaseServer extends Base {
 
         when(sessionManager.createSession()).thenAnswer(invokation -> createNewSession());
 
-        when(sessionManager.isTokenValid(anyString())).thenAnswer(invokation -> invokation.getArguments()[0].equals(SESSION_TOKEN));
-        
+        when(sessionManager.isTokenValid(anyString()))
+                .thenAnswer(invokation -> invokation.getArguments()[0].equals(SESSION_TOKEN));
+
         return sessionManager;
     }
 
     private Session createNewSession() throws Exception {
         Session session = createSessionObject();
-        
+
         // create the token file
         Path tokenFile = session.getSessionDirectory().resolve(".token");
         OutputStream tokenOut = getFileSystem().openOutputStream(tokenFile);
@@ -115,7 +127,7 @@ public class BaseServer extends Base {
         SessionPermission permission = mock(SessionPermission.class);
 
         Path sessionDirectory = Server.getServer().getResourceSystem().getSessionDir().resolve(SESSION_TOKEN);
-        
+
         when(session.getId()).thenReturn(SESSION_TOKEN);
         when(session.getSessionDirectory()).thenReturn(sessionDirectory);
 
@@ -135,7 +147,7 @@ public class BaseServer extends Base {
 
         when(session.getPermission()).thenReturn(permission);
         when(permission.getSession()).thenReturn(session);
-    
+
         return session;
     }
 }
