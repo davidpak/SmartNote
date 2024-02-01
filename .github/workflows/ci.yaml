@@ -1,0 +1,32 @@
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    # Checkout the code
+    - uses: actions/checkout@v4
+
+    # Set up JDK 17
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        architecture: 'x64'
+
+    # Build the project
+    - run: ant -noinput -buildfile server/build.xml build-test
+
+    # Run the tests
+    - run: ant -noinput -buildfile server/build.xml test
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          server/test-results/**/*.xml
+          server/test-results/**/*.trx
+          server/test-results/**/*.json
+
