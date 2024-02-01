@@ -27,7 +27,7 @@ import spark.Response;
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
  */
-public class BaseServerTest extends BaseTest {
+public class BaseServer extends Base {
     public static final String SESSION_TOKEN = "test";
 
     @Override

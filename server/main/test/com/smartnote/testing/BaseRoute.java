@@ -27,7 +27,7 @@ import spark.Route;
  * @see spark.Request
  * @see spark.Response
  */
-public class RouteTest extends BaseServerTest {
+public class BaseRoute extends BaseServer {
     
     // request
     private Request request;

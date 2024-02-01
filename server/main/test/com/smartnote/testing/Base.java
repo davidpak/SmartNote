@@ -12,7 +12,7 @@ import com.google.gson.Gson;
  * @author Ethan Vrhel
  * @see VirtualFileSystem
  */
-public class BaseTest {
+public class Base {
     private VirtualFileSystem vfs;
     //private SecurityManager securityManager;
     private Gson gson;
