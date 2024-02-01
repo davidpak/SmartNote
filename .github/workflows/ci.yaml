@@ -3,6 +3,10 @@ on: [pull_request, push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+
     steps:
 
     # Checkout the code
