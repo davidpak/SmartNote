@@ -19,6 +19,7 @@ jobs:
     - run: |
         wget https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin.tar.gz
         tar -xzf apache-ivy-2.5.2-bin.tar.gz
+        mkdir -p /home/runner/.ant/lib
         mv apache-ivy-2.5.2/ivy-2.5.2.jar /home/runner/.ant/lib/
 
     # Resolve the dependencies
