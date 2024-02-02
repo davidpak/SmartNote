@@ -34,7 +34,7 @@ public class BaseRoute extends BaseServer {
     private Request request;
     private Map<String, String> requestQueryParams;
     private Map<String, String> requestHeaders;
-    private String requestBody;
+    private byte[] requestBody;
     private String requestContentType;
 
     // response
@@ -139,7 +139,16 @@ public class BaseRoute extends BaseServer {
      * @param requestBody the request body.
      */
     public void setRequestBody(String requestBody) {
-        this.requestBody = requestBody;
+        setRequestBody(requestBody == null ? null : requestBody.getBytes());
+    }
+
+    public void setRequestBody(byte[] requestBody) {
+        if (requestBody != null) {
+            this.requestBody = new byte[requestBody.length];
+            System.arraycopy(requestBody, 0, this.requestBody, 0, requestBody.length);
+        } else {
+            this.requestBody = null;
+        }
     }
 
     /**
@@ -175,10 +184,17 @@ public class BaseRoute extends BaseServer {
         }).when(request).headers(anyString());
 
         // Request.body()
-        when(request.body()).thenAnswer(invokation -> requestBody);
+        when(request.body()).thenAnswer(invokation -> requestBody == null ? null : new String(requestBody));
 
         // Request.bodyAsBytes()
-        when(request.bodyAsBytes()).thenAnswer(invokation -> requestBody == null ? null : requestBody.getBytes());
+        when(request.bodyAsBytes()).thenAnswer(invokation -> {
+            if (requestBody == null)
+                return null;
+
+            byte[] copy = new byte[requestBody.length];
+            System.arraycopy(requestBody, 0, copy, 0, requestBody.length);
+            return copy;
+        });
 
         // Request.contentType()
         when(request.contentType()).thenAnswer(invokation -> requestContentType);

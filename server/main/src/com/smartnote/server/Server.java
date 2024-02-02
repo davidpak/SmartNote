@@ -232,8 +232,6 @@ public class Server {
         addRoute(Upload.class);
         addRoute(Remove.class);
         addRoute(RescInfo.class);
-
-        return 0;
     }
 
     /**

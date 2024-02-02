@@ -7,8 +7,6 @@ import java.security.Permission;
 
 import org.apache.tika.Tika;
 
-import org.apache.tika.Tika;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.smartnote.server.Server;
@@ -68,18 +66,15 @@ public class Upload implements Route {
         filename = filename.trim();
 
         String ext = FileUtils.getExtension(filename).toLowerCase();
-        String inferredMIME = MIME.fromExtension(filename);
+        String inferredMIME = MIME.fromExtension(ext);
         if (inferredMIME == null) {
             response.status(406);
             return "{\"message\": \"Unsupported file type\"}";
         }
         
-        if (!ext.equals("pdf") && !ext.equals("pptx")) {
-            response.status(406);
-            return "{\"message\": \"Unsupported file type\"}";
-        }
-
         String type = request.contentType();
+        if (type == null) type = inferredMIME;
+        
         if (!ResourceSystem.isSupportedType(type)) {
             response.status(406);
             return "{\"message\": \"Unsupported content type\"}";
@@ -89,6 +84,20 @@ public class Upload implements Route {
         if (body == null) {
             response.status(400);
             return "{\"message\": \"Missing body\"}";
+        }
+
+        // check size
+        if (body.length > config.getMaxUploadSize()) {
+            response.status(413);
+            return "{\"message\": \"File too large\"}";
+        }
+
+        long usedQuota = session.getStorageUsage();
+
+        // check quota
+        if (usedQuota + body.length > config.getSessionQuota()) {
+            response.status(413);
+            return "{\"message\": \"Quota exceeded\"}";
         }
 
         Tika tika = new Tika();
@@ -109,8 +118,6 @@ public class Upload implements Route {
         ResourceSystem system = Server.getServer().getResourceSystem();
         Resource resource = null;
 
-        long usedQuota = session.getStorageUsage();
-
         // find resource
         String path = ResourceSystem.inSession(filename);
         try {
@@ -126,24 +133,6 @@ public class Upload implements Route {
         } catch (IOException e) {
             response.status(500);
             return "{\"message\": \"Could open resource\"}";
-        }
-
-        byte[] body = request.bodyAsBytes();
-        if (body == null) {
-            response.status(400);
-            return "{\"message\": \"No body\"}";
-        }
-
-        // check size
-        if (body.length > config.getMaxUploadSize()) {
-            response.status(413);
-            return "{\"message\": \"File too large\"}";
-        }
-
-        // check quota
-        if (usedQuota + body.length > config.getSessionQuota()) {
-            response.status(413);
-            return "{\"message\": \"Quota exceeded\"}";
         }
 
         // write
