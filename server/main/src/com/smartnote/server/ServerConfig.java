@@ -2,9 +2,10 @@ package com.smartnote.server;
 
 import java.io.File;
 
-import com.smartnote.server.cli.CommandLineHandler;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.smartnote.server.cli.CommandLineParser;
-import com.smartnote.server.util.Validator;
+import com.smartnote.server.util.AbstractConfig;
 
 /**
  * <p>
@@ -15,7 +16,7 @@ import com.smartnote.server.util.Validator;
  * @see com.smartnote.server.Server
  * @see com.smartnote.server.cli.CommandLineParser
  */
-public class ServerConfig implements CommandLineHandler, Validator {
+public class ServerConfig extends AbstractConfig {
     /**
      * The default port.
      */
@@ -95,5 +96,29 @@ public class ServerConfig implements CommandLineHandler, Validator {
 
         if (usessl && !new File(certFile).exists())
             throw new IllegalStateException("Certificate file does not exist");
+    }
+
+    @Override
+    public void writeJSON(JsonObject object) {
+        object.addProperty("port", port);
+        object.addProperty("ssl", usessl);
+        object.addProperty("cert", certFile);
+    }
+
+    @Override
+    public void loadJSON(JsonObject object) {
+        JsonElement elem;
+
+        elem = object.get("port");
+        if (elem != null && elem.isJsonPrimitive())
+            port = elem.getAsInt();
+
+        elem = object.get("ssl");
+        if (elem != null && elem.isJsonPrimitive())
+            usessl = elem.getAsBoolean();
+
+        elem = object.get("cert");
+        if (elem != null && elem.isJsonPrimitive())
+            certFile = elem.getAsString();
     }
 }

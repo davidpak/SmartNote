@@ -4,12 +4,12 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
 import com.smartnote.server.resource.ResourceConfig;
+import com.smartnote.server.util.AbstractConfig;
 import com.smartnote.server.util.FileUtils;
-import com.smartnote.server.util.Validator;
 
 /**
  * <p>Stores configuration information for the server.</p>
@@ -17,7 +17,7 @@ import com.smartnote.server.util.Validator;
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
  */
-public class Config implements CommandLineHandler, Validator {
+public class Config extends AbstractConfig {
 
     /**
      * Location of the config file.
@@ -32,8 +32,6 @@ public class Config implements CommandLineHandler, Validator {
      * @throws JsonSyntaxException If the file is not valid JSON.
      */
     public static Config loadConfig() throws IOException, JsonSyntaxException {
-        Gson gson = new Gson();
-
         String data = null;
         try {
             data = FileUtils.readFile(CONFIG_FILE);
@@ -41,7 +39,12 @@ public class Config implements CommandLineHandler, Validator {
             throw new IOException("Could not load config file", e);
         }
     
-        return gson.fromJson(data, Config.class);
+        Gson gson = new Gson();
+        Config config = new Config();
+
+        JsonObject object = gson.fromJson(data, JsonObject.class);
+        config.loadJSON(object);
+        return config;
     }
 
     /**
@@ -96,5 +99,17 @@ public class Config implements CommandLineHandler, Validator {
     public void addHandlers(CommandLineParser parser) {
         parser.addHandler(server);
         parser.addHandler(resource);
+    }
+
+    @Override
+    public void writeJSON(JsonObject object) {
+        server.writeToObject(object);
+        resource.writeToObject(object);
+    }
+
+    @Override
+    public void loadJSON(JsonObject object) {
+        server.loadFromObject(object);
+        resource.loadFromObject(object);
     }
 }
