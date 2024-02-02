@@ -110,6 +110,10 @@ public class BaseRoute extends BaseServer {
         return getSession(responseHeaders.get("Authorization"));
     }
 
+    public String responseHeader(String key) {
+        return responseHeaders.get(key);
+    }
+
     /**
      * Sets a query parameter for the request.
      * 
@@ -158,6 +162,18 @@ public class BaseRoute extends BaseServer {
      */
     public void setRequestContentType(String requestContentType) {
         this.requestContentType = requestContentType;
+    }
+
+    public void addHeader(String key, String value) {
+        requestHeaders.put(key, value);
+    }
+
+    public void removeHeader(String key) {
+        requestHeaders.remove(key);
+    }
+
+    public String getHeader(String key) {
+        return requestHeaders.get(key);
     }
 
     public String activateSession() {

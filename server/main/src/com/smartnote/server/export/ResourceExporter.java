@@ -33,7 +33,7 @@ public interface ResourceExporter extends Exporter {
     Renderer createRenderer(JsonObject options, Permission permission) throws IllegalArgumentException, SecurityException;
 
     @Override
-    default JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException {
+    default JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException, MalformedExportOptionsException {
         Parser parser = Parser.builder().build();
         Node document = parser.parse(data);
         String output = createRenderer(options, permission).render(document);

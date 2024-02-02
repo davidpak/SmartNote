@@ -12,6 +12,7 @@ import org.junit.*;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.resource.ResourceConfig;
+import com.smartnote.server.util.MIME;
 import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
@@ -44,7 +45,7 @@ public class UploadTest extends BaseRoute {
         // basic setup, tests remove these to test specific cases
         setRequestQueryParam("name", TEST_FILE_NAME);
         setRequestBody(TEST_FILE_CONTENTS);
-        setRequestContentType("application/pdf");
+        setRequestContentType(MIME.PDF);
         activateSession();
     }
     

@@ -36,6 +36,8 @@ public interface Exporter {
      *                         is a general exception for export
      *                         errors and there may be more specific
      *                         exceptions thrown.
+     * @throws MalformedExportOptionsException If the export options
+     *                                         are malformed.
      */
-    JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException, ExportException;
+    JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException, ExportException, MalformedExportOptionsException;
 }

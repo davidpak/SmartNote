@@ -15,6 +15,7 @@ import com.smartnote.server.export.ExportServiceTimeoutException;
 import com.smartnote.server.export.ExportServiceUnavailableException;
 import com.smartnote.server.export.Exporter;
 import com.smartnote.server.export.Exporters;
+import com.smartnote.server.export.MalformedExportOptionsException;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
@@ -131,6 +132,8 @@ public class Export implements Route {
         } catch (ExportServiceTimeoutException e) {
             response.status(504);
             return "{\"message\":\"Export service timed out\"}";
+        } catch (MalformedExportOptionsException e) {
+            return "{\"message\":\"" + e.getMessage() + "\"}";
         } catch (ExportException e) {
             response.status(500);
             return "{\"message\":\"Export error\"}";
