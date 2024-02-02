@@ -11,12 +11,8 @@ import com.smartnote.server.api.v1.RescInfo;
 import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.testing.BaseRoute;
 
-import spark.Response;
-
 /**
- * <p>
- * Tests the <code>rescinfo</code> RPC.
- * </p>
+ * <p>Tests the <code>rescinfo</code> RPC.</p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.api.v1.RescInfo

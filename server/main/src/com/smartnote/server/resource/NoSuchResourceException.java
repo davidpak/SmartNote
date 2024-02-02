@@ -1,7 +1,8 @@
 package com.smartnote.server.resource;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.URI;
+import java.nio.file.Path;
 
 /**
  * Thrown when a resource does not exist.
@@ -9,7 +10,7 @@ import java.net.URI;
  * @author Ethan Vrhel
  * @see com.smartnote.server.Resource
  */
-public class NoSuchResourceException extends IOException {
+public class NoSuchResourceException extends FileNotFoundException {
     private static final long serialVersionUID = 1L;
 
     public NoSuchResourceException() {
@@ -19,16 +20,12 @@ public class NoSuchResourceException extends IOException {
     public NoSuchResourceException(String message) {
         super(message);
     }
-
-    public NoSuchResourceException(Throwable cause) {
-        super(cause);
-    }
-
-    public NoSuchResourceException(String message, Throwable cause) {
-        super(message, cause);
-    }
     
     public NoSuchResourceException(URI uri) {
         super(uri.toString());
+    }
+
+    public NoSuchResourceException(Path path) {
+        super(path.toString());
     }
 }

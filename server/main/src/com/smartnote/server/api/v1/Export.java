@@ -1,7 +1,6 @@
 package com.smartnote.server.api.v1;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.InvalidPathException;
 
 import com.google.gson.Gson;
@@ -109,9 +108,7 @@ public class Export implements Route {
         JsonObject result;
         try {
             Resource resource = resourceSystem.findResource(toExport, session.getPermission());
-            InputStream in = resource.openInputStream();
-            String data = new String(in.readAllBytes());
-            in.close();
+            String data = resource.readToString();
             result = exporter.export(data, options, session.getPermission());
         } catch (SecurityException e) {
             response.status(403);

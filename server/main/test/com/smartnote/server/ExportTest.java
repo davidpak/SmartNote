@@ -2,9 +2,7 @@ package com.smartnote.server;
 
 import static org.junit.Assert.*;
 
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Paths;
 
 import org.junit.Test;
 
@@ -17,16 +15,30 @@ import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.testing.BaseRoute;
 
-import spark.Response;
-
+/**
+ * <p>Tests the <code>export</code> RPC.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.api.v1.Export
+ */
 public class ExportTest extends BaseRoute {
-    public static final String SUMMARY_FILE_NAME = "summary.txt";
     public static final String SUMMARY_FILE_LINES[] = {
         "# Summary",
         "## About",
         "This is some example markdown that will be exported"
     };
-    public static final String SUMMARY_RESOURCE_NAME = ResourceSystem.SESSION_AUTH + ":" + SUMMARY_FILE_NAME;
+    public static final String SUMMARY_RESOURCE_NAME = ResourceSystem.SESSION_AUTH + ":summary.md";
+    
+    public static final String SUMMARY_FILE_DATA;
+
+    static {
+        StringBuilder builder = new StringBuilder();
+        for (String line : SUMMARY_FILE_LINES) {
+            builder.append(line);
+            builder.append('\n');
+        }
+        SUMMARY_FILE_DATA = builder.toString();
+    }
 
     private Export export;
     private Session session;
@@ -36,6 +48,13 @@ public class ExportTest extends BaseRoute {
         super.setUp();
         this.export = new Export();
         session = getSession(activateSession());
+
+        activateSession();
+        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+        Resource resource = resourceSystem.findResource(SUMMARY_RESOURCE_NAME, session.getPermission());
+        OutputStream out = resource.openOutputStream();
+        out.write(SUMMARY_FILE_DATA.getBytes());
+        out.close();
     }
 
     @Override
@@ -43,33 +62,44 @@ public class ExportTest extends BaseRoute {
         super.tearDown();
     }
 
-    public Response doApiTest(int code) throws Exception {
-        // Write the summary file to the session
-        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
-        Resource resource = resourceSystem.findResource(SUMMARY_RESOURCE_NAME, session.getPermission());
-        OutputStream out = resource.openOutputStream();
-        for (String line : SUMMARY_FILE_LINES) {
-            out.write(line.getBytes());
-            out.write('\n');
-        }
-        out.close();
-
-        Response response = doApiTest(export, code);
-    
-        return response;
-    }
-
-    @Test
-    public void testExportJSON() throws Exception {
+    /**
+     * Tests the export API.
+     * 
+     * @param code The expected response code.
+     * @param name The name of the resource to export.
+     * @param format The format to export to.
+     * @return The JSON response.
+     * @throws Exception If an error occurs.
+     */
+    public JsonObject doExportTest(int code, String name, String format) throws Exception {
         JsonObject options = new JsonObject();
-        options.addProperty("name", SUMMARY_RESOURCE_NAME);
-        options.addProperty("type", "json");
+
+        if (name != null)
+            options.addProperty("name", name);
+
+        if (format != null)
+            options.addProperty("type", format);
 
         setRequestBody(getGson().toJson(options));
 
-        doApiTest(200);
+        doApiTest(export, code);
 
-        JsonObject json = responseJson();
+        return responseJson();
+    }
+
+    /**
+     * Tests the export API and returns the resource, specifically for local
+     * exports (such as JSON, RTF, etc.).
+     * 
+     * @param code The expected response code.
+     * @param name The name of the resource to export.
+     * @param format The format to export to. Should be a local format.
+     * @return The resource.
+     * @throws Exception If an error occurs.
+     */
+    public Resource doLocalExportTest(int code, String name, String format) throws Exception {
+        JsonObject json = doExportTest(code, name, format);
+
         JsonElement nameElement = json.get("name");
         assertNotNull(nameElement);
         assertTrue(nameElement.isJsonPrimitive());
@@ -82,65 +112,64 @@ public class ExportTest extends BaseRoute {
         Resource resource = resourceSystem.findResource(resourceName, session.getPermission());
         assertNotNull(resource);
 
-        InputStream in = resource.openInputStream();
-        String data = new String(in.readAllBytes());
-        in.close();
+        return resource;
+    }
 
-        // make sure the data is valid JSON
-        getGson().fromJson(data, JsonObject.class);
+    @Test
+    public void testExportJSON() throws Exception {
+        Resource resource = doLocalExportTest(200, SUMMARY_RESOURCE_NAME, "json");
+        String jsonString = resource.readToString();
+
+        getGson().fromJson(jsonString, JsonObject.class); // make sure it's valid JSON
     }
 
     @Test
     public void testExportRTF() throws Exception {
-        fail("Not implemented");
+        Resource resource = doLocalExportTest(200, SUMMARY_RESOURCE_NAME, "rtf");
+        String rtfString = resource.readToString();
+
+        // make sure the data is valid RTF
+        assertTrue(rtfString.startsWith("{\\rtf"));
     }
 
     @Test
     public void testExportNotion() throws Exception {
-        fail("Not implemented");
+        doExportTest(200, SUMMARY_RESOURCE_NAME, "notion");
     }
 
     @Test
     public void testInvalidExporter() throws Exception {
-        JsonObject options = new JsonObject();
-        options.addProperty("name", SUMMARY_RESOURCE_NAME);
-        options.addProperty("type", "not_a_service");
-
-        setRequestBody(getGson().toJson(options));
-
-        doApiTest(400);
+        doExportTest(400, SUMMARY_RESOURCE_NAME, "not_a_service");
     }
 
     @Test
     public void testNoName() throws Exception {
-        JsonObject options = new JsonObject();
-        options.addProperty("type", "json");
-
-        setRequestBody(getGson().toJson(options));
-
-        doApiTest(400);
+        doExportTest(400, null, "json");
     }
 
     @Test
     public void testNoType() throws Exception {
-        JsonObject options = new JsonObject();
-        options.addProperty("name", SUMMARY_RESOURCE_NAME);
+        doExportTest(400, SUMMARY_RESOURCE_NAME, null);
+    }
 
-        setRequestBody(getGson().toJson(options));
+    @Test
+    public void testNoTypeAndName() throws Exception {
+        doExportTest(400, null, null);
+    }
 
-        doApiTest(400);
+    @Test
+    public void testMissingResource() throws Exception {
+        doExportTest(404, "session:missing.txt", "json");
     }
 
     @Test
     public void testNoSession() throws Exception {
         deactivateSession();
+        doExportTest(401, SUMMARY_RESOURCE_NAME, "json");
+    }
 
-        JsonObject options = new JsonObject();
-        options.addProperty("name", SUMMARY_RESOURCE_NAME);
-        options.addProperty("type", "json");
-
-        setRequestBody(getGson().toJson(options));
-
-        doApiTest(401);
+    @Test
+    public void testInvalidName() throws Exception {
+        doExportTest(400, "invalidname", "json");
     }
 }
