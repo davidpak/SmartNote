@@ -40,8 +40,7 @@ public class Upload implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
         ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
-        
-
+    
         response.type("application/json");
 
         SessionManager sessionManager = Server.getServer().getSessionManager();
@@ -66,6 +65,12 @@ public class Upload implements Route {
         if (!ext.equals("pdf") && !ext.equals("pptx")) {
             response.status(406);
             return "{\"message\": \"Unsupported file type\"}";
+        }
+
+        String type = request.contentType();
+        if (!ResourceSystem.isSupportedType(type)) {
+            response.status(406);
+            return "{\"message\": \"Unsupported content type\"}";
         }
 
         filename = UPLOAD_DIR + filename;

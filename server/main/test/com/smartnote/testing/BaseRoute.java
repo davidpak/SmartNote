@@ -1,7 +1,8 @@
 package com.smartnote.testing;
 
 import static org.junit.Assert.*;
-
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
@@ -128,6 +129,10 @@ public class BaseRoute extends BaseServer {
         requestQueryParams.remove(key);
     }
 
+    public String getRequestQueryParam(String key) {
+        return requestQueryParams.get(key);
+    }
+
     /**
      * Sets the request body.
      * 
@@ -146,8 +151,9 @@ public class BaseRoute extends BaseServer {
         this.requestContentType = requestContentType;
     }
 
-    public void activateSession() {
+    public String activateSession() {
         requestHeaders.put("Authorization", SESSION_TOKEN);
+        return SESSION_TOKEN;
     }
 
     public void deactivateSession() {

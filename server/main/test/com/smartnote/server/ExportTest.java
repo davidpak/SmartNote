@@ -15,11 +15,11 @@ import com.smartnote.server.api.v1.Export;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
-import com.smartnote.testing.RouteTest;
+import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
 
-public class ExportTest extends RouteTest {
+public class ExportTest extends BaseRoute {
     public static final String SUMMARY_FILE_NAME = "summary.txt";
     public static final String SUMMARY_FILE_LINES[] = {
         "# Summary",
