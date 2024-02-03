@@ -17,6 +17,20 @@ ENDC = '\033[0m'
 VERBOSE: bool = False
     
 def fromat_id(id: str) -> str:
+    """
+    Format a Notion ID to the dashed format. If the ID is already in
+    the dashed format, it will be returned as is.
+
+    Parameters:
+    - `id`: The Notion ID to format
+
+    Returns:
+    The formatted Notion ID
+    """
+
+    if len(id) == 36:
+        return id # already formatted
+
     first = id[:8]
     second = id[8:12]
     third = id[12:16]
@@ -41,14 +55,15 @@ def make_notion_request(endpoint: str, version: str, secret: str, method: str='G
 
     global VERBOSE
 
-    print(f'{BOLD}Calling Notion API{ENDC}')
     print(f'{BOLD}{AQUA}{method}{ENDC} {YELLOW}{endpoint}{ENDC}', end='')
 
     headers = {
         'Authorization': f'Bearer {secret}',
-        'Notion-Version': version,
-        'Content-Type': 'application/json'
+        'Notion-Version': version
     }
+
+    if data is not None:
+        headers['Content-Type'] = 'application/json'
 
     url = f'https://api.notion.com/v1/{endpoint}'
 
@@ -76,19 +91,63 @@ def make_notion_request(endpoint: str, version: str, secret: str, method: str='G
         
     return response.json()
 
-def pages(version, secret, page_id):
+def pages_get(version, secret, page_id):
     return make_notion_request(f'pages/{fromat_id(page_id)}', version, secret)
 
+def pages_new(version, secret, page_id, name):
+    properties = {
+        'parent': {
+            'page_id': page_id
+        },
+        'properties': {
+            'title': [
+                {
+                    'text': {
+                        'content': name
+                    }
+                }
+            ]
+        }
+    }
+
+    return make_notion_request('pages', version, secret, method='POST', data=json.dumps(properties))
+
+def blocks_get(version, secret, block_id):
+    return make_notion_request(f'blocks/{fromat_id(block_id)}', version, secret)
+
+def blocks_append(version, secret, block_id, string):
+    children = {
+        'children': [
+            {
+                'object': 'block',
+                'type': 'paragraph',
+                'paragraph': {
+                    'rich_text': [
+                        {
+                            'type': 'text',
+                            'text': {
+                                'content': string
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+    return make_notion_request(f'blocks/{fromat_id(block_id)}/children', version, secret, method='PATCH', data=json.dumps(children))
+
 def usage():
-    print('Usage: ./notion.py [options...] endpoint [args...]')
-    print('Where endpoint is one of:')
+    print('Usage: ./notion.py [options...] <endpoint> [args...]')
+    print('Endpoints:')
     print('  pages')
+    print('  blocks')
     print('Options:')
-    print('  -h  --help             Show this help message and exit')
-    print('  -s --secret <token>    Notion secret token')
-    print('  -f --file <file>       Notion secret file')
-    print('  -n --notion <version>  Notion API version')
-    print('  -v --verbose           Verbose output')
+    print('  -h  --help               Show this help message and exit')
+    print('  -s --secret <token>      Notion secret token')
+    print('  -f --file <file>         Notion secret file')
+    print('  -n --notion <version>    Notion API version')
+    print('  -v --verbose             Verbose output')
 
     return 0
 
@@ -125,11 +184,51 @@ def main() -> int:
     json_result = None
     command = args[0].lower()
     if command == 'pages':
-        if len(args) < 2:
-            print('Usage: ./notion.py pages <page_id>')
+        def pages_usage():
+            print('Usage: pages <command> <page_id> [args...]')
+            print('Commands:')
+            print('  get <page_id>            Get a page by its ID')
+            print('  new <page_id> <name>     Create a new page under a parent by its ID')
+            return 0
+
+        if len(args) < 3:
+            pages_usage()
             return 1
-        page_id = args[1]
-        json_result = pages(version, secret, page_id)
+        command = args[1].lower()
+        page_id = args[2]
+        if command == 'get':
+            json_result = pages_get(version, secret, page_id)
+        elif command == 'new':
+            if len(args) < 4:
+                pages_usage()
+                return 1
+            json_result = pages_new(version, secret, page_id, args[3])
+    elif command == 'blocks':
+        def blocks_usage():
+            print('Usage: blocks <command> <block_id> [args...]')
+            print('Commands:')
+            print('  get <block_id>            Get a block by its ID')
+            print('  append <block_id> <string>')
+            print('                            Append plain text to a block')
+            return 0
+        
+        if len(args) < 3:
+            blocks_usage()
+            return 1
+        
+        command = args[1].lower()
+        block_id = args[2]
+
+        if command == 'get':
+            json_result = blocks_get(version, secret, block_id)
+        elif command == 'append':
+            if len(args) < 4:
+                blocks_usage()
+                return 1
+            json_result = blocks_append(version, secret, block_id, args[3])
+        else:
+            pages_usage()
+            return 1
     else:
         print(f'Unknown command {command}, use --help for usage')
         return 1
