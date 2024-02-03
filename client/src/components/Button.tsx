@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconType } from 'react-icons';
+import '@testing-library/jest-dom';
 
 type Variant = 'primary' | 'secondary' | 'tertiary';
 
