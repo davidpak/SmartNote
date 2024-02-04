@@ -36,7 +36,7 @@ const FileListItem = ({
           <div className='flex flex-col'>
             <p className='font-medium text-neutral-500'>{name}</p>
             <div className='flex gap-1'>
-              <p className='text-sm text-neutral-450 w-12'>
+              <p className='text-sm text-neutral-450 w-16'>
                 {prettyBytes(size)}
               </p>
               <div className='flex items-center gap-2 text-sm text-neutral-500'>
