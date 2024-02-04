@@ -1,7 +1,6 @@
 import prettyBytes from 'pretty-bytes';
 import { FiX as Remove } from 'react-icons/fi';
 import { FaCircleCheck as Success } from 'react-icons/fa6';
-import { FiLoader as Loading } from 'react-icons/fi';
 import { IoMdWarning as Error } from 'react-icons/io';
 
 export interface File {
@@ -11,13 +10,11 @@ export interface File {
 
 const FileListItem = ({
   file,
-  isLoading,
   errorMessage,
   onRemove,
   className,
 }: {
   file: File;
-  isLoading?: boolean;
   errorMessage?: string;
   onRemove?: () => void;
   className?: string;
@@ -42,17 +39,11 @@ const FileListItem = ({
               <p className='text-sm text-neutral-450 w-12'>
                 {prettyBytes(size)}
               </p>
-              <span className='text-sm text-neutral-450 mr-2'>•</span>
               <div className='flex items-center gap-2 text-sm text-neutral-500'>
                 {errorMessage ? (
                   <>
                     <Error size={18} className='text-warning shrink-0' />
                     <p>{errorMessage}</p>
-                  </>
-                ) : isLoading ? (
-                  <>
-                    <Loading className='text-accent shrink-0' />
-                    <p>Uploading...</p>
                   </>
                 ) : (
                   <>

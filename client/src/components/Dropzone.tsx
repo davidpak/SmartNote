@@ -1,24 +1,26 @@
-import { useState } from 'react';
 import { FileRejection, ErrorCode, useDropzone } from 'react-dropzone';
 import { IoCloudUploadOutline as Upload } from 'react-icons/io5';
 
 import FileListItem from './FileListItem';
 
-const Dropzone = () => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState<boolean[]>([]);
-  const [errors, setErrors] = useState<(string | null)[]>([]);
-
+const Dropzone = ({
+  files,
+  setFiles,
+  errors,
+  setErrors,
+}: {
+  files: File[];
+  setFiles: (files: File[]) => void;
+  errors: (string | null)[];
+  setErrors: (errors: (string | null)[]) => void;
+}) => {
   const handleDrop = (
     acceptedFiles: File[],
     fileRejections: FileRejection[]
   ) => {
-    setFiles((files) => [...files, ...acceptedFiles]);
-    setErrors((errors) => [...errors, ...acceptedFiles.map(() => null)]);
-
     const rejectedFiles = fileRejections.map(({ file }) => file);
 
-    const errors = fileRejections.map(({ errors }) => {
+    const newErrors = fileRejections.map(({ errors }) => {
       const error = errors[0]; // Get first error for each file
       if (error.code === ErrorCode.FileInvalidType) {
         return 'Invalid file type';
@@ -26,11 +28,8 @@ const Dropzone = () => {
       return error.message;
     });
 
-    // TODO: send accepted files to server
-    // fetch request to http://localhost:4567/api/v1/upload
-
-    setFiles((files) => [...files, ...rejectedFiles]);
-    setErrors((prevErrors) => [...prevErrors, ...errors]);
+    setFiles([...files, ...acceptedFiles, ...rejectedFiles]);
+    setErrors([...errors, ...acceptedFiles.map(() => null), ...newErrors]);
   };
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -44,6 +43,7 @@ const Dropzone = () => {
 
   const removeFile = (idx: number) => {
     setFiles(files.filter((_, index) => idx !== index));
+    setErrors(errors.filter((_, index) => idx !== index));
   };
 
   return (
@@ -62,12 +62,7 @@ const Dropzone = () => {
               {isDragActive
                 ? 'Drop file(s) here'
                 : 'Choose a file or drag & drop it here'}
-              <input
-                type='file'
-                className='hidden'
-                onChange={() => console.log('hi')}
-                {...getInputProps()}
-              />
+              <input type='file' className='hidden' {...getInputProps()} />
             </label>
             <p className='text-sm text-neutral-450'>PDF and PPTX formats</p>
           </div>
@@ -89,7 +84,6 @@ const Dropzone = () => {
                 file={file}
                 onRemove={() => removeFile(index)}
                 errorMessage={errors[index] ?? undefined}
-                // TODO: default isLoading to true until server returns successful response
               />
             </li>
           ))}
