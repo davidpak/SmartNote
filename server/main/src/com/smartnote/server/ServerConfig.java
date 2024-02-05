@@ -99,25 +99,26 @@ public class ServerConfig extends AbstractConfig {
     }
 
     @Override
-    public void writeJSON(JsonObject object) {
+    public JsonObject writeJSON(JsonObject object) {
         object.addProperty("port", port);
         object.addProperty("ssl", usessl);
         object.addProperty("cert", certFile);
+        return object;
     }
 
     @Override
-    public void loadJSON(JsonObject object) {
+    public void loadJSON(JsonObject json) {
         JsonElement elem;
 
-        elem = object.get("port");
+        elem = json.get("port");
         if (elem != null && elem.isJsonPrimitive())
             port = elem.getAsInt();
 
-        elem = object.get("ssl");
+        elem = json.get("ssl");
         if (elem != null && elem.isJsonPrimitive())
             usessl = elem.getAsBoolean();
 
-        elem = object.get("cert");
+        elem = json.get("cert");
         if (elem != null && elem.isJsonPrimitive())
             certFile = elem.getAsString();
     }

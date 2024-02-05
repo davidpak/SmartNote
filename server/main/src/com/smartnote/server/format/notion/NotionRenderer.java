@@ -4,16 +4,19 @@ import org.commonmark.node.Node;
 import org.commonmark.renderer.Renderer;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 /**
- * <p>Converts markdown to Notion's internal format.</p>
+ * <p>
+ * Converts markdown to Notion's internal format.
+ * </p>
  * 
- * <p>Notion's internal format is a JSON object that
+ * <p>
+ * Notion's internal format is a JSON object that
  * represents the content of a Notion page. This class is
  * responsible for converting the markdown AST to this
  * JSON object. Consult the Notion API documentation for
- * more information</p>
+ * more information
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see NotionVisitor
@@ -22,9 +25,9 @@ public class NotionRenderer implements Renderer {
 
     @Override
     public void render(Node node, Appendable output) {
-        JsonObject object = new JsonObject();
-        node.accept(new NotionVisitor(object));
-        new Gson().toJson(object, output);
+        NotionVisitor visitor = new NotionVisitor();
+        node.accept(visitor);
+        new Gson().toJson(visitor.writeJSON(), output);
     }
 
     @Override
@@ -33,5 +36,5 @@ public class NotionRenderer implements Renderer {
         render(node, builder);
         return builder.toString();
     }
-    
+
 }

@@ -12,7 +12,9 @@ import com.smartnote.server.util.AbstractConfig;
 import com.smartnote.server.util.FileUtils;
 
 /**
- * <p>Stores configuration information for the server.</p>
+ * <p>
+ * Stores configuration information for the server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
@@ -28,7 +30,7 @@ public class Config extends AbstractConfig {
      * Loads the config file.
      * 
      * @return The config file.
-     * @throws IOException If an I/O error occurs while reading the file.
+     * @throws IOException         If an I/O error occurs while reading the file.
      * @throws JsonSyntaxException If the file is not valid JSON.
      */
     public static Config loadConfig() throws IOException, JsonSyntaxException {
@@ -38,7 +40,7 @@ public class Config extends AbstractConfig {
         } catch (Exception e) {
             throw new IOException("Could not load config file", e);
         }
-    
+
         Gson gson = new Gson();
         Config config = new Config();
 
@@ -55,7 +57,7 @@ public class Config extends AbstractConfig {
      */
     public static void writeConfig(Config config) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        
+
         String data = gson.toJson(config);
         FileUtils.writeFile(CONFIG_FILE, data);
     }
@@ -102,14 +104,15 @@ public class Config extends AbstractConfig {
     }
 
     @Override
-    public void writeJSON(JsonObject object) {
-        server.writeToObject(object);
-        resource.writeToObject(object);
+    public JsonObject writeJSON(JsonObject json) {
+        server.writeJSON(json);
+        resource.writeJSON(json);
+        return json;
     }
 
     @Override
     public void loadJSON(JsonObject object) {
-        server.loadFromObject(object);
-        resource.loadFromObject(object);
+        server.loadJSON(object);
+        resource.loadJSON(object);
     }
 }

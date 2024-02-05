@@ -49,7 +49,7 @@ public class ResourceConfig extends AbstractConfig {
     private long sessionQuota;
 
     private String uploadDir;
-    
+
     /**
      * Creates a new ResourceConfig object with default values.
      */
@@ -141,13 +141,13 @@ public class ResourceConfig extends AbstractConfig {
     }
 
     @Override
-    public void writeJSON(JsonObject object) {
+    public JsonObject writeJSON(JsonObject json) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'writeJSON'");
     }
 
     @Override
-    public void loadJSON(JsonObject object) {
+    public void loadJSON(JsonObject json) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'loadJSON'");
     }
