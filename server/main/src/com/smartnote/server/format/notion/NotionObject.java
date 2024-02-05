@@ -1,57 +1,27 @@
 package com.smartnote.server.format.notion;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
 
 import com.google.gson.*;
+import com.smartnote.server.util.Entry;
 import com.smartnote.server.util.JSONObjectSerializable;
 import com.smartnote.server.util.JSONUtil;
 
 /**
  * <p>
- * Base class for a
- * <a href="https://developers.notion.com/reference/block">Notion block</a>.
- * Blocks can be nested and contain rich text, lists, code, and other blocks.
- * </p>
- * 
- * <p>
- * Blocks can be serialized to JSON.
+ * Represents a Notion object. Notion objects can be serialized to JSON.
  * </p>
  * 
  * @author Ethan Vrhel
  * @see JSONObjectSerializable
  */
-abstract class NotionBlock implements JSONObjectSerializable {
-    private final List<NotionBlock> children = new ArrayList<>();
-    private NotionBlock parent;
-
-    /**
-     * <p>
-     * Add a child block to this block. If the block is already a
-     * child of another block, it is first removed from that block.
-     * </p>
-     * 
-     * @param child The child to add.
-     */
-    public void add(NotionBlock child) {
-        if (child.parent != null)
-            child.parent.children.remove(child);
-
-        children.add(child);
-        child.parent = this;
-    }
-
-    /**
-     * <p>
-     * Get the parent block of this block, i.e. the block that contains
-     * this block as a child.
-     * </p>
-     * 
-     * @return The parent block, or <code>null</code> if this block has
-     *         no parent.
-     */
-    public NotionBlock getParent() {
-        return parent;
+abstract class NotionObject implements JSONObjectSerializable {
+    public Entry<String, NotionObject> entry() {
+        return new Entry<String, NotionObject>(getName(), this);
     }
 
     /**
@@ -68,21 +38,235 @@ abstract class NotionBlock implements JSONObjectSerializable {
      */
     public abstract String getType();
 
-    @Override
-    public JsonObject writeJSON(JsonObject json) {
-        json.addProperty("type", getType());
-
-        if (children.size() > 0) {
-            JsonArray childrenArray = new JsonArray();
-            children.stream().map(NotionBlock::writeJSON).forEach(childrenArray::add);
-            json.add("children", childrenArray);
-        }
-        return json;
+    /**
+     * <p>
+     * Get the name of the block. This will be used as the name within
+     * the Notion page if the block is the top-level block of a page.
+     * This defaults to the type of the block, but can be overridden
+     * by subclasses.
+     * </p>
+     * 
+     * @return The name.
+     */
+    public String getName() {
+        return getType();
     }
 
     @Override
     public void loadJSON(JsonObject object) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
+    }
+}
+
+/**
+ * <p>
+ * Represents a Notion object that contains other Notion objects.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionObject
+ */
+abstract class NotionObjectCollection<T extends NotionObject> extends NotionObject implements Collection<T> {
+    private final List<T> objects = new ArrayList<>();
+
+    @Override
+    public int size() {
+        return objects.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return objects.isEmpty();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+        return objects.contains(o);
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        // to prevent removal of children
+        return new Iterator<>() {
+            private final Iterator<T> iterator = objects.iterator();
+            
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public T next() {
+                return iterator.next();
+            }
+        };
+    }
+
+    @Override
+    public Object[] toArray() {
+        return objects.toArray();
+    }
+
+    @Override
+    public <Q> Q[] toArray(Q[] a) {
+        return objects.toArray(a);
+    }
+
+    @Override
+    public boolean add(T object) {
+        objects.add(object);
+        return true;
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        return objects.remove(o);
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        return objects.containsAll(c);
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends T> c) throws UnsupportedOperationException {
+        return objects.addAll(c);
+    }
+
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        return objects.removeAll(c);
+    }
+
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        return objects.retainAll(c);
+    }
+
+    @Override
+    public void clear() {
+        objects.clear();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof NotionObjectCollection<?> t)
+            return t.objects.equals(objects);
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return objects.hashCode();
+    }
+
+    @Override
+    public Spliterator<T> spliterator() {
+        return objects.spliterator();
+    }
+
+    @Override
+    public String toString() {
+        return getType() + " [size=" + objects.size() + "]";
+    }
+}
+
+/**
+ * <p>
+ * Represents the <code>"properties"</code> object of a Notion page.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionObjectCollection
+ * @see NotionPage
+ */
+class NotionPageProperties extends NotionObjectCollection<NotionBlock> {
+    @Override
+    public String getType() {
+        return "properties";
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        return JSONUtil.toObject(stream().map(NotionObject::entry));
+    }
+}
+
+/**
+ * <p>
+ * Represents a Notion page.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionObjectCollection
+ * @see NotionPageProperties
+ */
+class NotionPage extends NotionObjectCollection<NotionObject> {
+    private NotionPageProperties properties = new NotionPageProperties();
+
+    public NotionPageProperties getProperties() {
+        return properties;
+    }
+
+    @Override
+    public String getType() {
+        return "page";
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        json.addProperty("object", getType());
+        json.add("properties", properties.writeJSON());
+        return json;
+    }    
+}
+
+/**
+ * <p>
+ * Base class for a
+ * <a href="https://developers.notion.com/reference/block">Notion block</a>.
+ * Blocks can be nested and contain rich text, lists, code, and other blocks.
+ * </p>
+ * 
+ * <p>
+ * Blocks can be serialized to JSON.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see JSONObjectSerializable
+ */
+abstract class NotionBlock extends NotionObjectCollection<NotionBlock> {
+    private NotionBlock parent;
+
+    /**
+     * <p>
+     * Get the parent block of this block, i.e. the block that contains
+     * this block as a child.
+     * </p>
+     * 
+     * @return The parent block, or <code>null</code> if this block has
+     *         no parent.
+     */
+    public NotionBlock getParent() {
+        return parent;
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        json.addProperty("type", getType());
+
+        if (size() > 0) 
+            json.add("children", JSONUtil.toArray(this));
+
+        return json;
+    }
+
+    @Override
+    public boolean add(NotionBlock block) {
+        if (block.parent != null)
+            block.parent.remove(block);
+        block.parent = this;
+        return super.add(block);
     }
 }
 
@@ -307,7 +491,7 @@ class NotionNumberedList extends NotionRichTextArray {
  * @author Ethan Vrhel
  * @see NotionBlock
  */
-class NotionCode extends NotionBlock {
+class NotionCode extends NotionRichTextArray {
     String language;
 
     private final List<NotionRichText> caption = new ArrayList<>();
@@ -351,5 +535,20 @@ class NotionCode extends NotionBlock {
     @Override
     public String getType() {
         return "code";
+    }
+}
+
+/**
+ * <p>
+ * Represents an inline code block in Notion.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionRichTextArray
+ */
+class NotionQuote extends NotionRichTextArray {
+    @Override
+    public String getType() {
+        return "quote";
     }
 }

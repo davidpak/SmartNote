@@ -20,7 +20,13 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
 
     @Override
     public void visit(Code code) {
+        NotionBlock oldParent = parent;
+        parent = new NotionQuote();     
+
         visitChildren(code);
+
+        oldParent.add(parent);
+        parent = oldParent;
     }
 
     @Override
@@ -47,9 +53,7 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
     public void visit(Heading heading) {
         NotionHeading notionHeading = new NotionHeading();
         notionHeading.level = heading.getLevel();
-
         parent.add(notionHeading);
-
         visitChildren(heading);
     }
 
