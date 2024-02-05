@@ -3,13 +3,13 @@ import { IconType } from 'react-icons';
 
 type Variant = 'primary' | 'secondary' | 'tertiary';
 
-interface ButtonType {
+interface ButtonType extends React.HTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   icon?: IconType;
   variant?: Variant;
 }
 
-const Button = ({ children, icon: Icon, variant = 'primary' }: ButtonType) => {
+const Button = ({ children, icon: Icon, variant = 'primary', ...props }: ButtonType) => {
   return (
     <button
       className={`font-semibold rounded-lg px-4 py-2 drop-shadow-md transition-all ${
@@ -19,6 +19,7 @@ const Button = ({ children, icon: Icon, variant = 'primary' }: ButtonType) => {
           ? 'bg-white border border-neutral-400 text-black hover:bg-neutral-200'
           : 'font-normal drop-shadow-none hover:text-accent'
       }`}
+      {...props}
     >
       <div className='flex items-center gap-1'>
         {Icon && <Icon aria-hidden='true' />}

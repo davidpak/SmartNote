@@ -7,7 +7,7 @@ export interface File {
   icon?: string;
 }
 
-const DropdownSelect = ({
+const DropdownSearch = ({
   label,
   options,
   selectPage,
@@ -113,4 +113,4 @@ const DropdownSelect = ({
   );
 };
 
-export default DropdownSelect;
+export default DropdownSearch;
