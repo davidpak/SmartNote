@@ -1,18 +1,32 @@
-from langchain.document_loaders import YoutubeLoader, UnstructuredPowerPointLoader
+from langchain_community.document_loaders import YoutubeLoader
+from langchain_community.document_loaders import UnstructuredPowerPointLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from dotenv import find_dotenv, load_dotenv
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
 )
 import textwrap
 
 load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
+
+
+def create_db_from_pptx(pptx_file):
+    loader = UnstructuredPowerPointLoader(pptx_file , mode="elements")
+    transcript = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
+    docs = text_splitter.split_documents(transcript)
+
+    db = FAISS.from_documents(docs, embeddings)
+    return db
 
 
 def create_db_from_youtube_video_url(video_url):
@@ -23,30 +37,30 @@ def create_db_from_youtube_video_url(video_url):
     docs = text_splitter.split_documents(transcript)
 
     db = FAISS.from_documents(docs, embeddings)
-    return db, docs
+    return db
 
 
-def create_db_from_powerpoint_file(pptx_file):
-    loader = UnstructuredPowerPointLoader(pptx_file)
-    data = loader.load()
+def create_db_from_pdf(pdf_file):
+    loader = PyPDFLoader(pdf_file)
+    pages = loader.load_and_split()
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
-    docs = text_splitter.split_documents(data)
+    docs = text_splitter.split_documents(pages)
 
     db = FAISS.from_documents(docs, embeddings)
-    return db, docs
+    return db
 
 
 def get_response_from_query(db, query, k=4):
     docs = db.similarity_search(query, k=k)
     docs_page_content = " ".join([d.page_content for d in docs])
 
-    chat = ChatOpenAI(model_name="gpt-3.5-turbo-16k", temperature=0.2)
+    chat = ChatOpenAI(model_name="gpt-4", temperature=0.2)
 
     # Template to use for the system message prompt
     template = """
-        You are a helpful assistant that that can answer questions about youtube videos 
-        based on the video's transcript: {docs}
+        You are a helpful assistant that that can answer questions about educational lectures or pdfs
+        based on the transcript: {docs}
 
         Only use the factual information from the transcript to answer the question.
 
@@ -71,10 +85,15 @@ def get_response_from_query(db, query, k=4):
 
 
 # Example usage:
-video_url = "https://www.youtube.com/watch?v=89cGQjB5R4M"
-db = create_db_from_youtube_video_url(video_url)
+# video_url = "https://www.youtube.com/watch?v=kYB8IZa5AuE"
+# db = create_db_from_youtube_video_url(video_url)
+# pptx_file = "Functions_in_Python.pptx"
+# db = create_db_from_pptx(pptx_file)
 
-query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """"
+pdf_file = "linear_regression.pdf"
+db = create_db_from_pdf(pdf_file)
+
+query = "Take notes on this in this format. Make sure that you properly newline throughout the page: """"
     # [Title]
 
     ## General Overview 
@@ -132,15 +151,8 @@ query = "Take notes on this video in this format. Make sure that you properly ne
     """
 
 response, docs = get_response_from_query(db, query)
-output_file_path = "../out/output.md"
+output_file_path = "out/output.md"
 with open(output_file_path, "w", encoding="utf-8") as file:
     file.write(response)
 
 print(f"Cleaned response has been saved to: {output_file_path}")
-
-# For PowerPoint file
-# pptx_file = "path/to/your/presentation.pptx"
-# db, docs = create_db_from_powerpoint_file(pptx_file)
-# response, _ = get_response_from_query(db, docs)
-# formatted_notes = generate_notes(response, docs)
-# print(textwrap.fill(formatted_notes, width=50))
