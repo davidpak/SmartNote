@@ -42,12 +42,16 @@ const FileListItem = ({
               <div className='flex items-center gap-2 text-sm text-neutral-500'>
                 {errorMessage ? (
                   <>
-                    <Error size={18} className='text-warning shrink-0' />
+                    <Error
+                      size={18}
+                      className='text-warning shrink-0'
+                      aria-hidden
+                    />
                     <p>{errorMessage}</p>
                   </>
                 ) : (
                   <>
-                    <Success className='text-success shrink-0' />
+                    <Success className='text-success shrink-0' aria-hidden />
                     <p>Completed</p>
                   </>
                 )}
@@ -61,7 +65,7 @@ const FileListItem = ({
         aria-label={`Remove ${name}`}
         className='h-fit'
       >
-        <Remove size={24} className='text-neutral-500' />
+        <Remove size={24} className='text-neutral-500' aria-hidden />
       </button>
     </div>
   );

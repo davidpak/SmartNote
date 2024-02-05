@@ -56,7 +56,7 @@ const Dropzone = ({
         tabIndex={-1}
       >
         <div className='flex flex-col items-center gap-4'>
-          <Upload size={40} className='text-neutral-500' />
+          <Upload size={40} className='text-neutral-500' aria-hidden />
           <div className='text-center'>
             <label className='font-medium text-lg text-neutral-500'>
               {isDragActive
