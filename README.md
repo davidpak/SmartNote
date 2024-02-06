@@ -18,6 +18,7 @@ SmartNote is an automated note-taking organization application that aims to revo
   - `src/` - Client source code
     - `components/` - React components
     - `pages/` - Application pages
+    - `tests/` - Jest tests
     - `types` - TypeScript types
     - `utils/` - Utility functions
 - `server/` - Server resources
@@ -102,3 +103,4 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [requests](https://requests.readthedocs.io/en/latest/) - Used in Python scripts to make HTTP requests.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.
 - [Tailwind CSS](https://tailwindcss.com/) - Used for CSS.
+- [tailwind-merge](https://www.npmjs.com/package/tailwind-merge) - Used to merge Tailwind CSS classes without style conflicts.
