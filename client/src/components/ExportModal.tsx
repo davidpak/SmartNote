@@ -3,8 +3,25 @@ import { useState, Fragment } from 'react';
 
 import Button from './Button';
 
-const ExportModal = ({ children }: { children: React.ReactNode }) => {
+const ExportModal = ({
+  children,
+  exportUrl,
+  exportFilename,
+}: {
+  children: React.ReactNode;
+  exportUrl: string;
+  exportFilename: string;
+}) => {
   const [open, setOpen] = useState(false);
+
+  function download(): void {
+    const aTag = document.createElement('a');
+    aTag.href = exportUrl;
+    aTag.download = exportFilename;
+    document.body.appendChild(aTag);
+    aTag.click();
+    document.body.removeChild(aTag);
+  }
 
   return (
     <div>
@@ -27,7 +44,7 @@ const ExportModal = ({ children }: { children: React.ReactNode }) => {
         <Dialog onClose={() => setOpen(false)}>
           <div className="fixed inset-0 bg-black/50"/>
           <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
-            <Dialog.Panel className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-xl transition-all">
+            <Dialog.Panel className="w-96 flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-xl transition-all">
               {children}
               <div className='flex justify-center gap-3'>
                 <Button
@@ -37,7 +54,11 @@ const ExportModal = ({ children }: { children: React.ReactNode }) => {
                 />
                 <Button
                   children='Export'
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    download();
+                    setOpen(false);
+                  }
+                  }
                 />
               </div>
             </Dialog.Panel>
