@@ -8,7 +8,6 @@ interface ButtonType extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   icon?: IconType;
   variant?: Variant;
-  className?: string;
 }
 
 const Button = ({
@@ -21,13 +20,12 @@ const Button = ({
   return (
     <button
       className={twMerge(
-        `rounded-lg px-4 py-2 drop-shadow-md transition-all w-fit ${
-          variant === 'primary'
-            ? 'bg-accent text-white hover:bg-accent-dark font-semibold'
-            : variant === 'secondary'
-            ? 'bg-white border border-neutral-400 text-black hover:bg-neutral-200 font-medium'
-            : 'font-normal drop-shadow-none hover:text-accent'
-        }`,
+        'rounded-lg px-4 py-2 drop-shadow-sm transition-all w-fit disabled:cursor-not-allowed',
+        variant === 'primary'
+          ? 'bg-accent text-white hover:bg-accent-dark font-semibold disabled:bg-neutral-200 disabled:text-neutral-425'
+          : variant === 'secondary'
+          ? 'bg-white border border-neutral-400 text-black enabled:hover:bg-neutral-200 font-medium disabled:border-neutral-200 disabled:text-neutral-425'
+          : 'font-normal drop-shadow-none hover:text-accent disabled:text-neutral-425',
         className
       )}
       {...rest}
