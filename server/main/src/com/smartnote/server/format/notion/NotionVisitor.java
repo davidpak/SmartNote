@@ -1,32 +1,37 @@
 package com.smartnote.server.format.notion;
 
+import static com.smartnote.server.format.notion.RichTextData.*;
+
+import java.util.function.Supplier;
+
 import org.commonmark.node.*;
 
 import com.google.gson.*;
 import com.smartnote.server.util.JSONObjectSerializable;
 
 class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
-    private NotionBlock parent;
+    private NotionPage page;
+    private NotionBlock current;
+
+    private Supplier<RichTextData> richText;
+
+    public NotionVisitor() {
+        this.page = new NotionPage();
+    }
 
     @Override
     public void visit(BlockQuote blockQuote) {
-        visitChildren(blockQuote);
+        emit(new NotionQuote(), blockQuote);
     }
 
     @Override
     public void visit(BulletList bulletList) {
-        visitChildren(bulletList);
+        emit(new NotionBulletedList(), bulletList);
     }
 
     @Override
     public void visit(Code code) {
-        NotionBlock oldParent = parent;
-        parent = new NotionQuote();     
-
-        visitChildren(code);
-
-        oldParent.add(parent);
-        parent = oldParent;
+        next(setCode(richText), code);
     }
 
     @Override
@@ -36,55 +41,52 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
 
     @Override
     public void visit(Emphasis emphasis) {
-        visitChildren(emphasis);
+        next(setItalic(richText), emphasis);
     }
 
     @Override
     public void visit(FencedCodeBlock fencedCodeBlock) {
-        visitChildren(fencedCodeBlock);
+        next(setCode(richText), fencedCodeBlock);
     }
 
     @Override
     public void visit(HardLineBreak hardLineBreak) {
-        visitChildren(hardLineBreak);
+        emit(new NotionParagraph(), hardLineBreak);
     }
 
     @Override
     public void visit(Heading heading) {
-        NotionHeading notionHeading = new NotionHeading();
-        notionHeading.level = heading.getLevel();
-        parent.add(notionHeading);
         visitChildren(heading);
     }
 
     @Override
     public void visit(ThematicBreak thematicBreak) {
-        visitChildren(thematicBreak);
+        // Ignore
     }
 
     @Override
     public void visit(HtmlInline htmlInline) {
-        visitChildren(htmlInline);
+        // Ignore
     }
 
     @Override
     public void visit(HtmlBlock htmlBlock) {
-        visitChildren(htmlBlock);
+        // Ignore
     }
 
     @Override
     public void visit(Image image) {
-        visitChildren(image);
+        // Ignore
     }
 
     @Override
     public void visit(IndentedCodeBlock indentedCodeBlock) {
-        visitChildren(indentedCodeBlock);
+        next(setCode(richText), indentedCodeBlock);
     }
 
     @Override
     public void visit(Link link) {
-        visitChildren(link);
+        next(setHref(richText).apply(link.getDestination()), link);
     }
 
     @Override
@@ -94,32 +96,32 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
 
     @Override
     public void visit(OrderedList orderedList) {
-        visitChildren(orderedList);
+        emit(new NotionNumberedList(), orderedList);
     }
 
     @Override
     public void visit(Paragraph paragraph) {
-        visitChildren(paragraph);
+        emit(new NotionParagraph(), paragraph);
     }
 
     @Override
     public void visit(SoftLineBreak softLineBreak) {
-        visitChildren(softLineBreak);
+        emit(new NotionParagraph(), softLineBreak);
     }
 
     @Override
     public void visit(StrongEmphasis strongEmphasis) {
-        visitChildren(strongEmphasis);
+        next(setBold(richText), strongEmphasis);
     }
 
     @Override
     public void visit(Text text) {
-        visitChildren(text);
+        emit(new NotionText(text.getLiteral(), richText.get()), text);
     }
 
     @Override
     public void visit(LinkReferenceDefinition linkReferenceDefinition) {
-        visitChildren(linkReferenceDefinition);
+        // Ignore
     }
 
     @Override
@@ -140,5 +142,26 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
     @Override
     public void loadJSON(JsonObject json) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
+    }
+
+    private void add(NotionBlock block) {
+        if (current == null)
+            page.add(block);
+        else
+            current.add(block);
+    }
+
+    private void next(Supplier<RichTextData> supplier, Node node) {
+        Supplier<RichTextData> old = richText;
+        richText = supplier;
+        visitChildren(node);
+        richText = old;
+    }
+
+    private void emit(NotionBlock block, Node node) {
+        add(block);
+        current = block;
+        visitChildren(node);
+        current = block.getParent();
     }
 }

@@ -1,10 +1,14 @@
 package com.smartnote.server.format.notion;
 
+import static com.smartnote.server.util.FunctionalUtils.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.gson.*;
 import com.smartnote.server.util.Entry;
@@ -89,7 +93,7 @@ abstract class NotionObjectCollection<T extends NotionObject> extends NotionObje
         // to prevent removal of children
         return new Iterator<>() {
             private final Iterator<T> iterator = objects.iterator();
-            
+
             @Override
             public boolean hasNext() {
                 return iterator.hasNext();
@@ -218,7 +222,7 @@ class NotionPage extends NotionObjectCollection<NotionObject> {
         json.addProperty("object", getType());
         json.add("properties", properties.writeJSON());
         return json;
-    }    
+    }
 }
 
 /**
@@ -237,6 +241,7 @@ class NotionPage extends NotionObjectCollection<NotionObject> {
  */
 abstract class NotionBlock extends NotionObjectCollection<NotionBlock> {
     private NotionBlock parent;
+    private NotionPage page;
 
     /**
      * <p>
@@ -251,11 +256,15 @@ abstract class NotionBlock extends NotionObjectCollection<NotionBlock> {
         return parent;
     }
 
+    public NotionPage getPage() {
+        return page;
+    }
+
     @Override
     public JsonObject writeJSON(JsonObject json) {
         json.addProperty("type", getType());
 
-        if (size() > 0) 
+        if (size() > 0)
             json.add("children", JSONUtil.toArray(this));
 
         return json;
@@ -270,34 +279,93 @@ abstract class NotionBlock extends NotionObjectCollection<NotionBlock> {
     }
 }
 
-/**
- * <p>
- * Represents a block of rich text in Notion.
- * </p>
- * 
- * @author Ethan Vrhel
- * @see NotionBlock
- */
-abstract class NotionRichText extends NotionBlock {
-    // annotations
-    boolean bold;
-    boolean italic;
-    boolean strikethrough;
-    boolean underline;
-    boolean code;
-    NotionColor color = NotionColor.DEFAULT;
+record AnnotationData(boolean bold, boolean italic, boolean strikethrough, boolean underline, boolean code,
+        NotionColor color) implements JSONObjectSerializable {
 
-    // other fields
-    String plainText;
-    String href;
+    public AnnotationData() {
+        this(false, false, false, false, false, NotionColor.DEFAULT);
+    }
 
     @Override
     public JsonObject writeJSON(JsonObject json) {
-        super.writeJSON(json);
+        if (bold)
+            json.addProperty("bold", bold);
+        if (italic)
+            json.addProperty("italic", italic);
+        if (strikethrough)
+            json.addProperty("strikethrough", strikethrough);
+        if (underline)
+            json.addProperty("underline", underline);
+        if (code)
+            json.addProperty("code", code);
+        if (!color.isDefault())
+            json.addProperty("color", color.color());
+        return json;
+    }
 
-        JsonObject annotations = createAnnotationsObject();
-        if (annotations != null)
-            json.add("annotations", annotations);
+    @Override
+    public void loadJSON(JsonObject json) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    public AnnotationData setBold() {
+        return new AnnotationData(true, italic, strikethrough, underline, code, color);
+    }
+
+    public AnnotationData setItalic() {
+        return new AnnotationData(bold, true, strikethrough, underline, code, color);
+    }
+
+    public AnnotationData setStrikethrough() {
+        return new AnnotationData(bold, italic, true, underline, code, color);
+    }
+
+    public AnnotationData setUnderline() {
+        return new AnnotationData(bold, italic, strikethrough, true, code, color);
+    }
+
+    public AnnotationData setCode() {
+        return new AnnotationData(bold, italic, strikethrough, underline, true, color);
+    }
+
+    public AnnotationData setColor(NotionColor color) {
+        return new AnnotationData(bold, italic, strikethrough, underline, code, color);
+    }
+
+    @Override
+    public String toString() {
+        return "AnnotationData [bold=" + bold + ", italic=" + italic + ", strikethrough=" + strikethrough
+                + ", underline=" + underline + ", code=" + code + ", color=" + color + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof AnnotationData a) {
+            return a.bold == bold && a.italic == italic && a.strikethrough == strikethrough && a.underline == underline
+                    && a.code == code && a.color.equals(color);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Boolean.hashCode(bold) + 2 * Boolean.hashCode(italic) + 4 * Boolean.hashCode(strikethrough)
+                + 8 * Boolean.hashCode(underline) + 16 * Boolean.hashCode(code) + 32 * color.hashCode();
+    }
+}
+
+record RichTextData(AnnotationData annotations, String plainText, String href) implements JSONObjectSerializable {
+
+    public RichTextData() {
+        this(new AnnotationData(), null, null);
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        JsonObject obj = annotations.writeJSON();
+        if (obj.size() > 0)
+            json.add("annotations", obj);
 
         if (plainText != null)
             json.addProperty("plain_text", plainText);
@@ -308,29 +376,165 @@ abstract class NotionRichText extends NotionBlock {
         return json;
     }
 
-    /**
-     * <p>
-     * Create the <code>"annotations"</code> object for this rich text.
-     * </p>
-     * 
-     * @return The annotations object, or <code>null</code> if there
-     *         are no annotations that vary from the default.
-     */
-    private JsonObject createAnnotationsObject() {
-        JsonObject annotationsObject = new JsonObject();
-        if (bold)
-            annotationsObject.addProperty("bold", bold);
-        if (italic)
-            annotationsObject.addProperty("italic", italic);
-        if (strikethrough)
-            annotationsObject.addProperty("strikethrough", strikethrough);
-        if (underline)
-            annotationsObject.addProperty("underline", underline);
-        if (code)
-            annotationsObject.addProperty("code", code);
-        if (!color.isDefault())
-            annotationsObject.addProperty("color", color.color());
-        return annotationsObject.size() > 0 ? annotationsObject : null;
+    @Override
+    public void loadJSON(JsonObject json) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    public RichTextData setBold() {
+        return new RichTextData(annotations.setBold(), plainText, href);
+    }
+
+    public RichTextData setItalic() {
+        return new RichTextData(annotations.setItalic(), plainText, href);
+    }
+
+    public RichTextData setStrikethrough() {
+        return new RichTextData(annotations.setStrikethrough(), plainText, href);
+    }
+
+    public RichTextData setUnderline() {
+        return new RichTextData(annotations.setUnderline(), plainText, href);
+    }
+
+    public RichTextData setCode() {
+        return new RichTextData(annotations.setCode(), plainText, href);
+    }
+
+    public RichTextData setColor(NotionColor color) {
+        return new RichTextData(annotations.setColor(color), plainText, href);
+    }
+
+    public RichTextData setPlainText(String plainText) {
+        return new RichTextData(annotations, plainText, href);
+    }
+
+    public RichTextData setHref(String href) {
+        return new RichTextData(annotations, plainText, href);
+    }
+
+    public static Supplier<RichTextData> setBold(Supplier<RichTextData> supplier) {
+        return thunk(supplier, RichTextData::setBold);
+    }
+
+    public static Supplier<RichTextData> setItalic(Supplier<RichTextData> supplier) {
+        return thunk(supplier, RichTextData::setItalic);
+    }
+
+    public static Supplier<RichTextData> setStrikethrough(Supplier<RichTextData> supplier) {
+        return thunk(supplier, RichTextData::setStrikethrough);
+    }
+
+    public static Supplier<RichTextData> setUnderline(Supplier<RichTextData> supplier) {
+        return thunk(supplier, RichTextData::setUnderline);
+    }
+
+    public static Supplier<RichTextData> setCode(Supplier<RichTextData> supplier) {
+        return thunk(supplier, RichTextData::setCode);
+    }
+
+    public static Function<NotionColor, Supplier<RichTextData>> setColor(Supplier<RichTextData> supplier) {
+        return flip(supplier, RichTextData::setColor);
+    }
+
+    public static Function<String, Supplier<RichTextData>> setPlainText(Supplier<RichTextData> supplier) {
+        return flip(supplier, RichTextData::setPlainText);
+    }
+
+    public static Function<String, Supplier<RichTextData>> setHref(Supplier<RichTextData> supplier) {
+        return flip(supplier, RichTextData::setHref);
+    }
+
+    @Override
+    public String toString() {
+        return "RichTextData [annotations=" + annotations + ", plainText=" + plainText + ", href=" + href + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof RichTextData r) {
+            return r.annotations.equals(annotations) && r.plainText.equals(plainText) && r.href.equals(href);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return annotations.hashCode() + 2 * plainText.hashCode() + 4 * href.hashCode();
+    }
+}
+
+/**
+ * <p>
+ * Represents a block of rich text in Notion.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionBlock
+ */
+abstract class NotionRichText extends NotionBlock {
+    RichTextData richText;
+
+    public NotionRichText() {
+        this(new RichTextData());
+    }
+
+    public NotionRichText(RichTextData richText) {
+        this.richText = richText;
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        super.writeJSON(json);
+        return richText.writeJSON(json);
+    }
+}
+
+record TextData(String content, String link) implements JSONObjectSerializable {
+    public TextData() {
+        this(null, null);
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        if (content != null)
+            json.addProperty("content", content);
+        if (link != null)
+            json.addProperty("link", link);
+        return json;
+    }
+
+    @Override
+    public void loadJSON(JsonObject json) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    public TextData content(String content) {
+        return new TextData(content, link);
+    }
+
+    public TextData link(String link) {
+        return new TextData(content, link);
+    }
+
+    @Override
+    public String toString() {
+        return "TextData [content=" + content + ", link=" + link + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof TextData t) {
+            return t.content.equals(content) && t.link.equals(link);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return content.hashCode() + 2 * link.hashCode();
     }
 }
 
@@ -343,9 +547,26 @@ abstract class NotionRichText extends NotionBlock {
  * @see NotionRichText
  */
 class NotionText extends NotionRichText {
-    // text
-    String content;
-    String link;
+    public static Supplier<NotionText> supplier(String content, RichTextData richText) {
+        return () -> new NotionText(content, richText);
+    }
+
+    TextData text;
+
+    public NotionText() {
+        this(null, new RichTextData());
+    }
+
+    public NotionText(String content, RichTextData richText) {
+        super(richText);
+        text = text.content(content);
+        this.richText = richText;
+    }
+
+    public NotionText(String content) {
+        this();
+        text = text.content(content);
+    }
 
     @Override
     public String getType() {
@@ -356,10 +577,9 @@ class NotionText extends NotionRichText {
     public JsonObject writeJSON(JsonObject json) {
         super.writeJSON(json);
 
-        JsonObject textObject = new JsonObject();
-        textObject.addProperty("content", content);
-        textObject.addProperty("link", link);
-        json.add("text", textObject);
+        JsonObject textObject = text.writeJSON();
+        if (textObject.size() > 0)
+            json.add("text", textObject);
 
         return json;
     }
