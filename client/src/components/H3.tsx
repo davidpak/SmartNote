@@ -1,10 +1,10 @@
 import { twMerge } from 'tailwind-merge';
 
-interface H3Type extends React.HTMLAttributes<HTMLHeadingElement> {
-  children: React.ReactNode;
-}
-
-const H3 = ({ children, className, ...rest }: H3Type) => {
+const H3 = ({
+  children,
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLHeadingElement>) => {
   return (
     <h3 className={twMerge('font-bold text-xl', className)} {...rest}>
       {children}

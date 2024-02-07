@@ -1,11 +1,11 @@
 import { IoMdWarning as Alert } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 
-interface WarningType extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-}
-
-const Warning = ({ children, className, ...rest }: WarningType) => {
+const Warning = ({
+  children,
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
       className={twMerge(

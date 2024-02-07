@@ -1,10 +1,10 @@
 import { twMerge } from 'tailwind-merge';
 
-interface H1Type extends React.HTMLAttributes<HTMLHeadingElement> {
-  children: React.ReactNode;
-}
-
-const H1 = ({ children, className, ...rest }: H1Type) => {
+const H1 = ({
+  children,
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLHeadingElement>) => {
   return (
     <h1
       className={twMerge(
