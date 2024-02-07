@@ -1,16 +1,21 @@
 import { useEffect, useRef } from 'react';
+import { twMerge } from 'tailwind-merge';
+
+interface CheckboxType extends React.HTMLAttributes<HTMLDivElement> {
+  label: string;
+  isChecked?: boolean;
+  isIndeterminate?: boolean;
+  onChange: () => void;
+}
 
 const Checkbox = ({
   label,
   isChecked = false,
   isIndeterminate = false,
   onChange,
-}: {
-  label: string;
-  isChecked?: boolean;
-  isIndeterminate?: boolean;
-  onChange: () => void;
-}) => {
+  className,
+  ...rest
+}: CheckboxType) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -20,7 +25,7 @@ const Checkbox = ({
   });
 
   return (
-    <div className='p-4'>
+    <div className={twMerge('p-4', className)} {...rest}>
       <label className='flex gap-3 items-center'>
         <input
           type='checkbox'
