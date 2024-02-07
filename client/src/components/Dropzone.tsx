@@ -3,17 +3,21 @@ import { IoCloudUploadOutline as Upload } from 'react-icons/io5';
 
 import FileListItem from './FileListItem';
 
+interface DropzoneType extends React.HTMLAttributes<HTMLDivElement> {
+  files: File[];
+  setFiles: (files: File[]) => void;
+  errors: (string | null)[];
+  setErrors: (errors: (string | null)[]) => void;
+}
+
 const Dropzone = ({
   files,
   setFiles,
   errors,
   setErrors,
-}: {
-  files: File[];
-  setFiles: (files: File[]) => void;
-  errors: (string | null)[];
-  setErrors: (errors: (string | null)[]) => void;
-}) => {
+  className,
+  ...rest
+}: DropzoneType) => {
   const handleDrop = (
     acceptedFiles: File[],
     fileRejections: FileRejection[]
@@ -47,7 +51,7 @@ const Dropzone = ({
   };
 
   return (
-    <>
+    <section className={className} {...rest}>
       <div
         {...getRootProps({
           className:
@@ -89,7 +93,7 @@ const Dropzone = ({
           ))}
         </ul>
       )}
-    </>
+    </section>
   );
 };
 
