@@ -170,6 +170,17 @@ public class Session {
         return new SessionPermission(this);
     }
 
+    /**
+     * Gets the amount of storage used by this session. Note that this
+     * recalculates the size of the session directory every time it is
+     * called.
+     * 
+     * @return The quota used.
+     */
+    public long getStorageUsage() {
+        return FileUtils.getDirectorySize(sessionDirectory.toFile());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Session))

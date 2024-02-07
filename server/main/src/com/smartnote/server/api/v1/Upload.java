@@ -5,11 +5,14 @@ import java.io.OutputStream;
 import java.nio.file.InvalidPathException;
 import java.security.Permission;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
+import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.MethodType;
@@ -36,6 +39,9 @@ public class Upload implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
+        ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
+        
+
         response.type("application/json");
 
         SessionManager sessionManager = Server.getServer().getSessionManager();
@@ -69,8 +75,12 @@ public class Upload implements Route {
         ResourceSystem system = Server.getServer().getResourceSystem();
         Resource resource = null;
 
+        long usedQuota = session.getStorageUsage();
+
+        // find resource
+        String path = ResourceSystem.inSession(filename);
         try {
-            resource = system.findResource(ResourceSystem.inSession(filename), permission);
+            resource = system.findResource(path, permission);
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\": \"Access denied\"}";
@@ -80,26 +90,39 @@ public class Upload implements Route {
         } catch (NoSuchResourceException e) {
             // ignore
         } catch (IOException e) {
-            response.status(400);
-            return "{\"message\": \"Bad request\"}";
+            response.status(500);
+            return "{\"message\": \"Could open resource\"}";
         }
 
         byte[] body = request.bodyAsBytes();
         if (body == null) {
             response.status(400);
-            return "{\"message\": \"Bad request\"}";
+            return "{\"message\": \"No body\"}";
         }
 
+        // check size
+        if (body.length > config.getMaxUploadSize()) {
+            response.status(413);
+            return "{\"message\": \"File too large\"}";
+        }
+
+        // check quota
+        if (usedQuota + body.length > config.getSessionQuota()) {
+            response.status(413);
+            return "{\"message\": \"Quota exceeded\"}";
+        }
+
+        // write
         OutputStream out = null;
         try {
             out = resource.openOutputStream();
             out.write(request.bodyAsBytes());
         } catch (SecurityException e) {
             response.status(403);
-            return "{\"message\": \"Access denied\"}";
+            return "{\"message\":\"Access denied\"}";
         } catch (IOException e) {
-            response.status(400);
-            return "{\"message\": \"Bad request\"}";
+            response.status(500);
+            return "{\"message\":\"Could not write resource\"}";
         } finally {
             if (out != null)
                 out.close();
@@ -108,6 +131,10 @@ public class Upload implements Route {
         session.updateSession(sessionManager);
         session.writeToResponse(response);
 
-        return "{\"message\": \"File was uploaded\"}";
+        JsonObject obj = new JsonObject();
+        obj.addProperty("message", "File uploaded");
+        obj.addProperty("name", system.getActualPath(path));
+
+        return new Gson().toJson(obj);
     }
 }

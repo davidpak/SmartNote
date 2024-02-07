@@ -6,9 +6,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
+import com.smartnote.server.Config;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -22,18 +20,18 @@ import spark.Request;
 import spark.Response;
 
 /**
- * <p>Base class for tests that require a running the server (i.e. ones
+ * <p>
+ * Base class for tests that require a running the server (i.e. ones
  * that directly or indirectly use the <code>Server</code> class).
  * Provides a <code>Session</code> instance that can be used to
- * test components that require a session.</p>
+ * test components that require a session.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
  */
-public class BaseServerTest extends BaseTest {
+public class BaseServer extends Base {
     public static final String SESSION_TOKEN = "test";
-
-    private Session session;
 
     @Override
     public void setUp() throws Exception {
@@ -49,35 +47,22 @@ public class BaseServerTest extends BaseTest {
         super.tearDown();
     }
 
-    /**
-     * Activates the session for the test. This will cause <code>SessionManager.getSession()</code>
-     * and <code>SessionManager.createSession()</code> to return the session.
-     */
-    public void activateSession() throws Exception {
-        session = createSession();
+    public Session getSession(String authToken) {
+        if (authToken == null)
+            return null;
+        if (!authToken.equals(SESSION_TOKEN))
+            return null;
+        return createSessionObject();
     }
 
-    /**
-     * Deactivates the session for the test. This will cause <code>SessionManager.getSession()</code>
-     * and <code>SessionManager.createSession()</code> to return <code>null</code>.
-     */
-    public void deactivateSession() {
-        session = null;
-    }
-
-    /**
-     * Gets the session for the test.
-     * 
-     * @return the session.
-     */
-    public Session getSession() {
-        return session;
-    }
-    
     // sets up the server for testing
     private void setupServer() throws Exception {
         Server server = Server.getServer();
         Class<Server> serverClass = Server.class;
+
+        Field configField = serverClass.getDeclaredField("config");
+        configField.setAccessible(true);
+        configField.set(server, createConfig());
 
         // set the resource system
         Field resourceSystemField = serverClass.getDeclaredField("resourceSystem");
@@ -88,6 +73,10 @@ public class BaseServerTest extends BaseTest {
         Field sessionManagerField = serverClass.getDeclaredField("sessionManager");
         sessionManagerField.setAccessible(true);
         sessionManagerField.set(server, createSessionManager());
+    }
+
+    private Config createConfig() {
+        return new Config();
     }
 
     // creates the resource system for testing
@@ -107,19 +96,38 @@ public class BaseServerTest extends BaseTest {
     private SessionManager createSessionManager() {
         // always return our mock session
         SessionManager sessionManager = mock(SessionManager.class);
-        when(sessionManager.getSession(any(Request.class))).thenAnswer(invokation -> session);
-        when(sessionManager.createSession()).thenAnswer(invokation -> session);
-        when(sessionManager.isTokenValid(anyString())).thenAnswer(invokation -> invokation.getArguments()[0].equals("test"));
+
+        when(sessionManager.getSession(any(Request.class))).thenAnswer(invokation -> {
+            Request request = (Request) invokation.getArguments()[0];
+            return getSession(request.headers("Authorization"));
+        });
+
+        when(sessionManager.createSession()).thenAnswer(invokation -> createNewSession());
+
+        when(sessionManager.isTokenValid(anyString()))
+                .thenAnswer(invokation -> invokation.getArguments()[0].equals(SESSION_TOKEN));
+
         return sessionManager;
     }
 
-    // create a mock session
-    private Session createSession() throws Exception {
+    private Session createNewSession() throws Exception {
+        Session session = createSessionObject();
+
+        // create the token file
+        Path tokenFile = session.getSessionDirectory().resolve(".token");
+        OutputStream tokenOut = getFileSystem().openOutputStream(tokenFile);
+        tokenOut.write(SESSION_TOKEN.getBytes());
+        tokenOut.close();
+
+        return session;
+    }
+
+    private Session createSessionObject() {
         Session session = mock(Session.class);
         SessionPermission permission = mock(SessionPermission.class);
 
         Path sessionDirectory = Server.getServer().getResourceSystem().getSessionDir().resolve(SESSION_TOKEN);
-        
+
         when(session.getId()).thenReturn(SESSION_TOKEN);
         when(session.getSessionDirectory()).thenReturn(sessionDirectory);
 
@@ -139,12 +147,6 @@ public class BaseServerTest extends BaseTest {
 
         when(session.getPermission()).thenReturn(permission);
         when(permission.getSession()).thenReturn(session);
-        
-        // create the token file
-        Path tokenFile = session.getSessionDirectory().resolve(".token");
-        OutputStream tokenOut = getFileSystem().openOutputStream(tokenFile);
-        tokenOut.write(SESSION_TOKEN.getBytes());
-        tokenOut.close();
 
         return session;
     }

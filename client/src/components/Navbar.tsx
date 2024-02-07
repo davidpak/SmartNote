@@ -1,8 +1,17 @@
 import { NavLink } from 'react-router-dom';
+import { twMerge } from 'tailwind-merge';
 
-const Navbar = () => {
+interface NavbarType extends React.HTMLAttributes<HTMLElement> {}
+
+const Navbar = ({ className, ...rest }: NavbarType) => {
   return (
-    <nav className='navbar bg-base-100 sticky z-10 w-full px-12 py-5 border-b border-b-neutral-300'>
+    <nav
+      className={twMerge(
+        'navbar bg-base-100 sticky z-10 w-full px-12 py-5 border-b border-b-neutral-300',
+        className
+      )}
+      {...rest}
+    >
       <div className='flex w-full items-center justify-between'>
         <NavLink to='/' className='w-40 shrink-0' aria-label='Home'>
           <img src='/smartnote-logo.svg' alt='' />

@@ -6,7 +6,7 @@ package com.smartnote.testing;
  * is called.</p>
  * 
  * @author Ethan Vrhel
- * @see BaseTest
+ * @see Base
  */
 public class ExitException extends RuntimeException {
     private final int status;

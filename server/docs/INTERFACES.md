@@ -56,9 +56,7 @@ The server will respond with one of the following status codes:
 
 ## `upload`
 
-Uploads a single file to the server. The file is associated with the client's session and is stored on the server until the session expires. Uploaded files can be specified in the [`generate`](#generate) RPC to generate summaries with multiple files. The file can be fetched using the [`fetch`](#fetch) RPC using the name given to the file when it was uploaded.
-
-A client has a storage quota, which is the maximum amount of data a single session can store. The quota is set by the server on startup and is the same for all clients. See the failure conditions for how the quota is enforced.
+Uploads a single file to the per-session storage. This request requires authentication. See [Server Resources](RESOURCES.md) for more information on resources.
 
 **Note**: This RPC cannot upload multiple files at once. To upload multiple files, call this RPC multiple times.
 
@@ -70,7 +68,15 @@ A client has a storage quota, which is the maximum amount of data a single sessi
 
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| `name` | `string` | The name of the file to upload. |
+| `name` | `string` | The name of the file to upload. Not a resource name. |
+| `disposition` | `string` | The creation disposition of the file. Optional. |
+
+The `disposition` query parameter is optional and is used to specify the creation disposition of the file. The following values are recognized:
+
+| Value | Description |
+| ----- | ----------- |
+| `create_always` | Always create a new file. If the file already exists, it is truncated to zero length. This is the default value. |
+| `create_new` | Create a new file. If the file already exists, the request fails. |
 
 #### Body
 
@@ -90,19 +96,11 @@ If the file was successfully uploaded, the server will respond with `200 OK`. Th
 | ---- | ---- | -------- |
 | `name` | `string` | The name of the uploaded resource. |
 
-The `name` field can be used in the [`fetch`](#fetch) RPC to fetch the uploaded file. It is not necessarily the same as the name given in the request query parameters.
+The `name` field can be used to identify the resource in future requests.
 
 #### Failure
 
-When the server fails to upload the file, it will respond with one of the following status codes:
-
-| Status Code | Description |
-| ----------- | ----------- |
-| `400 Bad Request` | The request was malformed. |
-| `401 Unauthorized` | The client is not authorized to upload files. |
-| `403 Forbidden` | The client is not allowed to upload files. |
-| `406 Not Acceptable` | The type of file being uploaded is not allowed. |
-| `413 Payload Too Large` | The file is too large or will cause the session quota to be exceeded. |
+When the server fails to upload the file, it responds with one of the status codes specified in [`Resources`](RESOURCES.md#Errors).
 
 ## `generate`
 
@@ -153,6 +151,11 @@ When the server fails to generate the summaries, it will respond with one of the
 | `408 Request Timeout` | The summary could not generate in time. Retry the request. |
 | `409 Conflict` | A request has not finished and `options` is not idempotent. |
 | `429 Too Many Requests` | The client is trying to generate too many summaries. |
+
+The following may also occur, but indicate an internal issue with the generator and does not indicate an issue with the request:
+
+| Status Code | Description |
+| ----------- | ----------- |
 | `502 Bad Gateway` | The generator is unavailable. |
 | `503 Service Unavailable` | The generator is unavailable. |
 | `504 Gateway Timeout` | The generator timed out. |
@@ -238,7 +241,7 @@ The following may occur when exporting to a remote location, such as Notion:
 
 ## `fetch`
 
-Fetches a resource from the server. Resources are defined by an authority and a name. The authority determines the type of resource to fetch, as well as the permissions required to access the resource. The name is a unique identifier for the resource within the specified authority.
+Fetches a resource from the server. See [Server Resources](RESOURCES.md) for more information on resources.
 
 ### Request
 
@@ -249,22 +252,10 @@ Fetches a resource from the server. Resources are defined by an authority and a 
 | Key | Type | Description |
 | --- | ---- | ----------- |
 | `name` | `string` | The name of the resource to fetch. |
-| `authority` | `string` | The authority of the resource to fetch. Optional. |
-
-`authority` is case-sensitive and must take one of the following values, if present:
-
-| Value | Description |
-| ----- | ----------- |
-| `public` | Fetch a public resource. |
-| `session` | Fetch a session-specific resource. |
-
-If `authority` is not specified, it will default to `public`. If `authority` is `session`, the request must contain a valid session token. Public resources may also be accessed through the [`public` endpoint](PUBLIC.md).
 
 #### Body
 
 No body is expected in the request and will be ignored if present.
-
-**Note**: If the `Accept` header is set in the HTTP request, the server will only return the content of the resource if the `Accept` header matches the resource's content type. See the failure response for more information.
 
 ### Response
 
@@ -278,21 +269,71 @@ If the resource was successfully fetched, the server will respond with `200 OK` 
 
 #### Failure
 
-The body of the response will contain a JSON object describing the error. It is defined as follows:
+Upon failure, the server will respond with one of the following status codes specified in [`Resources`](RESOURCES.md#Errors).
+
+## `remove`
+
+Remove a resource from the server. See [Server Resources](RESOURCES.md) for more information on resources.
+ 
+### Request
+
+`POST /api/v1/remove`
+
+#### Query Parameters
+
+| Key | Type | Description |
+| --- | ---- | ----------- |
+| `name` | `string` | The name of the resource to remove. |
+
+#### Body
+
+No body is expected in the request and will be ignored if present.
+
+### Response
+
+#### Success
+
+If the resource was successfully removed, the server will respond with `200 OK`.
+
+#### Failure
+
+Upon failure, the server will respond with one of the following status codes specified in [`Resources`](RESOURCES.md#Errors).
+
+## `rescinfo`
+
+Query capabilities and settings of the resource system. See [Server Resources](RESOURCES.md) for more information on resources.
+
+### Request
+
+`GET /api/v1/rescinfo`
+
+#### Query Parameters
+
+No query parameters are expected and are ignored if present.
+
+#### Body
+
+No body is expected in the request and will be ignored if present.
+
+### Response
+
+#### Success
+
+If the request was successful, the server will respond with `200 OK`. The `result` field of the response body will contain the additional fields:
 
 | Name | Type | Contents |
 | ---- | ---- | -------- |
-| `success` | `bool` | Whether the request was successful. Always `false`. |
-| `result` | `json` | A JSON object with a single field `message` describing the result of the request. |
+| `capabilities` | `json` | A JSON object describing the capabilities of the resource system. |
 
-The server will respond with one of the following status codes:
+`capabilities` is a JSON object with the following fields:
 
-| Status Code | Description |
-| ----------- | ----------- |
-| `400 Bad Request` | The request was malformed. |
-| `401 Unauthorized` | The client is not authorized to access the resource. |
-| `403 Forbidden` | The client is not allowed to access the resource. |
-| `404 Not Found` | The resource does not exist. |
-| `406 Not Acceptable` | The `Accept` header does not match the resource's content type. |
+| Name | Type | Contents |
+| ---- | ---- | -------- |
+| `sessionQuota` | `number` | The maximum amount of data a single session can store, in bytes. |
+| `maxUploadSize` | `number` | The maximum size of a single file upload, in bytes. |
+| `supportedTypes` | `array` | An array of strings containing supported MIME types. |
+| `authorities` | `array` | An array of strings containing supported authorities. |
 
-**Note**: The server will respond with `404 Not Found` if the resource is not found **or** if the client does not have permission to access the resource. This is to prevent leaking information about the existence of resources to unauthorized clients.
+#### Failure
+
+This request never fails.

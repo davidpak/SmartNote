@@ -27,8 +27,8 @@ public class Login implements Route {
         response.type("application/json");
 
         // no authorization header allowed
-        if (request.queryParams("Authorization") != null) {
-            halt(400);
+        if (request.headers("Authorization") != null) {
+            response.status(400);
             return "{\"message\": \"Authorization header not allowed\"}";
         }
 

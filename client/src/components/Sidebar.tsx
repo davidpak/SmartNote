@@ -14,17 +14,21 @@ interface File {
   type: FileType;
 }
 
+interface SidebarType extends React.HTMLAttributes<HTMLDivElement> {
+  files: File[];
+  activeIndex: number;
+  selectFile: (index: number) => void;
+}
+
 const Sidebar = ({
   files,
   activeIndex,
   selectFile,
-}: {
-  files: File[];
-  activeIndex: number;
-  selectFile: (index: number) => void;
-}) => {
+  className,
+  ...rest
+}: SidebarType) => {
   return (
-    <div>
+    <div className={className} {...rest}>
       <H2 className='text-base mb-2 px-8'>Uploaded Files</H2>
       <ul className='p-0 list-none'>
         {files.map((file, index) => (

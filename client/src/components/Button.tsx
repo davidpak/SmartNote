@@ -5,7 +5,6 @@ import { twMerge } from 'tailwind-merge';
 type Variant = 'primary' | 'secondary' | 'tertiary';
 
 interface ButtonType extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode;
   icon?: IconType;
   variant?: Variant;
 }

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.JsonObject;
+import com.smartnote.server.auth.Session;
 
 import spark.Request;
 import spark.Response;
@@ -26,11 +27,12 @@ import spark.Route;
  * @see spark.Request
  * @see spark.Response
  */
-public class RouteTest extends BaseServerTest {
+public class BaseRoute extends BaseServer {
     
     // request
     private Request request;
     private Map<String, String> requestQueryParams;
+    private Map<String, String> requestHeaders;
     private String requestBody;
     private String requestContentType;
 
@@ -60,7 +62,7 @@ public class RouteTest extends BaseServerTest {
      * @param route the route to handle.
      * @throws Exception if an error occurs.
      */
-    public Response handle(Route route) throws Exception {       
+    public Response handle(Route route) throws Exception {
         Response response = mockResponse();
 
         Object r = route.handle(request, response);
@@ -103,6 +105,10 @@ public class RouteTest extends BaseServerTest {
         return getGson().fromJson(responseBody, JsonObject.class);
     }
 
+    public Session responseSession() {
+        return getSession(responseHeaders.get("Authorization"));
+    }
+
     /**
      * Sets a query parameter for the request.
      * 
@@ -139,6 +145,14 @@ public class RouteTest extends BaseServerTest {
     public void setRequestContentType(String requestContentType) {
         this.requestContentType = requestContentType;
     }
+
+    public void activateSession() {
+        requestHeaders.put("Authorization", SESSION_TOKEN);
+    }
+
+    public void deactivateSession() {
+        requestHeaders.remove("Authorization");
+    }
     
     // creates a mock request
     private Request mockRequest() {
@@ -148,6 +162,11 @@ public class RouteTest extends BaseServerTest {
         doAnswer(invokation -> {
             return requestQueryParams.get(invokation.getArguments()[0]);
         }).when(request).queryParams(anyString());
+
+        // Request.headers(String)
+        doAnswer(invokation -> {
+            return requestHeaders.get(invokation.getArguments()[0]);
+        }).when(request).headers(anyString());
 
         // Request.body()
         when(request.body()).thenAnswer(invokation -> requestBody);
@@ -159,6 +178,7 @@ public class RouteTest extends BaseServerTest {
         when(request.contentType()).thenAnswer(invokation -> requestContentType);
         
         this.requestQueryParams = new HashMap<>();
+        this.requestHeaders = new HashMap<>();
         return request;
     }
 

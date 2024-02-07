@@ -11,6 +11,8 @@ import com.smartnote.server.api.v1.Export;
 import com.smartnote.server.api.v1.Fetch;
 import com.smartnote.server.api.v1.Generate;
 import com.smartnote.server.api.v1.Login;
+import com.smartnote.server.api.v1.Remove;
+import com.smartnote.server.api.v1.RescInfo;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.cli.CommandLineParser;
@@ -183,10 +185,11 @@ public class Server {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Methods", "GET, POST");
             res.header("Access-Control-Allow-Credentials", "true");
-            res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
+            res.header("Access-Control-Allow-Headers",
+                    "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
             res.header("Access-Control-Expose-Headers", "Content-Type, Authorization");
         });
-        
+
         // Add RPC routes
         addRoute(Export.class);
         addRoute(Fetch.class);
@@ -194,6 +197,8 @@ public class Server {
         addRoute(Upload.class);
         addRoute(Login.class);
         addRoute(Upload.class);
+        addRoute(Remove.class);
+        addRoute(RescInfo.class);
 
         return 0;
     }

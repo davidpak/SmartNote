@@ -6,6 +6,7 @@ import requests
 import sys
 import urllib.parse
 import cmdline as cl
+import json
 
 def upload_file(
         base_url: str,
@@ -33,9 +34,7 @@ def upload_file(
     filename_safe = urllib.parse.quote(filename)
     url = f'{base_url}/api/v1/upload?name={filename_safe}'
 
-    headers = {
-        'Content-Type': 'text/plain'
-    }
+    headers = {}
 
     if auth:
         headers['Authorization'] = auth
@@ -44,7 +43,9 @@ def upload_file(
     auth = r.headers.get('Authorization', None)
 
     if r.status_code == 200:
-        print(f'Done ({len(data)} bytes transfered)')
+        print(r.text)
+        response = json.loads(r.text)
+        print(f'Done ({len(data)} bytes transfered to {response["name"]})')
     else:
         print(f'Failed: {r.status_code} {r.reason}')
         print(r.text)
