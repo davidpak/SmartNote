@@ -9,14 +9,34 @@ import org.commonmark.node.*;
 import com.google.gson.*;
 import com.smartnote.server.util.JSONObjectSerializable;
 
+/**
+ * <p>Converts markdown to Notion's internal format.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionRenderer
+ */
 class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
     private NotionPage page;
     private NotionBlock current;
 
+    /**
+     * The rich text data supplier. Used to specify how to generate
+     * rich text data. The <code>RichTextData</code> class has
+     * static methods that return suppliers to generate rich text.
+     * These suppliers are chained together to apply multiple
+     * styles to the same text.
+     * 
+     * @see RichTextData
+     */
     private Supplier<RichTextData> richText;
 
-    public NotionVisitor() {
-        this.page = new NotionPage();
+    /**
+     * Constructs a new NotionVisitor.
+     * 
+     * @param page The page to write to.
+     */
+    public NotionVisitor(NotionPage page) {
+        this.page = page;
     }
 
     @Override
@@ -144,6 +164,11 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Add a block as a child of the current block or the page if there is no current block.
+     * 
+     * @param block The block to add.
+     */
     private void add(NotionBlock block) {
         if (current == null)
             page.add(block);
@@ -151,6 +176,15 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
             current.add(block);
     }
 
+    /**
+     * Consume a node and visit its children. The <code>richText</code>
+     * field will be set to the given supplier while the children are visited.
+     * It is then reset to its previous value. This does not add a block
+     * to the current block or page.
+     * 
+     * @param supplier A supplier that returns rich text data.
+     * @param node The node to consume.
+     */
     private void next(Supplier<RichTextData> supplier, Node node) {
         Supplier<RichTextData> old = richText;
         richText = supplier;
@@ -158,6 +192,14 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
         richText = old;
     }
 
+    /**
+     * Emit a block and visit its children. The current block is set to the
+     * given block while the children are visited. It is then reset to its
+     * previous value. This will add the block to the current block or page.
+     * 
+     * @param block The block to emit.
+     * @param node The node to visit.
+     */
     private void emit(NotionBlock block, Node node) {
         add(block);
         current = block;
