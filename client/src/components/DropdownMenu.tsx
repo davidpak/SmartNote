@@ -1,16 +1,21 @@
 import { Fragment, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
-import { LuChevronDown as Chevrons } from "react-icons/lu";
+import { LuChevronDown as Chevron } from "react-icons/lu";
+import { twMerge } from 'tailwind-merge';
+
+interface DropdownMenuType extends React.HTMLAttributes<HTMLDivElement> {
+  label: string;
+  options: string[];
+  selectOption: (option: string) => void;
+}
 
 const DropdownMenu = ({
   label,
   options,
   selectOption,
-}: {
-  label: string;
-  options: string[];
-  selectOption: (option: string) => void;
-}) => {
+  className,
+  ...rest
+}: DropdownMenuType) => {
   const [selected, setSelected] = useState(options[0]);
 
   return (
@@ -21,14 +26,14 @@ const DropdownMenu = ({
         selectOption(e);
       }}
     >
-      <div className='flex justify-between gap-2'>
+      <div className={twMerge('flex justify-between gap-2', className)} {...rest}>
         <Listbox.Label className='font-bold'>{label}</Listbox.Label>
         <div className='w-1/2'>
           <Listbox.Button
             className='flex justify-end gap-1 w-full'
           >
             {selected}
-            <Chevrons className='self-center shrink-0 text-neutral-450' aria-hidden='true' />
+            <Chevron className='self-center shrink-0 text-neutral-450' aria-hidden='true' />
           </Listbox.Button>
           <Transition
             as={Fragment}

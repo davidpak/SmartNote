@@ -3,16 +3,19 @@ import { useState, Fragment } from 'react';
 
 import Button from './Button';
 
-const ExportModal = ({
-  children,
-  exportUrl,
-  exportFilename,
-}: {
-  children: React.ReactNode;
+interface ExportModalType extends React.HTMLAttributes<HTMLDivElement> {
   exportUrl: string;
   exportFilename: string;
-}) => {
-  const [open, setOpen] = useState(false);
+}
+
+const ExportModal = ({
+  exportUrl,
+  exportFilename,
+  children,
+  className,
+  ...rest
+}: ExportModalType) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   function download(): void {
     const aTag = document.createElement('a');
@@ -24,15 +27,15 @@ const ExportModal = ({
   }
 
   return (
-    <div>
+    <div className={className} {...rest}>
       <Button
         children='Export'
-        onClick={() => setOpen(true)}
+        onClick={() => setIsOpen(true)}
       >
       </Button>
 
       <Transition
-        show={open}
+        show={isOpen}
         as={Fragment}
         enterFrom='opacity-0'
         enterTo='opacity-100'
@@ -41,7 +44,7 @@ const ExportModal = ({
         leaveFrom='opacity-100'
         leaveTo='opacity-0'
       >
-        <Dialog onClose={() => setOpen(false)}>
+        <Dialog onClose={() => setIsOpen(false)}>
           <div className="fixed inset-0 bg-black/50"/>
           <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
             <Dialog.Panel className="w-96 flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-xl transition-all">
@@ -50,13 +53,13 @@ const ExportModal = ({
                 <Button
                   children='Cancel'
                   variant='secondary'
-                  onClick={() => setOpen(false)}
+                  onClick={() => setIsOpen(false)}
                 />
                 <Button
                   children='Export'
                   onClick={() => {
                     download();
-                    setOpen(false);
+                    setIsOpen(false);
                   }
                   }
                 />
