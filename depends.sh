@@ -157,7 +157,7 @@ else
         if [[ -z "$java_version_major" ]]; then
             fail "java"
         else
-            if [[ "$java_version_major" -ge 8 ]]; then
+            if [[ "$java_version_major" -ge 17 ]]; then
                 succeed "java"
                 HAS_JAVA=true
             else
@@ -191,7 +191,7 @@ if [[ $HAS_JAVA = true ]]; then
                 fail "javac"
             else
                 clear_line
-                if [[ "$javac_version_major" -ge 8 ]]; then
+                if [[ "$javac_version_major" -ge 17 ]]; then
                     succeed "javac"
                     HAS_JAVAC=true
                 else
@@ -580,7 +580,7 @@ if [[ $HAS_JAVA = false ]]; then
     if [[ -z "$java_version" ]]; then
         printf "      ${RED}No installation${NC}\n"
     fi
-    printf "      ${RED}Requires JDK 8 or higher${NC}\n"
+    printf "      ${RED}Requires JDK 17 or higher${NC}\n"
 fi
 
 # Javac
@@ -589,7 +589,7 @@ if [[ $HAS_JAVAC = false ]]; then
     if [[ -z "$javac_version" ]]; then
         printf "      ${RED}No installation${NC}\n"
     fi
-    printf "      ${RED}Requires JDK 8 or higher${NC}\n"
+    printf "      ${RED}Requires JDK 17 or higher${NC}\n"
 fi
 
 # Ant

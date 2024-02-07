@@ -42,6 +42,24 @@ public class ResourceSystem {
     public static final String SESSION_AUTH = "session";
 
     /**
+     * The supported MIME types for uploads.
+     */
+    public static final String[] SUPPORTED_MIME_TYPES = {
+            "application/pdf",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    };
+
+    /**
+     * The supported authorities.
+     */
+    public static final String[] AUTHORITIES = {
+            PUBLIC_AUTH,
+            PRIVATE_AUTH,
+            SESSION_AUTH
+    };
+
+    /**
      * Creates a new public resource name.
      * 
      * @param path The path.
@@ -85,6 +103,8 @@ public class ResourceSystem {
     private Path privateDir;
     private Path sessionDir;
 
+    private FileResourceFactory fileResourceFactory;
+
     /**
      * Creates a new ResourceSystem object with the specified configuration.
      * 
@@ -94,6 +114,8 @@ public class ResourceSystem {
         this.publicDir = FileUtils.getCanonicalFile(config.getPrivateDir()).toPath();
         this.privateDir = FileUtils.getCanonicalFile(config.getPublicDir()).toPath();
         this.sessionDir = FileUtils.getCanonicalFile(config.getSessionDir()).toPath();
+
+        this.fileResourceFactory = (file, mode) -> new FileResource(file.toFile(), mode);
     }
 
     /**
@@ -160,41 +182,108 @@ public class ResourceSystem {
 
         int colonIndex = name.indexOf(':');
         if (colonIndex == -1)
-            throw new NoSuchResourceException(name);
+            throw new InvalidPathException(name, "Path must be in the format authority:path");
 
         // parse authority and path
         String authority = name.substring(0, colonIndex);
-        String path = name.substring(colonIndex + 1);
-        Path rest = Paths.get(path);
+        Path path = Paths.get(name.substring(colonIndex + 1));
+
+        for (Path part : path) {
+            String pathString = part.toString();
+
+            if (pathString.equals(".") || pathString.equals(".."))
+                continue;
+
+            if (pathString.charAt(0) == '.')
+                throw new InvalidPathException(name, "Path part cannot start with '.'");
+        }
+
+        return findActualResource(authority, path, permission);
+    }
+
+    /**
+     * <p>
+     * Similar to <code>findResource</code>, but allows access to files that start
+     * with
+     * a period (meant to be hidden files).
+     * </p>
+     * 
+     * @param authority  The authority. Cannot be <code>null</code>.
+     * @param path       The path within the authority. Cannot be <code>null</code>.
+     * @param permission The permission to use. Cannot be <code>null</code>.
+     * @return The resource. Never <code>null</code>.
+     * @throws SecurityException       If the permission is not sufficient to access
+     *                                 the
+     *                                 resource.
+     * @throws InvalidPathException    If the path is invalid.
+     * @throws NoSuchResourceException If the resource does not exist, or is not
+     *                                 accessible.
+     * @throws IOException             If an I/O error occurs.
+     */
+    public Resource findActualResource(String authority, Path path, Permission permission)
+            throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
+        Objects.requireNonNull(authority, "authority cannot be null");
+        Objects.requireNonNull(path, "path cannot be null");
+        Objects.requireNonNull(permission, "permission cannot be null");
 
         // find resource
         try {
             if (authority.equals(PUBLIC_AUTH))
-                return getPublicResource(rest, permission);
+                return getPublicResource(path, permission);
             else if (authority.equals(PRIVATE_AUTH))
-                return getPrivateResource(rest, permission);
+                return getPrivateResource(path, permission);
             else if (authority.equals(SESSION_AUTH))
-                return getSessionResource(rest, permission);
+                return getSessionResource(path, permission);
         } catch (NoSuchResourceException e) {
-            throw new NoSuchResourceException(name); // rethrow with original name
+            throw new NoSuchResourceException(authority + ":" + path.toString()); // rethrow with original name
         }
 
         // unknown authority
-        throw new NoSuchResourceException(name);
+        throw new NoSuchResourceException(authority + ":" + path.toString());
+    }
+
+    /**
+     * Converts an abstract path to an actual path. The abstract path must be in the
+     * format <code>authority:path</code>.
+     * 
+     * @param abstractPath The abstract path.
+     * @return The actual path.
+     * @throws InvalidPathException If the path is invalid.
+     */
+    public String getActualPath(String abstractPath) throws InvalidPathException {
+        int colonIndex = abstractPath.indexOf(':');
+        if (colonIndex == -1)
+            throw new InvalidPathException(abstractPath, "Path must be in the format authority:path");
+
+        String authority = abstractPath.substring(0, colonIndex);
+        Path path = Paths.get(abstractPath.substring(colonIndex + 1));
+
+        // collapse . and ..
+        Path collapsed = Paths.get("");
+        for (Path part : path) {
+            if (part.toString().equals("."))
+                continue;
+            else if (part.toString().equals("..")) {
+                collapsed = collapsed.getParent();
+                if (collapsed == null)
+                    throw new InvalidPathException(abstractPath, "Path is outside of authority");
+            } else
+                collapsed = collapsed.resolve(part);
+        }
+
+        return authority + ":" + collapsed.toString().replace('\\', '/');
     }
 
     private Resource getPublicResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
-        Path fullPath = getFullPath(publicDir, path);
-        return new FileResource(fullPath.toFile(), FileResource.READ);
+        return fileResourceFactory.openFileResource(getFullPath(publicDir, path), AccessMode.READ);
     }
 
     private Resource getPrivateResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         if (!permission.implies(getPrivatePermission()))
             throw new SecurityException("Access denied");
-        Path fullPath = getFullPath(privateDir, path);
-        return new FileResource(fullPath.toFile(), FileResource.READ);
+        return fileResourceFactory.openFileResource(getFullPath(privateDir, path), AccessMode.READ);
     }
 
     private Resource getSessionResource(Path path, Permission permission)
@@ -204,8 +293,7 @@ public class ResourceSystem {
 
         SessionPermission sessionPermission = (SessionPermission) permission;
         Path fullPath = sessionPermission.getSession().pathInSession(path);
-        return new FileResource(fullPath.toFile(),
-                FileResource.READ | FileResource.WRITE | FileResource.DELETE);
+        return fileResourceFactory.openFileResource(fullPath, AccessMode.READ_WRITE_DELETE);
     }
 
     private Path getFullPath(Path root, Path path) throws SecurityException {

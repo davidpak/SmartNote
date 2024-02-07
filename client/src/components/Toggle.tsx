@@ -1,11 +1,22 @@
 import { useState } from 'react';
 import { Switch } from '@headlessui/react';
+import { twMerge } from 'tailwind-merge';
 
-const Toggle = ({ label }: { label: string }) => {
+interface ToggleType extends React.HTMLAttributes<HTMLLabelElement> {
+  label: string;
+}
+
+const Toggle = ({ label, className, ...rest }: ToggleType) => {
   const [enabled, setEnabled] = useState(false);
 
   return (
-    <label className='flex justify-between gap-2 text-neutral-500'>
+    <label
+      className={twMerge(
+        'flex justify-between gap-2 text-neutral-500',
+        className
+      )}
+      {...rest}
+    >
       {label}
       <Switch
         checked={enabled}

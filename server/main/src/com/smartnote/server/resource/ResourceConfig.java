@@ -27,9 +27,22 @@ public class ResourceConfig implements CommandLineHandler, Validator {
      */
     public static final String DEFAULT_SESSION_DIR = "sessions";
 
+    /**
+     * Default maximum upload size.
+     */
+    public static final long DEFAULT_MAX_UPLOAD_SIZE = 1024 * 1024 * 100; // 100 MiB
+
+    /**
+     * Default session quota.
+     */
+    public static final long DEFAULT_SESSION_QUOTA = 1024 * 1024 * 1024; // 1 GiB
+
     private String privateDir;
     private String publicDir;
     private String sessionDir;
+
+    private long maxUploadSize;
+    private long sessionQuota;
     
     /**
      * Creates a new ResourceConfig object with default values.
@@ -38,6 +51,8 @@ public class ResourceConfig implements CommandLineHandler, Validator {
         this.privateDir = DEFAULT_PRIVATE_DIR;
         this.publicDir = DEFAULT_PUBLIC_DIR;
         this.sessionDir = DEFAULT_SESSION_DIR;
+        this.maxUploadSize = DEFAULT_MAX_UPLOAD_SIZE;
+        this.sessionQuota = DEFAULT_SESSION_QUOTA;
     }
 
     /**
@@ -65,6 +80,24 @@ public class ResourceConfig implements CommandLineHandler, Validator {
      */
     public String getSessionDir() {
         return sessionDir;
+    }
+
+    /**
+     * Gets the maximum upload size.
+     * 
+     * @return The maximum upload size
+     */
+    public long getMaxUploadSize() {
+        return maxUploadSize;
+    }
+
+    /**
+     * Gets the session quota.
+     * 
+     * @return The session quota
+     */
+    public long getSessionQuota() {
+        return sessionQuota;
     }
 
     @Override

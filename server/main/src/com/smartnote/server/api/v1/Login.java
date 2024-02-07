@@ -2,6 +2,7 @@ package com.smartnote.server.api.v1;
 
 import static spark.Spark.halt;
 
+import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
@@ -26,13 +27,13 @@ public class Login implements Route {
         response.type("application/json");
 
         // no authorization header allowed
-        if (request.queryParams("Authorization") != null) {
-            halt(400);
+        if (request.headers("Authorization") != null) {
+            response.status(400);
             return "{\"message\": \"Authorization header not allowed\"}";
         }
 
         // create session
-        Session session = Session.createSession();
+        Session session = Server.getServer().getSessionManager().createSession();
 
         session.writeToResponse(response);
         return "{\"message\": \"Session created\"}";

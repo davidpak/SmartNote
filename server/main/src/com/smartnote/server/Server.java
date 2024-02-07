@@ -11,8 +11,10 @@ import com.smartnote.server.api.v1.Export;
 import com.smartnote.server.api.v1.Fetch;
 import com.smartnote.server.api.v1.Generate;
 import com.smartnote.server.api.v1.Login;
+import com.smartnote.server.api.v1.Remove;
+import com.smartnote.server.api.v1.RescInfo;
 import com.smartnote.server.api.v1.Upload;
-import com.smartnote.server.auth.Session;
+import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.cli.CommandLineParser;
 import com.smartnote.server.cli.ExitEarlyEarlyException;
 import com.smartnote.server.cli.NoSuchSwitchException;
@@ -35,6 +37,11 @@ import spark.Route;
 public class Server {
 
     /**
+     * The version.
+     */
+    public static final String VERSION = "1.0.0";
+
+    /**
      * The logger.
      */
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
@@ -42,15 +49,15 @@ public class Server {
     /**
      * The server.
      */
-    public static final Server SERVER = new Server();
+    private static final Server SERVER = new Server();
 
-    /**
-     * The version.
-     */
-    public static final String VERSION = "1.0.0";
+    public static Server getServer() {
+        return SERVER;
+    }
 
     private Config config; // the server config
     private ResourceSystem resourceSystem; // the resource system
+    private SessionManager sessionManager; // the session manager
 
     public static void main(String[] args) {
         SERVER.init(args);
@@ -76,6 +83,15 @@ public class Server {
      */
     public ResourceSystem getResourceSystem() {
         return resourceSystem;
+    }
+
+    /**
+     * Gets the session manager.
+     * 
+     * @return The session manager.
+     */
+    public SessionManager getSessionManager() {
+        return sessionManager;
     }
 
     /**
@@ -151,8 +167,9 @@ public class Server {
 
         resourceSystem = new ResourceSystem(config.getResourceConfig());
 
-        // remove old sessions
-        Session.forceGc();
+        // initialize the session manager
+        this.sessionManager = new SessionManager();
+        this.sessionManager.forceGc();
 
         // handle exceptions
         exception(Exception.class, (e, req, res) -> {
@@ -163,6 +180,16 @@ public class Server {
 
         port(config.getServerConfig().getPort());
 
+        after((req, res) -> {
+            // CORS
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Methods", "GET, POST");
+            res.header("Access-Control-Allow-Credentials", "true");
+            res.header("Access-Control-Allow-Headers",
+                    "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
+            res.header("Access-Control-Expose-Headers", "Content-Type, Authorization");
+        });
+
         // Add RPC routes
         addRoute(Export.class);
         addRoute(Fetch.class);
@@ -170,6 +197,8 @@ public class Server {
         addRoute(Upload.class);
         addRoute(Login.class);
         addRoute(Upload.class);
+        addRoute(Remove.class);
+        addRoute(RescInfo.class);
 
         return 0;
     }
@@ -201,9 +230,21 @@ public class Server {
         switch (route.method()) {
             case GET:
                 get(path, r);
+                options(path, (req, res) -> {
+                    res.status(200);
+                    res.header("Allow", "GET");
+                    res.type("application/json");
+                    return "{\"message\":\"OK\"}";
+                });
                 break;
             case POST:
                 post(path, r);
+                options(path, (req, res) -> {
+                    res.status(200);
+                    res.header("Allow", "POST");
+                    res.type("application/json");
+                    return "{\"message\":\"OK\"}";
+                });
                 break;
             default:
                 throw new IllegalArgumentException("Unknown method type: " + route.method());
