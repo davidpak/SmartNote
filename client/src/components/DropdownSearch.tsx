@@ -7,19 +7,19 @@ export interface File {
   icon?: string;
 }
 
-interface DropdownSelectType extends React.HTMLAttributes<HTMLDivElement> {
+interface DropdownSearchType extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
   options: File[];
   selectPage: Dispatch<SetStateAction<File>>;
 }
 
-const DropdownSelect = ({
+const DropdownSearch = ({
   label,
   options,
   selectPage,
   className,
   ...rest
-}: DropdownSelectType) => {
+}: DropdownSearchType) => {
   const [searchOptions, setSearchOptions] = useState(options);
   const placeholder: File = {
     name: label,
@@ -117,4 +117,4 @@ const DropdownSelect = ({
   );
 };
 
-export default DropdownSelect;
+export default DropdownSearch;
