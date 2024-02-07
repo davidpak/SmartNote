@@ -1,19 +1,40 @@
 package com.smartnote.server.export;
 
+import static com.smartnote.server.util.FunctionalUtils.*;
+
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublisher;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.smartnote.server.util.Entry;
 
+/**
+ * <p>
+ * Interface to the Notion API.
+ * </p>
+ * 
+ * @author Ethan Vrhel
+ * @see NotionExporter
+ */
 public class NotionAPI {
+    /**
+     * Base URL for the Notion API.
+     */
     public static final String NOTION_API_URL = "https://api.notion.com/v1";
-    
-    public static URI getURIFor(String path) {
-        return URI.create(NOTION_API_URL + path);
+
+    public static URI uriOf(String endpoint) {
+        return URI.create(NOTION_API_URL + endpoint);
     }
 
     private String token;
@@ -23,53 +44,62 @@ public class NotionAPI {
 
     private HttpClient client;
 
-    private JsonObject databases;
-
-    public NotionAPI build(String token, String version) throws IOException, InterruptedException, Exception {
+    /**
+     * Sets up the Notion API.
+     * 
+     * @param token   The Notion API token.
+     * @param version The Notion API version.
+     * @return <code>this</code>
+     * @throws IOException If the system does not have the necessary
+     *                     resources to connect to the Notion API.
+     */
+    public NotionAPI build(String token, String version) throws IOException {
         this.token = token;
         this.version = version;
         this.gson = new Gson();
-        this.client = HttpClient.newHttpClient();
-        this.databases = null;
-
-        URI databasesURI = getURIFor("/databases");
-
-        HttpRequest request = HttpRequest.newBuilder(databasesURI)
-            .header("Authorization", "Bearer " + token)
-            .header("Notion-Version", version)
-            .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200)
-            throw new Exception("Failed to build Notion API: " + response.statusCode());
-
-        this.databases = gson.fromJson(response.body(), JsonObject.class);
+        try {
+            this.client = HttpClient.newHttpClient();
+        } catch (UncheckedIOException e) {
+            throw new IOException(e);
+        }
 
         return this;
     }
 
-    public JsonObject getDatabases() {
-        return databases;
+    private HttpRequest.Builder append(String blockId, JsonObject body) {
+        String endpoint = "blocks/" + formatId(blockId) + "/children";
+        return auth(to(endpoint).method("PATCH", jsonPublisher(body)));
     }
 
-    public JsonObject createPage(String databaseID, JsonObject properties) throws IOException, InterruptedException {
-        URI createPageURI = getURIFor("/pages");
+    private HttpRequest.Builder auth(HttpRequest.Builder b) {
+        return b.header("Authorization", "Bearer " + token).header("Notion-Version", version);
+    }
 
-        JsonObject body = new JsonObject();
-        body.addProperty("parent", databaseID);
-        body.add("properties", properties);
+    /**
+     * Format a Notion ID to the dashed format. If the ID is already in the dashed
+     * format, it is returned as is.
+     * 
+     * @param id The ID to format.
+     * @return The formatted ID.
+     */
+    private static String formatId(String id) {
+        if (id.length() == 36)
+            return id;
 
-        HttpRequest request = HttpRequest.newBuilder(createPageURI)
-            .header("Authorization", "Bearer " + token)
-            .header("Notion-Version", version)
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(body)))
-            .build();
+        StringBuilder sb = new StringBuilder(id);
+        sb.insert(8, '-');
+        sb.insert(13, '-');
+        sb.insert(18, '-');
+        sb.insert(23, '-');
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200)
-            throw new IOException("Failed to create page: " + response.body());
+        return sb.toString();
+    }
 
-        return gson.fromJson(response.body(), JsonObject.class);
+    private static HttpRequest.Builder to(String endpoint) {
+        return HttpRequest.newBuilder().uri(uriOf(endpoint));
+    }
+
+    private static BodyPublisher jsonPublisher(JsonElement json) {
+        return HttpRequest.BodyPublishers.ofString(new Gson().toJson(json));
     }
 }

@@ -9,7 +9,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 /**
- * <p>Exports to Notion using the Notion API.</p>
+ * <p>
+ * Exports to Notion using the Notion API.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see RemoteExporter
@@ -19,19 +21,18 @@ public class NotionExporter implements RemoteExporter {
     public static final String NOTION_VERSION = "2021-08-16";
 
     @Override
-    public JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException, ExportException, MalformedExportOptionsException {
+    public JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException,
+            InvalidPathException, IOException, ExportException, MalformedExportOptionsException {
         String token = getToken(options);
         NotionAPI notionAPI = new NotionAPI();
 
         JsonObject result;
         try {
             notionAPI.build(token, NOTION_VERSION);
-            
+
             result = new JsonObject();
         } catch (IOException e) {
             throw new ExportServiceUnavailableException(e);
-        } catch (InterruptedException e) {
-            throw new ExportServiceTimeoutException(e);
         } catch (Exception e) {
             throw new ExportServiceConnectionException(e);
         }
