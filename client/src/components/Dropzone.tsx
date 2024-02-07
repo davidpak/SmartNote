@@ -1,5 +1,6 @@
 import { FileRejection, ErrorCode, useDropzone } from 'react-dropzone';
 import { IoCloudUploadOutline as Upload } from 'react-icons/io5';
+import { twMerge } from 'tailwind-merge';
 
 import FileListItem from './FileListItem';
 
@@ -51,7 +52,7 @@ const Dropzone = ({
   };
 
   return (
-    <section className={className} {...rest}>
+    <section className={twMerge('flex flex-col gap-4', className)} {...rest}>
       <div
         {...getRootProps({
           className:
