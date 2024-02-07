@@ -8,7 +8,6 @@ interface ButtonType extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   icon?: IconType;
   variant?: Variant;
-  className?: string;
 }
 
 const Button = ({

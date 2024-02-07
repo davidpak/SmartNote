@@ -2,10 +2,17 @@ import prettyBytes from 'pretty-bytes';
 import { FiX as Remove } from 'react-icons/fi';
 import { FaCircleCheck as Success } from 'react-icons/fa6';
 import { IoMdWarning as Error } from 'react-icons/io';
+import { twMerge } from 'tailwind-merge';
 
 export interface File {
   name: string;
   size: number; // in bytes
+}
+
+interface FileListItemType extends React.HTMLAttributes<HTMLDivElement> {
+  file: File;
+  errorMessage?: string;
+  onRemove?: () => void;
 }
 
 const FileListItem = ({
@@ -13,18 +20,15 @@ const FileListItem = ({
   errorMessage,
   onRemove,
   className,
-}: {
-  file: File;
-  errorMessage?: string;
-  onRemove?: () => void;
-  className?: string;
-}) => {
+  ...rest
+}: FileListItemType) => {
   const { name, size } = file;
   const type = name.split('.').slice(-1)[0];
 
   return (
     <div
-      className={`${className ?? ''} flex w-full justify-between items-center`}
+      className={twMerge('flex w-full justify-between items-center', className)}
+      {...rest}
     >
       <div className='flex items-center gap-5'>
         <img
