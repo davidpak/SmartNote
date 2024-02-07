@@ -1,15 +1,17 @@
+import { twMerge } from 'tailwind-merge';
+
 const H1 = ({
   children,
   className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
+  ...rest
+}: React.HTMLAttributes<HTMLHeadingElement>) => {
   return (
     <h1
-      className={`${
-        className ?? ''
-      } font-bold text-[4rem] leading-[3rem] text-accent`}
+      className={twMerge(
+        'font-bold text-[4rem] leading-[3rem] text-accent',
+        className
+      )}
+      {...rest}
     >
       {children}
     </h1>
