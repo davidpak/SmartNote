@@ -6,16 +6,15 @@ import java.util.function.Supplier;
 
 import org.commonmark.node.*;
 
-import com.google.gson.*;
-import com.smartnote.server.util.JSONObjectSerializable;
-
 /**
- * <p>Converts markdown to Notion's internal format.</p>
+ * <p>
+ * Converts markdown to Notion's internal format.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see NotionRenderer
  */
-class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
+class NotionVisitor extends AbstractVisitor {
     private NotionPage page;
     private NotionBlock current;
 
@@ -154,18 +153,9 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
         visitChildren(customNode);
     }
 
-    @Override
-    public JsonObject writeJSON(JsonObject json) {
-        return json;
-    }
-
-    @Override
-    public void loadJSON(JsonObject json) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
     /**
-     * Add a block as a child of the current block or the page if there is no current block.
+     * Add a block as a child of the current block or the page if there is no
+     * current block.
      * 
      * @param block The block to add.
      */
@@ -183,7 +173,7 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
      * to the current block or page.
      * 
      * @param supplier A supplier that returns rich text data.
-     * @param node The node to consume.
+     * @param node     The node to consume.
      */
     private void next(Supplier<RichTextData> supplier, Node node) {
         Supplier<RichTextData> old = richText;
@@ -198,7 +188,7 @@ class NotionVisitor extends AbstractVisitor implements JSONObjectSerializable {
      * previous value. This will add the block to the current block or page.
      * 
      * @param block The block to emit.
-     * @param node The node to visit.
+     * @param node  The node to visit.
      */
     private void emit(NotionBlock block, Node node) {
         add(block);

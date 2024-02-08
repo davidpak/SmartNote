@@ -25,9 +25,10 @@ public class NotionRenderer implements Renderer {
 
     @Override
     public void render(Node node, Appendable output) {
-        NotionVisitor visitor = new NotionVisitor();
+        NotionPage page = new NotionPage();
+        NotionVisitor visitor = new NotionVisitor(page);
         node.accept(visitor);
-        new Gson().toJson(visitor.writeJSON(), output);
+        new Gson().toJson(page.writeJSON(), output);
     }
 
     @Override
