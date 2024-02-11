@@ -1,14 +1,17 @@
 package com.smartnote.testing;
 
 import static org.junit.Assert.*;
-
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.JsonObject;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.auth.SessionManager;
 
 import spark.Request;
 import spark.Response;
@@ -33,11 +36,13 @@ public class BaseRoute extends BaseServer {
     private Request request;
     private Map<String, String> requestQueryParams;
     private Map<String, String> requestHeaders;
+    private Map<String, String> requestCookies;
     private String requestBody;
     private String requestContentType;
 
     // response
     private Map<String, String> responseHeaders;
+    private Map<String, AbstractMap.SimpleEntry<String, Integer>> responseCookies;
     private String responseBody;
     private String responseType;
     private int responseStatus;
@@ -106,7 +111,9 @@ public class BaseRoute extends BaseServer {
     }
 
     public Session responseSession() {
-        return getSession(responseHeaders.get("Authorization"));
+        var p = responseCookies.get(SessionManager.COOKIE_NAME);
+        if (p == null) return null;
+        return getSession(p.getKey());
     }
 
     /**
@@ -119,6 +126,10 @@ public class BaseRoute extends BaseServer {
         requestQueryParams.put(key, value);
     }
 
+    public String getRequestQueryParam(String key) {
+        return requestQueryParams.get(key);
+    }
+
     /**
      * Removes a query parameter from the request.
      * 
@@ -126,6 +137,14 @@ public class BaseRoute extends BaseServer {
      */
     public void removeRequestQueryParam(String key) {
         requestQueryParams.remove(key);
+    }
+
+    public void setRequestCookie(String key, String value) {
+        requestCookies.put(key, value);
+    }
+
+    public void removeRequestCookie(String key) {
+        requestCookies.remove(key);
     }
 
     /**
@@ -147,11 +166,11 @@ public class BaseRoute extends BaseServer {
     }
 
     public void activateSession() {
-        requestHeaders.put("Authorization", SESSION_TOKEN);
+        requestCookies.put(SessionManager.COOKIE_NAME, SESSION_TOKEN);
     }
 
     public void deactivateSession() {
-        requestHeaders.remove("Authorization");
+        requestCookies.remove(SessionManager.COOKIE_NAME);
     }
     
     // creates a mock request
@@ -168,6 +187,11 @@ public class BaseRoute extends BaseServer {
             return requestHeaders.get(invokation.getArguments()[0]);
         }).when(request).headers(anyString());
 
+        // Request.cookie(String)
+        doAnswer(invokation -> {
+            return requestCookies.get(invokation.getArguments()[0]);
+        }).when(request).cookie(anyString());
+
         // Request.body()
         when(request.body()).thenAnswer(invokation -> requestBody);
 
@@ -179,12 +203,14 @@ public class BaseRoute extends BaseServer {
         
         this.requestQueryParams = new HashMap<>();
         this.requestHeaders = new HashMap<>();
+        this.requestCookies = new HashMap<>();
         return request;
     }
 
     // creates a mock response
     private Response mockResponse() {
         responseHeaders = new HashMap<>();
+        responseCookies = new HashMap<>();
 
         Response response = mock(Response.class);
 
@@ -220,6 +246,18 @@ public class BaseRoute extends BaseServer {
             responseHeaders.put((String) invokation.getArguments()[0], (String) invokation.getArguments()[1]);
             return null;
         }).when(response).header(anyString(), anyString());
+
+        // Response.cookie(String, String, int)
+        doAnswer(invokation -> {
+            responseCookies.put((String) invokation.getArguments()[0], new AbstractMap.SimpleEntry<>((String) invokation.getArguments()[1], (int) invokation.getArguments()[2]));
+            return null;
+        }).when(response).cookie(anyString(), anyString(), anyInt());
+        
+        // Response.cookie(String, String)
+        doAnswer(invokation -> {
+            responseCookies.put((String) invokation.getArguments()[0], new AbstractMap.SimpleEntry<>((String) invokation.getArguments()[1], null));
+            return null;
+        }).when(response).cookie(anyString(), anyString());
 
         return response;
     }

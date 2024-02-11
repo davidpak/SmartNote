@@ -17,8 +17,7 @@ import spark.Response;
  * <p>
  * Stores session information. Sessions are implemented using
  * <a href="https://en.wikipedia.org/wiki/JSON_Web_Token">JSON Web Tokens</a>
- * (JWTs). The JWT is stored in the <code>Authorization</code> header
- * within HTTP requests and responses.
+ * (JWTs). The JWT is stored in the <code>session</code> cookie.
  * </p>
  * 
  * <p>
@@ -153,12 +152,14 @@ public class Session {
 
     /**
      * Writes the session token to the response. Will be stored in the
-     * <code>Authorization</code> header.
+     * <code>session</code> cookie.
      * 
      * @param response The response.
      */
     public void writeToResponse(Response response) {
-        response.header("Authorization", jwt.getToken());
+        Instant expr = jwt.getExpiresAtAsInstant();
+        int maxAge = (int) (expr.getEpochSecond() - Instant.now().getEpochSecond());
+        response.cookie(SessionManager.COOKIE_NAME, jwt.getToken(), maxAge);
     }
 
     /**

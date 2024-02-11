@@ -1,10 +1,13 @@
 package com.smartnote.testing;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
+import java.time.Instant;
 
 import com.smartnote.server.Config;
 import com.smartnote.server.Server;
@@ -99,7 +102,7 @@ public class BaseServer extends Base {
 
         when(sessionManager.getSession(any(Request.class))).thenAnswer(invokation -> {
             Request request = (Request) invokation.getArguments()[0];
-            return getSession(request.headers("Authorization"));
+            return getSession(request.cookie(SessionManager.COOKIE_NAME));
         });
 
         when(sessionManager.createSession()).thenAnswer(invokation -> createNewSession());
@@ -141,7 +144,7 @@ public class BaseServer extends Base {
 
         doAnswer(invokation -> {
             Response response = (Response) invokation.getArguments()[0];
-            response.header("Authorization", SESSION_TOKEN);
+            response.cookie(SessionManager.COOKIE_NAME, SESSION_TOKEN, (int) SessionManager.SESSION_LENGTH);
             return null;
         }).when(session).writeToResponse(any(Response.class));
 
