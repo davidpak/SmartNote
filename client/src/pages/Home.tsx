@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
 import Warning from '../components/Warning';
@@ -10,7 +11,7 @@ const Home = () => {
 
   const hasErrors = () => errors.filter((error) => error !== null).length > 0;
 
-  // TODO: save jwt in context or redux
+  // TODO: server should send JWT as an HTTP-only cookie
   useEffect(() => {
     const login = async () => {
       if (!jwt) {
@@ -57,19 +58,19 @@ const Home = () => {
   };
 
   return (
-    <div className='flex flex-col gap-8 items-center w-1/2'>
-      <Dropzone
-        files={files}
-        setFiles={(files) => setFiles(files)}
-        errors={errors}
-        setErrors={(errors) => setErrors(errors)}
-        className='w-full'
-      />
-      {hasErrors() && <Warning>Remove all invalid files to continue.</Warning>}
-      {/* TODO: display warning banner if there are invalid files or user
-      removes all files, disable button when there are errors or no files
-      uploaded yet */}
-      {/* <Warning>Upload at least one file to continue.</Warning> */}
+    <div className='flex flex-col items-center gap-8'>
+      <div className='flex flex-col gap-6 items-center w-full max-w-lg'>
+        <Dropzone
+          files={files}
+          setFiles={(files) => setFiles(files)}
+          errors={errors}
+          setErrors={(errors) => setErrors(errors)}
+          className='w-full'
+        />
+        {hasErrors() && (
+          <Warning>Remove all invalid files to continue.</Warning>
+        )}
+      </div>
       <Button
         {...((files.length === 0 || hasErrors()) && { disabled: true })}
         onClick={() => uploadFiles()}
