@@ -1,8 +1,8 @@
-import DropdownSelect from '../components/DropdownSelect';
+import DropdownSearch from '../components/DropdownSearch';
 import componentSmokeTest from './componentSmokeTest';
 
 componentSmokeTest({
-  Component: DropdownSelect,
+  Component: DropdownSearch,
   props: {
     label: 'Select a Notion page',
     options: [
