@@ -25,10 +25,10 @@ import com.google.gson.JsonObject;
  */
 public class NotionRenderer implements Renderer {
     public JsonObject renderJson(Node node) {
-        NotionPage page = new NotionPage();
-        Visitor visitor = new NotionVisitor(page);
+        NotionVisitor visitor = new NotionVisitor();
         node.accept(visitor);
-        return page.writeJSON();
+        return visitor.getJson();
+        //return page.writeJSON();
     }
 
     @Override

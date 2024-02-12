@@ -14,9 +14,11 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.smartnote.server.format.notion.NotionRenderer;
+import com.smartnote.server.util.MIME;
 
 /**
  * <p>
@@ -43,7 +45,7 @@ public class NotionAPI {
             System.exit(1);
         }
 
-        String markdown = "Hello World!"; // Files.readString(Paths.get("private", "output.md"));
+        String markdown = Files.readString(Paths.get("private", "test.md"));
 
         Parser parser = Parser.builder().build();
         Node document = parser.parse(markdown);
@@ -51,11 +53,12 @@ public class NotionAPI {
         NotionRenderer renderer = new NotionRenderer();
         JsonObject notionJson = renderer.renderJson(document);
 
-        System.out.println(notionJson);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        System.out.println(gson.toJson(notionJson));
 
         String token = args[0];
         String blockId = args[1];
-        String version = "2021-05-13";
+        String version = "2022-06-28";
 
         NotionAPI api = new NotionAPI().build(token, version);
         api.appendBlock(blockId, notionJson);
@@ -97,18 +100,16 @@ public class NotionAPI {
     public void appendBlock(String blockId, JsonObject json) throws IOException, InterruptedException {
         HttpRequest.Builder builder = append(blockId, json);
         HttpRequest request = builder.build();
+        System.out.println(request.uri() + " " + request.method() + " " + request.headers());
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println("Response: " + response.statusCode());
-        System.out.println(response.body());
-    }
-
-    private void append(String blockId, String jsonString) {
-        HttpRequest.Builder builder = append(blockId, gson.fromJson(jsonString, JsonObject.class));
+        if (response.statusCode() != 200)
+            System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(gson.fromJson(response.body(), JsonObject.class)));
     }
 
     private HttpRequest.Builder append(String blockId, JsonObject body) {
         String endpoint = "blocks/" + formatId(blockId) + "/children";
-        return auth(to(endpoint).method("PATCH", jsonPublisher(body)));
+        return auth(to(endpoint).method("PATCH", jsonPublisher(body))).header("Content-Type", MIME.JSON);
     }
 
     private HttpRequest.Builder auth(HttpRequest.Builder b) {
