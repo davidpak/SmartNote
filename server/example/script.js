@@ -10,21 +10,17 @@ button.addEventListener("click", function(evt) {
 
     // first, login
     fetch(login_url, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
     }).then(response => {
         if (!response.ok)
             throw new Error("HTTP error " + response.status);
 
-        // get auth token
-        let auth = response.headers.get("Authorization");
-
         // now, upload file
         fetch(upload_url, {
             method: 'POST',
-            headers: {
-                'Authorization': auth
-            },
-            body: file
+            credentials: 'include',
+            body: file,
         }).then(response => {
             if (!response.ok)
                 throw new Error("HTTP error " + response.status);

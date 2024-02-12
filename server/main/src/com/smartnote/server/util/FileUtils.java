@@ -281,6 +281,9 @@ public class FileUtils {
     public static long getDirectorySize(File directory) throws NullPointerException, SecurityException {
         Objects.requireNonNull(directory);
 
+        if (!directory.exists())
+            return 0L;
+
         long size = 0;
         for (File f : directory.listFiles()) {
             if (f.isDirectory())

@@ -1,5 +1,6 @@
 package com.smartnote.server.resource;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.smartnote.server.cli.CommandLineParser;
 import com.smartnote.server.util.AbstractConfig;
@@ -118,19 +119,19 @@ public class ResourceConfig extends AbstractConfig {
 
     @Override
     public void addHandlers(CommandLineParser parser) {
-        parser.addHandler("private-dir", (p, a) -> {
+        parser.addHandler("privateDir", (p, a) -> {
             privateDir = p.next();
         }, "r");
 
-        parser.addHandler("public-dir", (p, a) -> {
+        parser.addHandler("publicDir", (p, a) -> {
             publicDir = p.next();
         }, "u");
 
-        parser.addHandler("session-dir", (p, a) -> {
+        parser.addHandler("sessionDir", (p, a) -> {
             sessionDir = p.next();
         }, "e");
 
-        parser.addHandler("upload-dir", (p, a) -> {
+        parser.addHandler("uploadDir", (p, a) -> {
             uploadDir = p.next();
         }, "p");
     }
@@ -142,13 +143,41 @@ public class ResourceConfig extends AbstractConfig {
 
     @Override
     public JsonObject writeJSON(JsonObject json) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'writeJSON'");
+        json.addProperty("privateDir", privateDir);
+        json.addProperty("publicDir", publicDir);
+        json.addProperty("sessionDir", sessionDir);
+        json.addProperty("maxUploadSize", maxUploadSize);
+        json.addProperty("sessionQuota", sessionQuota);
+        json.addProperty("uploadDir", uploadDir);
+        return json;
     }
 
     @Override
     public void loadJSON(JsonObject json) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'loadJSON'");
+        JsonElement elem;
+
+        elem = json.get("privateDir");
+        if (elem != null && elem.isJsonPrimitive())
+            privateDir = elem.getAsString();
+
+        elem = json.get("publicDir");
+        if (elem != null && elem.isJsonPrimitive())
+            publicDir = elem.getAsString();
+
+        elem = json.get("sessionDir");
+        if (elem != null && elem.isJsonPrimitive())
+            sessionDir = elem.getAsString();
+
+        elem = json.get("maxUploadSize");
+        if (elem != null && elem.isJsonPrimitive())
+            maxUploadSize = elem.getAsLong();
+
+        elem = json.get("sessionQuota");
+        if (elem != null && elem.isJsonPrimitive())
+            sessionQuota = elem.getAsLong();
+
+        elem = json.get("uploadDir");
+        if (elem != null && elem.isJsonPrimitive())
+            uploadDir = elem.getAsString();
     }
 }

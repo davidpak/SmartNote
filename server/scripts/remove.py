@@ -2,47 +2,25 @@
 
 from typing import *
 
-import requests
 import sys
 import urllib.parse
 import cmdline as cl
+import serverutil as su
 
-def upload_file(
-        base_url: str,
-        resc: str,
-        auth: Union[str, None]=None) -> Union[str, None]:
-    """
-    Remove a file from the server. See README.md for more information.
-
-    Parameters:
-    - `base_url`: Server base URL.
-    - `filename`: File name.
-    - `auth`: Authentication token. If `None`, then no authentication
-              token is used.
-
-    Returns:
-    The new authentication token, if any.
-    """
-    
+def upload_file(base_url: str, resc: str) -> su.Response:    
     print(f'Remove {resc}... ', end='')
 
     resc_safe = urllib.parse.quote(resc)
-    url = f'{base_url}/api/v1/remove?name={resc_safe}'
+    endpoint = f'api/v1/remove?name={resc_safe}'
 
-    headers = {}
-
-    if auth:
-        headers['Authorization'] = auth
-
-    r = requests.post(url, headers=headers)
-    auth = r.headers.get('Authorization', None)
+    r = su.post(base_url, endpoint)
 
     if r.status_code == 200:
         print(f'Removed')
     else:
         print(f'Failed: {r.status_code} {r.reason}')
 
-    return auth
+    return r
 
 def usage():
     print('Usage: ./remove.py [options...] <host> [resource...]')
@@ -76,8 +54,6 @@ def main() -> int:
         return 1
     assert isinstance(host, str)
 
-    auth = options.get('auth', None)
-
     if len(resources) == 0:
         print('No resources')
         return 1
@@ -95,31 +71,10 @@ def main() -> int:
         url = f'{host}:{port}'
     else:
         url = f'http://{host}:{port}'
-        
-    # get auth token if not provided
-    if auth is None:
-        print(f'No authentication token provided')
-        print(f'Trying to authenticate with server... ', end='')
-
-        r = requests.post(f'{url}/api/v1/login')
-        auth = r.headers.get('Authorization', None)
-
-        if r.status_code == 200:
-            print(f'Done')
-        else:
-            print(f'Failed: {r.status_code} {r.reason}')
-            print(r.text)
-            return 1
 
     # upload files
-    try:
-        for resc in resources:
-            auth = upload_file(url, resc, auth=auth)
-    except Exception as e:
-        print(f'{e.__class__.__name__} removing from {url}')
-        return 1
-    
-    print(f'Auth token: {auth}')
+    for resc in resources:
+        upload_file(url, resc)
 
     return 0
 
