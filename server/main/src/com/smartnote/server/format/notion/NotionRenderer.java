@@ -1,9 +1,11 @@
 package com.smartnote.server.format.notion;
 
 import org.commonmark.node.Node;
+import org.commonmark.node.Visitor;
 import org.commonmark.renderer.Renderer;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 /**
  * <p>
@@ -22,13 +24,16 @@ import com.google.gson.Gson;
  * @see NotionVisitor
  */
 public class NotionRenderer implements Renderer {
+    public JsonObject renderJson(Node node) {
+        NotionPage page = new NotionPage();
+        Visitor visitor = new NotionVisitor(page);
+        node.accept(visitor);
+        return page.writeJSON();
+    }
 
     @Override
     public void render(Node node, Appendable output) {
-        NotionPage page = new NotionPage();
-        NotionVisitor visitor = new NotionVisitor(page);
-        node.accept(visitor);
-        new Gson().toJson(page.writeJSON(), output);
+        new Gson().toJson(renderJson(node), output);
     }
 
     @Override

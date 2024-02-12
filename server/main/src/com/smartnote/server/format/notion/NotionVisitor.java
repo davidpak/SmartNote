@@ -55,6 +55,7 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Document document) {
+        richText = () -> new RichTextData();
         visitChildren(document);
     }
 
@@ -161,7 +162,7 @@ class NotionVisitor extends AbstractVisitor {
      */
     private void add(NotionBlock block) {
         if (current == null)
-            page.add(block);
+            page.getProperties().add(block);
         else
             current.add(block);
     }
@@ -191,6 +192,7 @@ class NotionVisitor extends AbstractVisitor {
      * @param node  The node to visit.
      */
     private void emit(NotionBlock block, Node node) {
+        System.out.println("Emit: " + node.getClass().getSimpleName());
         add(block);
         current = block;
         visitChildren(node);

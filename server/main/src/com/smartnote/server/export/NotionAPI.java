@@ -5,10 +5,18 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublisher;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.smartnote.server.format.notion.NotionRenderer;
 
 /**
  * <p>
@@ -22,10 +30,35 @@ public class NotionAPI {
     /**
      * Base URL for the Notion API.
      */
-    public static final String NOTION_API_URL = "https://api.notion.com/v1";
+    public static final String NOTION_API_URL = "https://api.notion.com/v1/";
 
     public static URI uriOf(String endpoint) {
         return URI.create(NOTION_API_URL + endpoint);
+    }
+
+    // For testing
+    public static void main(String[] args) throws Exception {
+        if (args.length < 2) {
+            System.err.println("Usage: NotionAPI <token> <blockId>");
+            System.exit(1);
+        }
+
+        String markdown = "Hello World!"; // Files.readString(Paths.get("private", "output.md"));
+
+        Parser parser = Parser.builder().build();
+        Node document = parser.parse(markdown);
+
+        NotionRenderer renderer = new NotionRenderer();
+        JsonObject notionJson = renderer.renderJson(document);
+
+        System.out.println(notionJson);
+
+        String token = args[0];
+        String blockId = args[1];
+        String version = "2021-05-13";
+
+        NotionAPI api = new NotionAPI().build(token, version);
+        api.appendBlock(blockId, notionJson);
     }
 
     private String token;
@@ -61,8 +94,16 @@ public class NotionAPI {
 
     }
 
-    private void append(String blockId, String jsonString) {
+    public void appendBlock(String blockId, JsonObject json) throws IOException, InterruptedException {
+        HttpRequest.Builder builder = append(blockId, json);
+        HttpRequest request = builder.build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Response: " + response.statusCode());
+        System.out.println(response.body());
+    }
 
+    private void append(String blockId, String jsonString) {
+        HttpRequest.Builder builder = append(blockId, gson.fromJson(jsonString, JsonObject.class));
     }
 
     private HttpRequest.Builder append(String blockId, JsonObject body) {

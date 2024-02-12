@@ -69,6 +69,11 @@ abstract class NotionObject implements JSONObjectSerializable {
     public void loadJSON(JsonObject object) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String toString() {
+        return getType();
+    }
 }
 
 /**
@@ -180,7 +185,7 @@ abstract class NotionObjectCollection<T extends NotionObject> extends NotionObje
 
     @Override
     public String toString() {
-        return getType() + " [size=" + objects.size() + "]";
+        return "NotionObjectCollection [size=" + objects.size() + "]";
     }
 }
 
@@ -201,7 +206,14 @@ class NotionPageProperties extends NotionObjectCollection<NotionBlock> {
 
     @Override
     public JsonObject writeJSON(JsonObject json) {
-        return JSONUtil.toObject(stream().map(NotionObject::entry));
+        for (NotionBlock block : this)
+            json.add(block.getName(), block.writeJSON());
+        return json;
+    }
+
+    @Override
+    public String toString() {
+        return "NotionPageProperties [size=" + size() + "]";
     }
 }
 
@@ -214,7 +226,7 @@ class NotionPageProperties extends NotionObjectCollection<NotionBlock> {
  * @see NotionObjectCollection
  * @see NotionPageProperties
  */
-class NotionPage extends NotionObjectCollection<NotionObject> {
+class NotionPage extends NotionObject {
     private NotionPageProperties properties = new NotionPageProperties();
 
     public NotionPageProperties getProperties() {
@@ -231,6 +243,12 @@ class NotionPage extends NotionObjectCollection<NotionObject> {
         json.addProperty("object", getType());
         json.add("properties", properties.writeJSON());
         return json;
+    }
+
+    @Override
+    public String toString() {
+        return "NotionPage [properties=" + properties + "]";
+
     }
 }
 
@@ -294,6 +312,11 @@ abstract class NotionBlock extends NotionObjectCollection<NotionBlock> {
             block.parent.remove(block);
         block.parent = this;
         return super.add(block);
+    }
+
+    @Override
+    public String toString() {
+        return "NotionBlock [size=" + size() + "]";
     }
 }
 
@@ -534,11 +557,20 @@ abstract class NotionRichText extends NotionBlock {
         super.writeJSON(json);
         return richText.writeJSON(json);
     }
+
+    @Override
+    public String toString() {
+        return "NotionRichText [richText=" + richText + "]";
+    }
 }
 
 record TextData(String content, String link) implements JSONObjectSerializable {
     public TextData() {
         this(null, null);
+    }
+
+    public TextData(String content) {
+        this(content, null);
     }
 
     @Override
@@ -602,15 +634,14 @@ class NotionText extends NotionRichText {
         this(null, new RichTextData());
     }
 
-    public NotionText(String content, RichTextData richText) {
-        super(richText);
-        text = text.content(content);
-        this.richText = richText;
+    public NotionText(String content) {
+        this(content, new RichTextData());
     }
 
-    public NotionText(String content) {
-        this();
-        text = text.content(content);
+    public NotionText(String content, RichTextData richText) {
+        super(richText);
+        text = new TextData(content);
+        this.richText = richText;
     }
 
     @Override
@@ -627,6 +658,11 @@ class NotionText extends NotionRichText {
             json.add("text", textObject);
 
         return json;
+    }
+
+    @Override
+    public String toString() {
+        return "NotionText [text=" + text + ", richText=" + richText + "]";
     }
 }
 
@@ -672,6 +708,11 @@ abstract class NotionRichTextArray extends NotionBlock {
 
         return json;
     }
+
+    @Override
+    public String toString() {
+        return "NotionRichTextArray [size=" + size() + ", richText=" + richText.size() + ", color=" + color + "]";
+    }
 }
 
 /**
@@ -687,6 +728,11 @@ class NotionParagraph extends NotionRichTextArray {
     @Override
     public String getType() {
         return "paragraph";
+    }
+
+    @Override
+    public String toString() {
+        return "NotionParagraph [size=" + size() + ", color=" + color + "]";
     }
 }
 
@@ -716,6 +762,13 @@ class NotionHeading extends NotionRichTextArray {
     public String getType() {
         return "heading_" + level;
     }
+
+    @Override
+    public String toString() {
+        return "NotionHeading [level=" + level + ", isToggleable=" + isToggleable + ", size=" + size() + ", color="
+                + color + "]";
+
+    }
 }
 
 /**
@@ -731,6 +784,12 @@ class NotionBulletedList extends NotionRichTextArray {
     public String getType() {
         return "bulleted_list_item";
     }
+
+    @Override
+    public String toString() {
+        return "NotionBulletedList [size=" + size() + ", color=" + color + "]";
+
+    }
 }
 
 /**
@@ -745,6 +804,11 @@ class NotionNumberedList extends NotionRichTextArray {
     @Override
     public String getType() {
         return "numbered_list_item";
+    }
+
+    @Override
+    public String toString() {
+        return "NotionNumberedList [size=" + size() + ", color=" + color + "]";
     }
 }
 
@@ -801,6 +865,12 @@ class NotionCode extends NotionRichTextArray {
     public String getType() {
         return "code";
     }
+
+    @Override
+    public String toString() {
+        return "NotionCode [language=" + language + ", size=" + size() + ", caption=" + caption.size() + ", code="
+                + code.size() + ", color=" + color + "]";
+    }
 }
 
 /**
@@ -815,5 +885,10 @@ class NotionQuote extends NotionRichTextArray {
     @Override
     public String getType() {
         return "quote";
+    }
+
+    @Override
+    public String toString() {
+        return "NotionQuote [size=" + size() + ", color=" + color + "]";
     }
 }
