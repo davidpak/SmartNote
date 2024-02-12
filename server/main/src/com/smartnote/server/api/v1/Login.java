@@ -1,7 +1,5 @@
 package com.smartnote.server.api.v1;
 
-import static spark.Spark.halt;
-
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.util.MethodType;

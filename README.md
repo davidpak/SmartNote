@@ -18,6 +18,7 @@ SmartNote is an automated note-taking organization application that aims to revo
   - `src/` - Client source code
     - `components/` - React components
     - `pages/` - Application pages
+    - `tests/` - Jest tests
     - `types` - TypeScript types
     - `utils/` - Utility functions
 - `server/` - Server resources
@@ -85,6 +86,8 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 ## Third-Party Libraries
 
+- [Apache Tika](https://tika.apache.org/) - Used to detect MIME types.
+- [commonmark](https://commonmark.org/) - Used to parse Markdown.
 - [python-dotenv](https://github.com/theskumar/python-dotenv) - Used to load environment variables from `.env` files.
 - [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
@@ -102,3 +105,4 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [requests](https://requests.readthedocs.io/en/latest/) - Used in Python scripts to make HTTP requests.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.
 - [Tailwind CSS](https://tailwindcss.com/) - Used for CSS.
+- [tailwind-merge](https://www.npmjs.com/package/tailwind-merge) - Used to merge Tailwind CSS classes without style conflicts.

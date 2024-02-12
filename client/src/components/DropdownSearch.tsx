@@ -7,22 +7,26 @@ export interface File {
   icon?: string;
 }
 
-const DropdownSelect = ({
-  label,
-  options,
-  selectPage,
-}: {
+interface DropdownSearchType extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
   options: File[];
   selectPage: Dispatch<SetStateAction<File>>;
-}) => {
+}
+
+const DropdownSearch = ({
+  label,
+  options,
+  selectPage,
+  className,
+  ...rest
+}: DropdownSearchType) => {
   const [searchOptions, setSearchOptions] = useState(options);
   const placeholder: File = {
     name: label,
   };
 
   return (
-    <div>
+    <div className={className} {...rest}>
       <Listbox defaultValue={placeholder} onChange={selectPage}>
         <Listbox.Button
           className='border border-neutral-450 focus:outline-accent relative w-full py-2 pl-4 text-left rounded-lg shadow'
@@ -113,4 +117,4 @@ const DropdownSelect = ({
   );
 };
 
-export default DropdownSelect;
+export default DropdownSearch;

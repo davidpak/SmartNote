@@ -6,7 +6,9 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.security.AllPermission;
 import java.security.Permission;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import com.smartnote.server.auth.SessionPermission;
 import com.smartnote.server.util.FileUtils;
@@ -59,6 +61,15 @@ public class ResourceSystem {
             SESSION_AUTH
     };
 
+    // for quick lookup
+    private static final Set<String> SUPPORTED_MIME_TYPES_SET;
+
+    static {
+        SUPPORTED_MIME_TYPES_SET = new HashSet<>();
+        for (String type : SUPPORTED_MIME_TYPES)
+            SUPPORTED_MIME_TYPES_SET.add(type.toLowerCase());
+    }
+
     /**
      * Creates a new public resource name.
      * 
@@ -97,6 +108,17 @@ public class ResourceSystem {
      */
     public static Permission getPrivatePermission() {
         return new AllPermission();
+    }
+
+    /**
+     * Checks if the specified type is supported.
+     * 
+     * @param type The type.
+     * @return <code>true</code> if the type is supported, <code>false</code>
+     *         otherwise.
+     */
+    public static boolean isSupportedType(String type) {
+        return SUPPORTED_MIME_TYPES_SET.contains(type.toLowerCase());
     }
 
     private Path publicDir;

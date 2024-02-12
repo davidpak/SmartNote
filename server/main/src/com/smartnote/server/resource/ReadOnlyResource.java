@@ -45,4 +45,9 @@ public class ReadOnlyResource implements Resource {
     public long size() throws SecurityException, IOException {
         return resource.size();
     }
+
+    @Override
+    public boolean exists() throws SecurityException, IOException {
+        return resource.exists();
+    }
 }
