@@ -57,6 +57,14 @@ public class NotionAPI {
         return this;
     }
 
+    public void create(JsonObject pageJson) throws IOException {
+
+    }
+
+    private void append(String blockId, String jsonString) {
+
+    }
+
     private HttpRequest.Builder append(String blockId, JsonObject body) {
         String endpoint = "blocks/" + formatId(blockId) + "/children";
         return auth(to(endpoint).method("PATCH", jsonPublisher(body)));

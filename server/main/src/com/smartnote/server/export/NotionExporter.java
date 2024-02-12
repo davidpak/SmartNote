@@ -30,6 +30,8 @@ public class NotionExporter implements RemoteExporter {
         try {
             notionAPI.build(token, NOTION_VERSION);
 
+            
+
             result = new JsonObject();
         } catch (IOException e) {
             throw new ExportServiceUnavailableException(e);
