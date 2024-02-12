@@ -13,6 +13,11 @@
     <property name="test.build.dir" value="build/test-classes"/>
     <property name="dist.name" value="server.tar.gz"/>
 
+    <!-- Build time -->
+    <tstamp>
+        <format property="build.time" pattern="yyyy-MM-dd HH:mm:ss"/>
+    </tstamp>
+
     <!-- Classpath -->
     <path id="lib.path">
         <fileset dir="${lib.dir}"/>
@@ -78,6 +83,8 @@
         <jar destfile="${jar.name}">
             <manifest>
                 <attribute name="Main-Class" value="com.smartnote.server.Server"/>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Time" value="${build.time}"/>
             </manifest>
 
             <fileset dir="${build.dir}"/>

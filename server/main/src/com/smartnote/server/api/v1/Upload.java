@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.nio.file.InvalidPathException;
 import java.security.Permission;
 
+import org.apache.tika.Tika;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.smartnote.server.Server;
@@ -15,6 +17,7 @@ import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.FileUtils;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -40,9 +43,9 @@ public class Upload implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
         ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
-        
-
+    
         response.type("application/json");
+        response.type(MIME.JSON);
 
         SessionManager sessionManager = Server.getServer().getSessionManager();
 
@@ -63,10 +66,50 @@ public class Upload implements Route {
         filename = filename.trim();
 
         String ext = FileUtils.getExtension(filename).toLowerCase();
-        if (!ext.equals("pdf") && !ext.equals("pptx")) {
+        String inferredMIME = MIME.fromExtension(ext);
+        if (inferredMIME == null) {
             response.status(406);
             return "{\"message\": \"Unsupported file type\"}";
         }
+        
+        String type = request.contentType();
+        if (type == null) type = inferredMIME;
+        
+        if (!ResourceSystem.isSupportedType(type)) {
+            response.status(406);
+            return "{\"message\": \"Unsupported content type\"}";
+        }
+
+        byte[] body = request.bodyAsBytes();
+        if (body == null) {
+            response.status(400);
+            return "{\"message\": \"Missing body\"}";
+        }
+
+        // check size
+        if (body.length > config.getMaxUploadSize()) {
+            response.status(413);
+            return "{\"message\": \"File too large\"}";
+        }
+
+        long usedQuota = session.getStorageUsage();
+
+        // check quota
+        if (usedQuota + body.length > config.getSessionQuota()) {
+            response.status(413);
+            return "{\"message\": \"Quota exceeded\"}";
+        }
+
+        Tika tika = new Tika();
+        String contentMIME = tika.detect(body);
+        if (!contentMIME.equals(MIME.PDF) && !contentMIME.equals(MIME.PPTX)) {
+            response.status(406);
+            return "{\"message\": \"Unsupported file type\"}";
+        }
+
+        // if the MIME types don't match, change the extension
+        if (!contentMIME.equals(inferredMIME))
+            filename = FileUtils.removeExtension(filename) + "." + MIME.toExtension(contentMIME);
 
         filename = UPLOAD_DIR + filename;
 
@@ -74,8 +117,6 @@ public class Upload implements Route {
 
         ResourceSystem system = Server.getServer().getResourceSystem();
         Resource resource = null;
-
-        long usedQuota = session.getStorageUsage();
 
         // find resource
         String path = ResourceSystem.inSession(filename);
@@ -92,24 +133,6 @@ public class Upload implements Route {
         } catch (IOException e) {
             response.status(500);
             return "{\"message\": \"Could open resource\"}";
-        }
-
-        byte[] body = request.bodyAsBytes();
-        if (body == null) {
-            response.status(400);
-            return "{\"message\": \"No body\"}";
-        }
-
-        // check size
-        if (body.length > config.getMaxUploadSize()) {
-            response.status(413);
-            return "{\"message\": \"File too large\"}";
-        }
-
-        // check quota
-        if (usedQuota + body.length > config.getSessionQuota()) {
-            response.status(413);
-            return "{\"message\": \"Quota exceeded\"}";
         }
 
         // write

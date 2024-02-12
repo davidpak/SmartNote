@@ -86,6 +86,8 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 ## Third-Party Libraries
 
+- [Apache Tika](https://tika.apache.org/) - Used to detect MIME types.
+- [commonmark](https://commonmark.org/) - Used to parse Markdown.
 - [python-dotenv](https://github.com/theskumar/python-dotenv) - Used to load environment variables from `.env` files.
 - [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.

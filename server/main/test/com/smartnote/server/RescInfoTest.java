@@ -9,19 +9,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.smartnote.server.api.v1.RescInfo;
 import com.smartnote.server.resource.ResourceConfig;
-import com.smartnote.testing.RouteTest;
-
-import spark.Response;
+import com.smartnote.testing.BaseRoute;
 
 /**
- * <p>
- * Tests the <code>rescinfo</code> RPC.
- * </p>
+ * <p>Tests the <code>rescinfo</code> RPC.</p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.api.v1.RescInfo
  */
-public class RescInfoTest extends RouteTest {
+public class RescInfoTest extends BaseRoute {
     private RescInfo rescInfo;
 
     @Override

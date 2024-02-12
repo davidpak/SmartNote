@@ -1,7 +1,8 @@
 package com.smartnote.testing;
 
 import static org.junit.Assert.*;
-
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public class BaseRoute extends BaseServer {
     private Request request;
     private Map<String, String> requestQueryParams;
     private Map<String, String> requestHeaders;
-    private String requestBody;
+    private byte[] requestBody;
     private String requestContentType;
 
     // response
@@ -109,6 +110,10 @@ public class BaseRoute extends BaseServer {
         return getSession(responseHeaders.get("Authorization"));
     }
 
+    public String responseHeader(String key) {
+        return responseHeaders.get(key);
+    }
+
     /**
      * Sets a query parameter for the request.
      * 
@@ -128,13 +133,26 @@ public class BaseRoute extends BaseServer {
         requestQueryParams.remove(key);
     }
 
+    public String getRequestQueryParam(String key) {
+        return requestQueryParams.get(key);
+    }
+
     /**
      * Sets the request body.
      * 
      * @param requestBody the request body.
      */
     public void setRequestBody(String requestBody) {
-        this.requestBody = requestBody;
+        setRequestBody(requestBody == null ? null : requestBody.getBytes());
+    }
+
+    public void setRequestBody(byte[] requestBody) {
+        if (requestBody != null) {
+            this.requestBody = new byte[requestBody.length];
+            System.arraycopy(requestBody, 0, this.requestBody, 0, requestBody.length);
+        } else {
+            this.requestBody = null;
+        }
     }
 
     /**
@@ -146,8 +164,21 @@ public class BaseRoute extends BaseServer {
         this.requestContentType = requestContentType;
     }
 
-    public void activateSession() {
+    public void addHeader(String key, String value) {
+        requestHeaders.put(key, value);
+    }
+
+    public void removeHeader(String key) {
+        requestHeaders.remove(key);
+    }
+
+    public String getHeader(String key) {
+        return requestHeaders.get(key);
+    }
+
+    public String activateSession() {
         requestHeaders.put("Authorization", SESSION_TOKEN);
+        return SESSION_TOKEN;
     }
 
     public void deactivateSession() {
@@ -169,10 +200,17 @@ public class BaseRoute extends BaseServer {
         }).when(request).headers(anyString());
 
         // Request.body()
-        when(request.body()).thenAnswer(invokation -> requestBody);
+        when(request.body()).thenAnswer(invokation -> requestBody == null ? null : new String(requestBody));
 
         // Request.bodyAsBytes()
-        when(request.bodyAsBytes()).thenAnswer(invokation -> requestBody == null ? null : requestBody.getBytes());
+        when(request.bodyAsBytes()).thenAnswer(invokation -> {
+            if (requestBody == null)
+                return null;
+
+            byte[] copy = new byte[requestBody.length];
+            System.arraycopy(requestBody, 0, copy, 0, requestBody.length);
+            return copy;
+        });
 
         // Request.contentType()
         when(request.contentType()).thenAnswer(invokation -> requestContentType);

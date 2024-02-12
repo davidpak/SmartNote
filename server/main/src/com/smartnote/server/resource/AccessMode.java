@@ -20,4 +20,19 @@ public enum AccessMode {
     public boolean hasDelete() {
         return this == READ_WRITE_DELETE;
     }
+
+    public void checkRead() throws SecurityException {
+        if (!hasRead())
+            throw new SecurityException("No read permission");
+    }
+
+    public void checkWrite() throws SecurityException {
+        if (!hasWrite())
+            throw new SecurityException("No write permission");
+    }
+
+    public void checkDelete() throws SecurityException {
+        if (!hasDelete())
+            throw new SecurityException("No delete permission");
+    }
 }
