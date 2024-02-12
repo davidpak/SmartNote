@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,12 +38,12 @@ public class BaseRoute extends BaseServer {
     private Map<String, String> requestQueryParams;
     private Map<String, String> requestHeaders;
     private Map<String, String> requestCookies;
-    private String requestBody;
+    private byte[] requestBody;
     private String requestContentType;
 
     // response
     private Map<String, String> responseHeaders;
-    private Map<String, AbstractMap.SimpleEntry<String, Integer>> responseCookies;
+    private Map<String, AbstractMap.SimpleEntry<String, Instant>> responseCookies;
     private String responseBody;
     private String responseType;
     private int responseStatus;
@@ -111,11 +112,23 @@ public class BaseRoute extends BaseServer {
     }
 
     public Session responseSession() {
-        return getSession(responseHeaders.get("Authorization"));
+        var p = responseCookies.get("session");
+        if (p == null) return null;
+        return getSession(p.getKey());
     }
 
     public String responseHeader(String key) {
         return responseHeaders.get(key);
+    }
+
+    public String responseCookie(String key) {
+        var p = responseCookies.get(key);
+        if (p == null) return null;
+
+        Instant expires = p.getValue();
+        if (expires == null) return p.getKey();     
+        if (expires.isBefore(Instant.now())) return null;
+        return p.getKey();
     }
 
     /**
@@ -280,7 +293,13 @@ public class BaseRoute extends BaseServer {
 
         // Response.cookie(String, String, int)
         doAnswer(invokation -> {
-            responseCookies.put((String) invokation.getArguments()[0], new AbstractMap.SimpleEntry<>((String) invokation.getArguments()[1], (int) invokation.getArguments()[2]));
+            int maxAge = (int) invokation.getArguments()[2];
+
+            Instant expires = null;
+            if (maxAge >= 0)
+                expires = Instant.now().plusSeconds(maxAge);
+
+            responseCookies.put((String) invokation.getArguments()[0], new AbstractMap.SimpleEntry<>((String) invokation.getArguments()[1], expires));
             return null;
         }).when(response).cookie(anyString(), anyString(), anyInt());
         

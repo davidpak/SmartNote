@@ -28,6 +28,7 @@ public class Login implements Route {
         SessionManager sessionManager = Server.getServer().getSessionManager();
         Session session = sessionManager.getSession(request);
         if (session != null) {
+            session.store();
             session.updateSession(sessionManager);
             session.writeToResponse(response);
             return "{\"message\": \"Session renewed\"}";

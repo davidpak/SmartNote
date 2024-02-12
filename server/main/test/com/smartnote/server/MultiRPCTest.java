@@ -27,7 +27,7 @@ public class MultiRPCTest extends BaseRoute {
         doApiTest(login, 200);
 
         // get the token from the login response
-        addHeader("Authorization", responseHeader("Authorization"));
+        setRequestCookie("session", responseCookie("session"));
     
         setRequestBody(UploadTest.TEST_FILE_CONTENTS);
         setRequestQueryParam("name", UploadTest.TEST_FILE_NAME);

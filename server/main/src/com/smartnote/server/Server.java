@@ -204,6 +204,8 @@ public class Server {
 
     // Initializes the networking stuff (Spark)
     private void initNetworking() {
+        ServerConfig serverConfig = config.getServerConfig();
+
         // handle exceptions
         exception(Exception.class, (e, req, res) -> {
             e.printStackTrace();
@@ -211,13 +213,14 @@ public class Server {
             res.body("Internal server error");
         });
 
-        port(config.getServerConfig().getPort());
+        port(serverConfig.getPort());
 
         after((req, res) -> {
             // CORS
-            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Origin", serverConfig.getOrigin());
             res.header("Access-Control-Allow-Methods", "GET, POST");
             res.header("Access-Control-Allow-Credentials", "true");
+            res.header("Access-Control-Allow-Headers", "Content-Type");
             res.header("Access-Control-Expose-Headers", "Content-Type");
         });
 

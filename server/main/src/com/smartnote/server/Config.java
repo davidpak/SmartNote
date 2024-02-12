@@ -112,7 +112,10 @@ public class Config extends AbstractConfig {
 
     @Override
     public void loadJSON(JsonObject object) {
-        server.loadJSON(object);
-        resource.loadJSON(object);
+        if (object.has("server"))
+            server.loadJSON(object.getAsJsonObject("server"));
+
+        if (object.has("resource"))
+            resource.loadJSON(object);
     }
 }

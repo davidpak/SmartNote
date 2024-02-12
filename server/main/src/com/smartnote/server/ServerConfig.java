@@ -23,21 +23,35 @@ public class ServerConfig extends AbstractConfig {
     public static final int DEFAULT_PORT = 4567;
 
     /**
+     * The default host.
+     */
+    public static final String DEFAULT_HOST = "localhost";
+
+    /**
      * The default certificate file.
      */
     public static final String DEFAULT_CERT_FILE = "cert.pem";
 
+    /**
+     * The default origin for CORS.
+     */
+    public static final String DEFAULT_ORIGIN = "http://localhost:8080";
+
     private int port;
+    private String host;
     private boolean usessl;
     private String certFile;
+    private String origin;
 
     /**
      * Creates a new ServerConfig object with default values.
      */
     public ServerConfig() {
         this.port = DEFAULT_PORT;
+        this.host = DEFAULT_HOST;
         this.usessl = false;
         this.certFile = DEFAULT_CERT_FILE;
+        this.origin = DEFAULT_ORIGIN;
     }
 
     /**
@@ -50,11 +64,20 @@ public class ServerConfig extends AbstractConfig {
     }
 
     /**
+     * Gets the host.
+     * 
+     * @return The host
+     */
+    public String getHost() {
+        return host;
+    }
+
+    /**
      * Gets whether or not SSL is used.
      * 
      * @return Whether or not SSL is used
      */
-    public boolean getUseSSL() {
+    public boolean useSSL() {
         return usessl;
     }
 
@@ -67,10 +90,23 @@ public class ServerConfig extends AbstractConfig {
         return certFile;
     }
 
+    /**
+     * Gets the origin for CORS.
+     * 
+     * @return The origin
+     */
+    public String getOrigin() {
+        return origin;
+    }
+
     @Override
     public void addHandlers(CommandLineParser parser) {
         parser.addHandler("port", (p, a) -> {
             port = p.nextInt();
+        });
+
+        parser.addHandler("host", (p, a) -> {
+            host = p.next();
         });
 
         parser.addHandler("ssl", (p, a) -> {
@@ -83,6 +119,10 @@ public class ServerConfig extends AbstractConfig {
 
         parser.addHandler("cert", (p, a) -> {
             certFile = p.next();
+        });
+
+        parser.addHandler("origin", (p, a) -> {
+            origin = p.next();
         });
     }
 
@@ -99,11 +139,13 @@ public class ServerConfig extends AbstractConfig {
     }
 
     @Override
-    public JsonObject writeJSON(JsonObject object) {
-        object.addProperty("port", port);
-        object.addProperty("ssl", usessl);
-        object.addProperty("cert", certFile);
-        return object;
+    public JsonObject writeJSON(JsonObject json) {
+        json.addProperty("port", port);
+        json.addProperty("host", host);
+        json.addProperty("ssl", usessl);
+        json.addProperty("cert", certFile);
+        json.addProperty("origin", origin);
+        return json;
     }
 
     @Override
@@ -114,6 +156,10 @@ public class ServerConfig extends AbstractConfig {
         if (elem != null && elem.isJsonPrimitive())
             port = elem.getAsInt();
 
+        elem = json.get("host");
+        if (elem != null && elem.isJsonPrimitive())
+            host = elem.getAsString();
+
         elem = json.get("ssl");
         if (elem != null && elem.isJsonPrimitive())
             usessl = elem.getAsBoolean();
@@ -121,5 +167,9 @@ public class ServerConfig extends AbstractConfig {
         elem = json.get("cert");
         if (elem != null && elem.isJsonPrimitive())
             certFile = elem.getAsString();
+
+        elem = json.get("origin");
+        if (elem != null && elem.isJsonPrimitive())
+            origin = elem.getAsString();
     }
 }

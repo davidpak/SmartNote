@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
@@ -130,6 +131,7 @@ public class BaseServer extends Base {
         SessionPermission permission = mock(SessionPermission.class);
 
         Path sessionDirectory = Server.getServer().getResourceSystem().getSessionDir().resolve(SESSION_TOKEN);
+        Path tokenFile = sessionDirectory.resolve(".token");
 
         when(session.getId()).thenReturn(SESSION_TOKEN);
         when(session.getSessionDirectory()).thenReturn(sessionDirectory);
@@ -147,6 +149,17 @@ public class BaseServer extends Base {
             response.cookie(SessionManager.COOKIE_NAME, SESSION_TOKEN, (int) SessionManager.SESSION_LENGTH);
             return null;
         }).when(session).writeToResponse(any(Response.class));
+
+        doAnswer(invokation -> {
+            try {
+                VirtualFileSystem vfs = getFileSystem();
+                OutputStream out = vfs.openOutputStream(tokenFile);
+                out.write(SESSION_TOKEN.getBytes());
+                out.close();
+            } catch (Exception e) {
+            }
+            return null;
+        }).when(session).store();
 
         when(session.getPermission()).thenReturn(permission);
         when(permission.getSession()).thenReturn(session);

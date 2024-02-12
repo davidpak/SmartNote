@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Permission;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -159,7 +161,15 @@ public class Session {
     public void writeToResponse(Response response) {
         Instant expr = jwt.getExpiresAtAsInstant();
         int maxAge = (int) (expr.getEpochSecond() - Instant.now().getEpochSecond());
-        response.cookie(SessionManager.COOKIE_NAME, jwt.getToken(), maxAge);
+        Instant expireInstant = Instant.now().plusSeconds(maxAge);
+
+        DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+        String expires = expireInstant.atZone(ZoneId.of("GMT")).format(formatter);
+
+        String cookie = String.format("%s=%s; Expires=%s; SameSite=Lax", SessionManager.COOKIE_NAME, jwt.getToken(), expires);
+        response.header("Set-Cookie", cookie);
+
+        //response.cookie(SessionManager.COOKIE_NAME, jwt.getToken(), maxAge);
     }
 
     /**
@@ -199,7 +209,7 @@ public class Session {
     /**
      * Store session information in this session's directory.
      */
-    void store() {
+    public void store() {
         try {
             Files.createDirectories(sessionDirectory);
             Files.write(tokenFile, jwt.getToken().getBytes());
