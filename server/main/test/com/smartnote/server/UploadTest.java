@@ -3,6 +3,7 @@ package com.smartnote.server;
 import static org.junit.Assert.*;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -11,6 +12,7 @@ import org.junit.*;
 import com.smartnote.server.api.v1.Upload;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.resource.ResourceConfig;
+import com.smartnote.server.util.MIME;
 import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
@@ -23,7 +25,15 @@ import spark.Response;
  */
 public class UploadTest extends BaseRoute {
     public static final String TEST_FILE_NAME = "file.pdf";
-    public static final String TEST_FILE_CONTENTS = "Hello, world!";
+    public static final byte[] TEST_FILE_CONTENTS;
+
+    static {
+        try {
+            TEST_FILE_CONTENTS = Files.readAllBytes(Paths.get("server", "testfiles", TEST_FILE_NAME));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
     
     private Upload upload;
 
@@ -35,7 +45,7 @@ public class UploadTest extends BaseRoute {
         // basic setup, tests remove these to test specific cases
         setRequestQueryParam("name", TEST_FILE_NAME);
         setRequestBody(TEST_FILE_CONTENTS);
-        setRequestContentType("application/pdf");
+        setRequestContentType(MIME.PDF);
         activateSession();
     }
     
@@ -81,7 +91,7 @@ public class UploadTest extends BaseRoute {
 
     @Test
     public void testUploadNoBody() throws Exception {
-        setRequestBody(null);
+        setRequestBody((byte[]) null);
         doApiTest(400);
     }
 

@@ -14,6 +14,12 @@ import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
 
+/**
+ * <p>Tests the <code>login</code> RPC.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.api.v1.Login
+ */
 public class LoginTest extends BaseRoute {
 
     private Login login;

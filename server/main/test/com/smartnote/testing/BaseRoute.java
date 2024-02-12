@@ -111,9 +111,11 @@ public class BaseRoute extends BaseServer {
     }
 
     public Session responseSession() {
-        var p = responseCookies.get(SessionManager.COOKIE_NAME);
-        if (p == null) return null;
-        return getSession(p.getKey());
+        return getSession(responseHeaders.get("Authorization"));
+    }
+
+    public String responseHeader(String key) {
+        return responseHeaders.get(key);
     }
 
     /**
@@ -153,7 +155,16 @@ public class BaseRoute extends BaseServer {
      * @param requestBody the request body.
      */
     public void setRequestBody(String requestBody) {
-        this.requestBody = requestBody;
+        setRequestBody(requestBody == null ? null : requestBody.getBytes());
+    }
+
+    public void setRequestBody(byte[] requestBody) {
+        if (requestBody != null) {
+            this.requestBody = new byte[requestBody.length];
+            System.arraycopy(requestBody, 0, this.requestBody, 0, requestBody.length);
+        } else {
+            this.requestBody = null;
+        }
     }
 
     /**
@@ -165,8 +176,21 @@ public class BaseRoute extends BaseServer {
         this.requestContentType = requestContentType;
     }
 
-    public void activateSession() {
+    public void addHeader(String key, String value) {
+        requestHeaders.put(key, value);
+    }
+
+    public void removeHeader(String key) {
+        requestHeaders.remove(key);
+    }
+
+    public String getHeader(String key) {
+        return requestHeaders.get(key);
+    }
+
+    public String activateSession() {
         requestCookies.put(SessionManager.COOKIE_NAME, SESSION_TOKEN);
+        return SESSION_TOKEN;
     }
 
     public void deactivateSession() {
@@ -193,10 +217,17 @@ public class BaseRoute extends BaseServer {
         }).when(request).cookie(anyString());
 
         // Request.body()
-        when(request.body()).thenAnswer(invokation -> requestBody);
+        when(request.body()).thenAnswer(invokation -> requestBody == null ? null : new String(requestBody));
 
         // Request.bodyAsBytes()
-        when(request.bodyAsBytes()).thenAnswer(invokation -> requestBody == null ? null : requestBody.getBytes());
+        when(request.bodyAsBytes()).thenAnswer(invokation -> {
+            if (requestBody == null)
+                return null;
+
+            byte[] copy = new byte[requestBody.length];
+            System.arraycopy(requestBody, 0, copy, 0, requestBody.length);
+            return copy;
+        });
 
         // Request.contentType()
         when(request.contentType()).thenAnswer(invokation -> requestContentType);

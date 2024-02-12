@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
@@ -293,18 +294,75 @@ public class FileUtils {
         return size;
     }
 
-    public static String getExtension(String path) {
-        int index = path.lastIndexOf('.');
+    public static String getExtension(Path path) {
+        Objects.requireNonNull(path);
+
+        String name = path.getFileName().toString();
+        int index = name.lastIndexOf('.');
         if (index == -1)
             return "";
-        return path.substring(index + 1);
+        return name.substring(index + 1);
     }
 
+    /**
+     * Gets the extension of a file.
+     * 
+     * @param file The file. Cannot be <code>null</code>.
+     * @return The extension, or an empty string if the file has no extension.
+     */
     public static String getExtension(File file) {
-        return getExtension(file.getName());
+        return getExtension(Objects.requireNonNull(file).toPath());
+    }
+
+    /**
+     * Gets the extension of a file.
+     * 
+     * @param path The path to the file. Cannot be <code>null</code>.
+     * @return The extension, or an empty string if the file has no extension.
+     */
+    public static String getExtension(String path) {
+        return getExtension(Paths.get(Objects.requireNonNull(path)));
+    }    
+
+    /**
+     * Removes the extension from a file.
+     * 
+     * @param path The path to the file. Cannot be <code>null</code>.
+     * @return The path without the extension.
+     */
+    public static Path removeExtension(Path path) {
+        Objects.requireNonNull(path);
+        Path parent = path.getParent();
+        String name = path.getFileName().toString();
+        
+        int index = name.lastIndexOf('.');
+        if (index == -1)
+            return path;
+        return parent.resolve(name.substring(0, index));
+    }
+
+    /**
+     * Removes the extension from a file.
+     * 
+     * @param file The file. Cannot be <code>null</code>.
+     * @return The file without the extension.
+     */
+    public static File removeExtension(File file) {
+        Objects.requireNonNull(file);
+        return removeExtension(file.toPath()).toFile();
+    }
+
+    /**
+     * Removes the extension from a file.
+     * 
+     * @param path The path to the file. Cannot be <code>null</code>.
+     * @return The path without the extension.
+     */
+    public static String removeExtension(String path) {
+        Objects.requireNonNull(path);
+        return removeExtension(Paths.get(path)).toString();
     }
 
     // don't allow instantiation
-    private FileUtils() {
-    }
+    private FileUtils() {}
 }

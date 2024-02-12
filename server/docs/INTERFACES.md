@@ -190,12 +190,13 @@ The body must be present in the request.
 | `token` | `string` | A token to use when exporting to a remote location. |
 | `output` | `string` | A resource name to use when exporting to a local file. |
 
-`type` is a case-sensitive `string` describing the type of export to perform. The following types are recognized:
+`type` is a case-insensitive `string` describing the type of export to perform. The following types are recognized:
 
 | Value | Description |
 | ----- | ----------- |
-| `Notion` | Export the notes to a Notion database. |
+| `notion` | Export the notes to a Notion database. |
 | `rtf` | Export the notes to a Rich Text Format (RTF) file. |
+| `json` | Export the notes to a JSON file. |
 
 `token` is a `string` containing a token to use when exporting to a remote location. The token is dependent on the export type.
 

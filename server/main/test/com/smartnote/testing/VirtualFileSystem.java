@@ -12,6 +12,7 @@ import java.util.Map;
 
 import com.smartnote.server.resource.AccessMode;
 import com.smartnote.server.resource.FileResourceFactory;
+import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 
 /**
@@ -62,9 +63,10 @@ public class VirtualFileSystem {
      * 
      * @param path the path.
      * @return the input stream.
+     * @throws FileNotFoundException if the file does not exist.
      * @throws IOException if an error occurs.
      */
-    public InputStream openInputStream(Path path) throws IOException {
+    public InputStream openInputStream(Path path) throws FileNotFoundException, IOException {
         VirtualFile file = files.get(path);
         if (file == null)
             throw new FileNotFoundException(path.toString());
@@ -75,12 +77,14 @@ public class VirtualFileSystem {
      * Deletes the file at the specified path.
      * 
      * @param path the path.
+     * @throws FileNotFoundException if the file does not exist.
      * @throws IOException if an error occurs.
      */
-    public void delete(Path path) throws IOException {
+    public void delete(Path path) throws FileNotFoundException, IOException {
         VirtualFile file = files.get(path);
         if (file == null)
             throw new FileNotFoundException(path.toString());
+        file.delete();
         files.remove(path);
     }
 
@@ -123,33 +127,47 @@ public class VirtualFileSystem {
 
         @Override
         public InputStream openInputStream() throws SecurityException, IOException {
-            if (!mode.hasRead())
-                throw new SecurityException("No read permission");
-            return VirtualFileSystem.this.openInputStream(path);
+            mode.checkRead();
+            return checkExists().openInputStream();
         }
 
         @Override
         public OutputStream openOutputStream() throws SecurityException, IOException {
-            if (!mode.hasWrite())
-                throw new SecurityException("No write permission");
+            mode.checkWrite();
             return VirtualFileSystem.this.openOutputStream(path);
         }
 
         @Override
         public void delete() throws SecurityException, IOException {
-            if (!mode.hasDelete())
-                throw new SecurityException("No delete permission");
+            mode.checkDelete();
+            checkExists();
             VirtualFileSystem.this.delete(path);
         }
 
         @Override
         public long size() throws SecurityException, IOException {
-            VirtualFile file = files.get(path);
-            if (file == null)
-                throw new FileNotFoundException(path.toString());
-            return file.data.length;
+            mode.checkRead();
+            return checkExists().data.length;
         }
 
+        @Override
+        public boolean exists() throws SecurityException, IOException {
+            mode.checkRead();
+            return VirtualFileSystem.this.exists(path);
+        }
+
+        @Override
+        public String toString() {
+            return path.toString();
+        }
+
+        // Check file exists and return it, or throw an exception
+        private VirtualFile checkExists() throws NoSuchResourceException {
+            VirtualFile file = files.get(path);
+            if (file == null)
+                throw new NoSuchResourceException(path.toString());
+            return file;
+        }
     }
 
     /**
@@ -187,6 +205,28 @@ public class VirtualFileSystem {
                 if (isDirectory)
                     throw new IOException("File is a directory");
                 return new VirtualFileInputStream();
+            }
+        }
+
+        // Deletes the file, does not unlink it in the file system
+        void delete() throws IOException {
+            synchronized (lock) {
+                if (readers > 0)
+                    throw new IOException("File is already opened for reading");
+
+                if (isOpenedForWriting)
+                    throw new IOException("File is already opened for writing");
+
+                data = null;
+            }
+        }
+
+        @Override
+        public String toString() {
+            if (isDirectory) {
+                return "<dir>";
+            } else {
+                return "<file (length=" + data.length + ")>";
             }
         }
 
