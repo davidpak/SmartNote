@@ -6,6 +6,9 @@ import java.util.function.Supplier;
 
 import org.commonmark.node.*;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 /**
  * <p>
  * Converts markdown to Notion's internal format.
@@ -29,6 +32,9 @@ class NotionVisitor extends AbstractVisitor {
      */
     private Supplier<RichTextData> richText;
 
+    private JsonObject json;
+    private JsonArray array;
+
     /**
      * Constructs a new NotionVisitor.
      * 
@@ -36,6 +42,11 @@ class NotionVisitor extends AbstractVisitor {
      */
     public NotionVisitor(NotionPage page) {
         this.page = page;
+        this.json = new JsonObject();
+    }
+
+    public JsonObject getJson() {
+        return json;
     }
 
     @Override
@@ -56,6 +67,9 @@ class NotionVisitor extends AbstractVisitor {
     @Override
     public void visit(Document document) {
         richText = () -> new RichTextData();
+
+        array = new JsonArray();
+        json.add("children", array);
         visitChildren(document);
     }
 
@@ -121,7 +135,23 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Paragraph paragraph) {
-        emit(new NotionParagraph(), paragraph);
+        JsonArray oldArray = array;
+
+        JsonObject paraObject = new JsonObject();
+        paraObject.addProperty("object", "block");
+        paraObject.addProperty("type", "paragraph");
+        paraObject.add("paragraph", paraObject);
+
+        JsonArray richTextArray = new JsonArray();
+        paraObject.add("rich_text", richTextArray);
+
+        array = richTextArray;
+
+        visitChildren(paragraph);
+
+        array = oldArray;
+
+        // emit(new NotionParagraph(), paragraph);
     }
 
     @Override
@@ -136,7 +166,16 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Text text) {
-        emit(new NotionText(text.getLiteral(), richText.get()), text);
+
+        JsonObject richTextObject = new JsonObject();
+        richTextObject.addProperty("type", "text");
+
+        JsonObject textObject = new JsonObject();
+        textObject.addProperty("content", text.getLiteral());
+
+        richTextObject.add("text", textObject);
+
+        // emit(new NotionText(text.getLiteral(), richText.get()), text);
     }
 
     @Override

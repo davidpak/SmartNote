@@ -298,6 +298,7 @@ abstract class NotionBlock extends NotionObjectCollection<NotionBlock> {
 
     @Override
     public JsonObject writeJSON(JsonObject json) {
+        json.addProperty("object", "block");
         json.addProperty("type", getType());
 
         if (size() > 0)
