@@ -11,10 +11,16 @@ import org.junit.Test;
 
 import com.smartnote.server.api.v1.Remove;
 import com.smartnote.server.resource.ResourceConfig;
-import com.smartnote.testing.RouteTest;
+import com.smartnote.testing.BaseRoute;
 import com.smartnote.testing.VirtualFileSystem;
 
-public class RemoveTest extends RouteTest {
+/**
+ * <p>Tests the <code>remove</code> RPC.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.api.v1.Remove
+ */
+public class RemoveTest extends BaseRoute {
     public static final String TEST_FILE = "test.txt";
     public static final byte[] TEST_FILE_DATA = "Hello World!".getBytes();
 

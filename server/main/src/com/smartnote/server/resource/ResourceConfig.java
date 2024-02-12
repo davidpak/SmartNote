@@ -1,17 +1,16 @@
 package com.smartnote.server.resource;
 
-import com.smartnote.server.cli.CommandLineHandler;
+import com.google.gson.JsonObject;
 import com.smartnote.server.cli.CommandLineParser;
-import com.smartnote.server.util.Validator;
+import com.smartnote.server.util.AbstractConfig;
 
 /**
  * Stores configuration information for the resource system.
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Resource
- * @see com.smartnote.server.cli.CommandLineParser
  */
-public class ResourceConfig implements CommandLineHandler, Validator {
+public class ResourceConfig extends AbstractConfig {
     /**
      * Default private directory.
      */
@@ -37,13 +36,20 @@ public class ResourceConfig implements CommandLineHandler, Validator {
      */
     public static final long DEFAULT_SESSION_QUOTA = 1024 * 1024 * 1024; // 1 GiB
 
+    /**
+     * Default upload directory.
+     */
+    public static final String DEFAULT_UPLOAD_DIR = "uploads";
+
     private String privateDir;
     private String publicDir;
     private String sessionDir;
 
     private long maxUploadSize;
     private long sessionQuota;
-    
+
+    private String uploadDir;
+
     /**
      * Creates a new ResourceConfig object with default values.
      */
@@ -53,6 +59,7 @@ public class ResourceConfig implements CommandLineHandler, Validator {
         this.sessionDir = DEFAULT_SESSION_DIR;
         this.maxUploadSize = DEFAULT_MAX_UPLOAD_SIZE;
         this.sessionQuota = DEFAULT_SESSION_QUOTA;
+        this.uploadDir = DEFAULT_UPLOAD_DIR;
     }
 
     /**
@@ -100,6 +107,15 @@ public class ResourceConfig implements CommandLineHandler, Validator {
         return sessionQuota;
     }
 
+    /**
+     * Gets the upload directory.
+     * 
+     * @return The upload directory
+     */
+    public String getUploadDir() {
+        return uploadDir;
+    }
+
     @Override
     public void addHandlers(CommandLineParser parser) {
         parser.addHandler("private-dir", (p, a) -> {
@@ -113,10 +129,26 @@ public class ResourceConfig implements CommandLineHandler, Validator {
         parser.addHandler("session-dir", (p, a) -> {
             sessionDir = p.next();
         }, "e");
+
+        parser.addHandler("upload-dir", (p, a) -> {
+            uploadDir = p.next();
+        }, "p");
     }
 
     @Override
     public void validate() throws IllegalStateException {
         // No validation
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'writeJSON'");
+    }
+
+    @Override
+    public void loadJSON(JsonObject json) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'loadJSON'");
     }
 }
