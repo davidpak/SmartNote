@@ -7,38 +7,32 @@ import Warning from '../components/Warning';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
-import Button from '../components/Button';
-import Warning from '../components/Warning';
-import H1 from '../components/H1';
-import H2 from '../components/H2';
-import Body from '../components/Body';
 
 const Home = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
-  const [jwt, setJwt] = useState<string>();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const hasErrors = () => errors.filter((error) => error !== null).length > 0;
 
-  // TODO: server should send JWT as an HTTP-only cookie
   useEffect(() => {
     const login = async () => {
-      if (!jwt) {
-        const res = await fetch('http://localhost:4567/api/v1/login', {
-          method: 'POST',
-        });
-        if (!res.ok) {
-          throw new Error('HTTP error ' + res.status);
-        }
-        setJwt(res.headers.get('Authorization')!);
+      const res = await fetch('http://localhost:4567/api/v1/login', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('HTTP error ' + res.status);
       }
+      setIsLoggedIn(true);
     };
-
-    login();
-  }, [jwt]);
+    if (!isLoggedIn) {
+      login();
+    }
+  }, []);
 
   const uploadFiles = () => {
-    if (!jwt) {
+    if (!isLoggedIn) {
       throw new Error('not authenticated');
     }
     const reader = new FileReader();
@@ -50,18 +44,15 @@ const Home = () => {
           `http://localhost:4567/api/v1/upload?name=${file.name}`,
           {
             method: 'POST',
-            headers: {
-              Authorization: jwt,
-            },
+            credentials: 'include',
             body: file,
           }
         );
         if (!res.ok) {
           throw new Error('HTTP error ' + res.status);
         }
-        const json = await res.json();
-        console.log(json);
       };
+
       reader.onerror = () => console.error(reader.error);
     });
   };
