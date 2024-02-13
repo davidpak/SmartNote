@@ -2,6 +2,7 @@ import { FileRejection, ErrorCode, useDropzone } from 'react-dropzone';
 import { IoCloudUploadOutline as Upload } from 'react-icons/io5';
 
 import FileListItem from './FileListItem';
+import Button from './Button';
 
 interface DropzoneType extends React.HTMLAttributes<HTMLDivElement> {
   files: File[];
@@ -70,18 +71,14 @@ const Dropzone = ({
             </label>
             <p className='text-sm text-neutral-450'>PDF and PPTX formats</p>
           </div>
-
-          <button
-            onClick={open}
-            className='text-sm text-neutral-475 border border-neutral-300 rounded-xl px-4 py-2 hover:bg-neutral-150 transition'
-          >
+          <Button onClick={open} variant='secondary' className='text-sm'>
             Browse Files
-          </button>
+          </Button>
         </div>
       </div>
 
       {files.length > 0 && (
-        <ul className='flex flex-col gap-4'>
+        <ul className='flex flex-col gap-4 mt-6'>
           {files.map((file: File, index: number) => (
             <li key={index}>
               <FileListItem

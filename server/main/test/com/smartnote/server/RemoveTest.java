@@ -12,7 +12,6 @@ import org.junit.Test;
 import com.smartnote.server.api.v1.Remove;
 import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.testing.BaseRoute;
-import com.smartnote.testing.BaseRoute;
 import com.smartnote.testing.VirtualFileSystem;
 
 /**

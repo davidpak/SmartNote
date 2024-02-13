@@ -30,11 +30,9 @@ class RTFVisitor extends AbstractVisitor {
 
     private static class ListState {
         final int type;
-        int count;
 
         ListState(int type) {
             this.type = type;
-            this.count = 1;
         }
     }
 
@@ -163,8 +161,6 @@ class RTFVisitor extends AbstractVisitor {
         } else {
             throw new IllegalStateException("Unknown list type: " + state.type);
         }
-
-        state.count++;
 
         visitChildren(listItem);
     }
