@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.smartnote.server.auth.SessionPermission;
 import com.smartnote.server.util.FileUtils;
+import com.smartnote.server.util.MIME;
 
 /**
  * <p>
@@ -47,9 +48,9 @@ public class ResourceSystem {
      * The supported MIME types for uploads.
      */
     public static final String[] SUPPORTED_MIME_TYPES = {
-            "application/pdf",
-            "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        MIME.PDF,
+        MIME.PPTX,
+        MIME.PPT
     };
 
     /**
@@ -188,7 +189,7 @@ public class ResourceSystem {
      * 
      * @param name       The name of the resource. Should be in the format
      *                   <code>authority:path</code>. Cannot be <code>null</code>.
-     * @param permission The permission to use. Cannot be <code>null</code>.
+     * @param permission The permission to use. <code>null</code> means default.
      * @return The resource. Never <code>null</code>.
      * @throws SecurityException       If the permission is not sufficient to access
      *                                 the resource.
@@ -200,7 +201,6 @@ public class ResourceSystem {
     public Resource findResource(String name, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         Objects.requireNonNull(name, "name cannot be null");
-        Objects.requireNonNull(permission, "permission cannot be null");
 
         int colonIndex = name.indexOf(':');
         if (colonIndex == -1)
@@ -232,7 +232,7 @@ public class ResourceSystem {
      * 
      * @param authority  The authority. Cannot be <code>null</code>.
      * @param path       The path within the authority. Cannot be <code>null</code>.
-     * @param permission The permission to use. Cannot be <code>null</code>.
+     * @param permission The permission to use. <code>null</code> means default.
      * @return The resource. Never <code>null</code>.
      * @throws SecurityException       If the permission is not sufficient to access
      *                                 the
@@ -246,7 +246,6 @@ public class ResourceSystem {
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         Objects.requireNonNull(authority, "authority cannot be null");
         Objects.requireNonNull(path, "path cannot be null");
-        Objects.requireNonNull(permission, "permission cannot be null");
 
         // find resource
         try {
@@ -281,16 +280,19 @@ public class ResourceSystem {
         Path path = Paths.get(abstractPath.substring(colonIndex + 1));
 
         // collapse . and ..
-        Path collapsed = Paths.get("");
+        Path collapsed = null;
         for (Path part : path) {
             if (part.toString().equals("."))
                 continue;
             else if (part.toString().equals("..")) {
-                collapsed = collapsed.getParent();
                 if (collapsed == null)
                     throw new InvalidPathException(abstractPath, "Path is outside of authority");
-            } else
-                collapsed = collapsed.resolve(part);
+
+                collapsed = collapsed.getParent();          
+            } else {
+                if (collapsed == null) collapsed = part;
+                else collapsed = collapsed.resolve(part);
+            }
         }
 
         return authority + ":" + collapsed.toString().replace('\\', '/');
@@ -303,14 +305,14 @@ public class ResourceSystem {
 
     private Resource getPrivateResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
-        if (!permission.implies(getPrivatePermission()))
+        if (permission == null || !permission.implies(getPrivatePermission()))
             throw new SecurityException("Access denied");
         return fileResourceFactory.openFileResource(getFullPath(privateDir, path), AccessMode.READ);
     }
 
     private Resource getSessionResource(Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
-        if (!(permission instanceof SessionPermission))
+        if (permission == null || !(permission instanceof SessionPermission))
             throw new SecurityException("Access denied");
 
         SessionPermission sessionPermission = (SessionPermission) permission;
