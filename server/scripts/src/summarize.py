@@ -1,3 +1,9 @@
+import sys
+import os
+from typing import Union, List
+from urllib.parse import urlparse
+from cmdline import Switch, parse
+
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from langchain_community.document_loaders import PyPDFLoader
@@ -18,17 +24,6 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 
-def create_db_from_pptx(pptx_file):
-    loader = UnstructuredPowerPointLoader(pptx_file , mode="elements")
-    transcript = loader.load()
-
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
-    docs = text_splitter.split_documents(transcript)
-
-    db = FAISS.from_documents(docs, embeddings)
-    return db
-
-
 def create_db_from_youtube_video_url(video_url):
     loader = YoutubeLoader.from_youtube_url(video_url)
     transcript = loader.load()
@@ -37,8 +32,38 @@ def create_db_from_youtube_video_url(video_url):
     docs = text_splitter.split_documents(transcript)
 
     db = FAISS.from_documents(docs, embeddings)
-    return db
+    return db, docs
 
+
+def extract_youtube_link_from_file(file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            content = file.read().strip()
+            return content
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        sys.exit(1)
+
+
+def is_youtube_link(input_str):
+    # Check if the input string is a valid YouTube link
+    parsed_url = urlparse(input_str)
+    return (
+        parsed_url.netloc == "www.youtube.com"
+        and "/watch" in parsed_url.path
+        and "v=" in parsed_url.query
+    )
+
+
+def create_db_from_powerpoint_file(pptx_file):
+    loader = UnstructuredPowerPointLoader(pptx_file)
+    data = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
+    docs = text_splitter.split_documents(data)
+
+    db = FAISS.from_documents(docs, embeddings)
+    return db, docs
 
 def create_db_from_pdf(pdf_file):
     loader = PyPDFLoader(pdf_file)
@@ -48,7 +73,7 @@ def create_db_from_pdf(pdf_file):
     docs = text_splitter.split_documents(pages)
 
     db = FAISS.from_documents(docs, embeddings)
-    return db
+    return db, docs
 
 
 def get_response_from_query(db, query, k=4):
@@ -59,8 +84,8 @@ def get_response_from_query(db, query, k=4):
 
     # Template to use for the system message prompt
     template = """
-        You are a helpful assistant that that can answer questions about educational lectures or pdfs
-        based on the transcript: {docs}
+        You are a helpful assistant that that can answer questions about youtube videos, pdfs, and powerpoint files 
+        based on: {docs}
 
         Only use the factual information from the transcript to answer the question.
 
@@ -84,16 +109,28 @@ def get_response_from_query(db, query, k=4):
     return response, docs
 
 
-# Example usage:
-# video_url = "https://www.youtube.com/watch?v=kYB8IZa5AuE"
-# db = create_db_from_youtube_video_url(video_url)
-# pptx_file = "Functions_in_Python.pptx"
-# db = create_db_from_pptx(pptx_file)
+def process_file(file_path, switches):
+    _, ext = os.path.splitext(file_path)
 
-pdf_file = "linear_regression.pdf"
-db = create_db_from_pdf(pdf_file)
+    if ext == ".pptx":
+        db, docs = create_db_from_powerpoint_file(file_path)
+    elif ext == ".pdf":
+        db, docs = create_db_from_pdf(file_path)
+    elif ext == '.txt':
+        input_str = extract_youtube_link_from_file(file_path)
+        if is_youtube_link(input_str):
+            try:
+                db, docs = create_db_from_youtube_video_url(input_str)
+            except Exception as e:
+                print(f"Error processing YouTube link: {e}")
+                sys.exit(1)
+        else:
+            raise Exception(f"Invalid YouTube link in the file: {file_path}")
+    else:
+        raise Exception(f"Unsupported file type: {ext}")
 
-query = "Take notes on this in this format. Make sure that you properly newline throughout the page: """"
+    args, options = parse(sys.argv[1:], switches)
+    query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """"
     # [Title]
 
     ## General Overview 
@@ -150,9 +187,23 @@ query = "Take notes on this in this format. Make sure that you properly newline 
     [Summarize the key takeaways or concluding remarks.]
     """
 
-response, docs = get_response_from_query(db, query)
-output_file_path = "out/output.md"
-with open(output_file_path, "w", encoding="utf-8") as file:
-    file.write(response)
+    response, docs = get_response_from_query(db, query)
 
-print(f"Cleaned response has been saved to: {output_file_path}")
+    output_file_path = "../out/output.md"
+    with open(output_file_path, "w", encoding="utf-8") as file:
+        file.write(response)
+    print(f"Cleaned response has been saved to: {output_file_path}")
+
+
+if __name__ == "__main__":
+    my_switches = [
+        Switch("verbose", short="v", type=bool, value=False),
+    ]
+
+
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <file_path> [options]")
+        sys.exit(1)
+
+    file_path = sys.argv[1]
+    process_file(file_path, my_switches)
