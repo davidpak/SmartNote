@@ -1,17 +1,18 @@
-import { IoMdArrowBack as Arrow } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 
-import H2 from "./H2";
-import Body from "./Body";
-import Button from "./Button";
+import H2 from './H2';
+import Body from './Body';
+import Button from './Button';
 
 interface ExportSuccessType extends React.HTMLAttributes<HTMLDivElement> {
   prev: () => void;
+  goHome: () => void;
 }
 
 const ExportSuccess = ({
   prev,
+  goHome,
   className,
   ...rest
 }: ExportSuccessType) => {
@@ -29,13 +30,11 @@ const ExportSuccess = ({
         Back
       </Button>
       <H2>Export Successful!</H2>
-      <Body>
-        Congrats! Check out your new notes page :&#41;
-      </Body>
+      <Body>Congrats! Check out your new notes page :&#41;</Body>
       <div className='flex gap-5'>
-        <Link to='/' tabIndex={-1}>
-          <Button variant='secondary'>Home</Button>
-        </Link>
+        <Button onClick={goHome} variant='secondary'>
+          Home
+        </Button>
         <a href='https://www.notion.so/' target='_blank' tabIndex={-1}>
           <Button>Go to Notion</Button>
         </a>
