@@ -1,7 +1,6 @@
 package com.smartnote.server.format.notion;
 
 import org.commonmark.node.Node;
-import org.commonmark.node.Visitor;
 import org.commonmark.renderer.Renderer;
 
 import com.google.gson.Gson;
@@ -24,11 +23,17 @@ import com.google.gson.JsonObject;
  * @see NotionVisitor
  */
 public class NotionRenderer implements Renderer {
+
+    /**
+     * Renders the given node as a JSON object.
+     * 
+     * @param node the node to render
+     * @return the JSON object representing the node
+     */
     public JsonObject renderJson(Node node) {
         NotionVisitor visitor = new NotionVisitor();
         node.accept(visitor);
-        return visitor.getJson();
-        //return page.writeJSON();
+        return visitor.createJson();
     }
 
     @Override

@@ -6,10 +6,8 @@ import java.util.Stack;
 
 import org.commonmark.node.*;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 /**
  * <p>
@@ -27,15 +25,18 @@ class NotionVisitor extends AbstractVisitor {
 
     /**
      * Constructs a new NotionVisitor.
-     * 
-     * @param page The page to write to.
      */
     public NotionVisitor() {
         this.listStack = new Stack<>();
         this.styleStack = new Stack<>();
     }
 
-    public JsonObject getJson() {
+    /**
+     * Create a Notion-compatible JSON object.
+     * 
+     * @return The JSON object.
+     */
+    public JsonObject createJson() {
         return block.createJson();
     }
 
@@ -53,15 +54,12 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Code code) {
-        this.styleStack.push(styleStack.peek().code());
-        Text text = new Text(code.getLiteral());
-        visit(text);
-        this.styleStack.pop();
+        block.addRichText(code.getLiteral(), styleStack.peek().code());
     }
 
     @Override
     public void visit(Document document) {
-        this.block = new Block();
+        this.block = new Block(null);
         this.styleStack.push(new Style());
         visitChildren(document);
         this.styleStack.pop();
@@ -69,45 +67,30 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Emphasis emphasis) {
-        this.styleStack.push(styleStack.peek().italic());
-        visitChildren(emphasis);
-        this.styleStack.pop();
+        visitChildren(emphasis, styleStack.peek().italic());
     }
 
     @Override
     public void visit(FencedCodeBlock fencedCodeBlock) {
-        Block oldBlock = this.block;
         String language = fencedCodeBlock.getInfo();
         if (language == null || language.length() == 0)
             language = "plain text";
 
         Block block = new Block("code");
+        block.addProperty("language", language);
+        block.addRichText(fencedCodeBlock.getLiteral(), styleStack.peek());
+
         this.block.addChild(block);
-
-        this.block = block;
-
-        block.more.addProperty("language", language);
-
-        Text text = new Text(fencedCodeBlock.getLiteral());
-        visit(text);
-
-        this.block = oldBlock;
     }
 
     @Override
     public void visit(HardLineBreak hardLineBreak) {
+        // Ignore
     }
 
     @Override
     public void visit(Heading heading) {
-        Block oldBlock = this.block;
-
-        Block block = new Block("heading_" + heading.getLevel());
-        this.block.addChild(block);
-
-        this.block = block;
-        visitChildren(heading);
-        this.block = oldBlock;
+        visitChildren(heading, new Block("heading_" + heading.getLevel()));
     }
 
     @Override
@@ -137,21 +120,12 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Link link) {
-        this.styleStack.push(styleStack.peek().link(link.getDestination()));
-        visitChildren(link);
-        this.styleStack.pop();
+        visitChildren(link, styleStack.peek().link(link.getDestination()));
     }
 
     @Override
     public void visit(ListItem listItem) {
-        Block oldBlock = this.block;
-
-        Block block = new Block(this.listStack.peek());
-        this.block.addChild(block);
-
-        this.block = block;
-        visitChildren(listItem);
-        this.block = oldBlock;
+        visitChildren(listItem, new Block(this.listStack.peek()));
     }
 
     @Override
@@ -168,46 +142,22 @@ class NotionVisitor extends AbstractVisitor {
             return;
         }
 
-        Block oldBlock = this.block;
-
-        Block block = new Block("paragraph");
-        this.block.addChild(block);
-
-        this.block = block;
-        visitChildren(paragraph);
-        this.block = oldBlock;
+        visitChildren(paragraph, new Block("paragraph"));
     }
 
     @Override
     public void visit(SoftLineBreak softLineBreak) {
-
+        // Ignore
     }
 
     @Override
     public void visit(StrongEmphasis strongEmphasis) {
-        this.styleStack.push(styleStack.peek().bold());
-        visitChildren(strongEmphasis);
-        this.styleStack.pop();
+        visitChildren(strongEmphasis, styleStack.peek().bold());
     }
 
     @Override
     public void visit(Text text) {
-        JsonObject textObject = new JsonObject();
-        textObject.addProperty("type", "text");
-
-        Style style = new Style(styleStack.peek());
-
-        JsonObject textDataObject = new JsonObject();
-        textDataObject.addProperty("content", text.getLiteral());
-
-        if (style.link != null)
-            textObject.addProperty("link", style.link);
-
-        textObject.add("text", textDataObject);
-
-        style.addToText(textObject);
-
-        block.addRichText(textObject);
+        block.addRichText(text.getLiteral(), styleStack.peek());
     }
 
     @Override
@@ -225,8 +175,28 @@ class NotionVisitor extends AbstractVisitor {
         visitChildren(customNode);
     }
 
+    private void visitChildren(Node node, Block block) {
+        Block oldBlock = this.block;
+        this.block.addChild(block);
+        this.block = block;
+        visitChildren(node);
+        this.block = oldBlock;
+    }
+
+    private void visitChildren(Node node, Style style) {
+        this.styleStack.push(style);
+        visitChildren(node);
+        this.styleStack.pop();
+    }
+
+    /**
+     * <p>
+     * Represents a block in Notion's internal format.
+     * </p>
+     * 
+     * @author Ethan Vrhel
+     */
     private static class Block {
-        private String object;
         private String type;
 
         private List<JsonObject> richText;
@@ -234,41 +204,91 @@ class NotionVisitor extends AbstractVisitor {
 
         private JsonObject more;
 
-        public Block() {
-            this(null, null);
-        }
-
+        /**
+         * Create a new block.
+         * 
+         * @param type The type of the block. If <code>null</code>,
+         * the block is the root block.
+         */
         public Block(String type) {
-            this("block", type);
-        }
-
-        public Block(String object, String type) {
-            this.object = object;
             this.type = type;
             this.richText = new ArrayList<>();
             this.children = new ArrayList<>();
             this.more = new JsonObject();
         }
 
-        public void addRichText(JsonObject object) {
-            richText.add(object);
+        /**
+         * Add rich text to the block.
+         * 
+         * @param literal The literal text.
+         * @param style  The style of the text.
+         */
+        public void addRichText(String literal, Style style) {      
+            JsonObject textObject = new JsonObject();
+            textObject.addProperty("type", "text");
+
+            JsonObject textDataObject = new JsonObject();
+            textDataObject.addProperty("content", literal);
+
+            if (style.link != null) {
+                JsonObject linkObject = new JsonObject();
+                linkObject.addProperty("url", style.link);
+                textDataObject.add("link", linkObject);
+            }
+
+            textObject.add("text", textDataObject);
+
+            style.addToText(textObject);
+
+            richText.add(textObject);
         }
 
+        /**
+         * Add a child block to the block.
+         * 
+         * @param block The child block.
+         */
         public void addChild(Block block) {
             children.add(block);
         }
 
+        /**
+         * Add an additional property to the block.
+         * 
+         * @param key  The key.
+         * @param value The value.
+         */
+        public void addProperty(String key, String value) {
+            more.addProperty(key, value);
+        }
+
+        /**
+         * Convert the block to a Notion-compatible JSON object.
+         * 
+         * @return The JSON object.
+         */
         public JsonObject createJson() {
+            JsonObject objectData = createObjectData();
+            if (type == null) // represents the root block
+                return objectData;
+
             JsonObject json = new JsonObject();
 
-            if (object != null)
-                json.addProperty("object", "block");
+            // add object and type
+            json.addProperty("object", "block");
+            json.addProperty("type", type); 
+            
+            // only add objectData if it has data
+            if (objectData.size() > 0)
+                json.add(type, objectData);
 
-            if (type != null)
-                json.addProperty("type", type);
+            return json;
+        }
 
+        private JsonObject createObjectData() {
             JsonObject objectData = new JsonObject();
 
+            // add rich text
             if (richText.size() > 0) {
                 JsonArray richTextArray = new JsonArray();
                 for (JsonObject richTextObject : richText)
@@ -276,27 +296,27 @@ class NotionVisitor extends AbstractVisitor {
                 objectData.add("rich_text", richTextArray);
             }
 
+            // add children
             if (children.size() > 0) {
                 JsonArray childrenArray = new JsonArray();
                 for (Block child : children)
                     childrenArray.add(child.createJson());
-
-                if (type != null)
-                    objectData.add("children", childrenArray);
-                else
-                    json.add("children", childrenArray);
+                objectData.add("children", childrenArray);
             }
 
+            // add additional properties
             for (String key : more.keySet())
                 objectData.add(key, more.get(key));
 
-            if (type != null && objectData.size() > 0)
-                json.add(type, objectData);
-
-            return json;
+            return objectData;
         }
     }
 
+    /**
+     * Describe a style in Notion's internal format.
+     * 
+     * @author Ethan Vrhel
+     */
     private static class Style {
         private boolean bold;
         private boolean italic;
@@ -304,8 +324,11 @@ class NotionVisitor extends AbstractVisitor {
         private boolean underline;
         private boolean code;
 
-        private String link;
+        private String link; // null if no link
 
+        /**
+         * Create a default style.
+         */
         public Style() {
             this.bold = false;
             this.italic = false;
@@ -315,6 +338,11 @@ class NotionVisitor extends AbstractVisitor {
             this.link = null;
         }
 
+        /**
+         * Copy a style.
+         * 
+         * @param style The style to copy.
+         */
         public Style(Style style) {
             this.bold = style.bold;
             this.italic = style.italic;
@@ -324,6 +352,11 @@ class NotionVisitor extends AbstractVisitor {
             this.link = style.link;
         }
 
+        /**
+         * Add the style to a text JSON object.
+         * 
+         * @param textJson The text JSON object.
+         */
         public void addToText(JsonObject textJson) {
             JsonObject json = new JsonObject();
 
@@ -346,36 +379,67 @@ class NotionVisitor extends AbstractVisitor {
                 textJson.add("annotations", json);
         }
 
+        /**
+         * Return a new style with bold enabled.
+         * 
+         * @return The new style.
+         */
         public Style bold() {
             Style style = new Style(this);
             style.bold = true;
             return style;
         }
 
+        /**
+         * Return a new style with italic enabled.
+         * 
+         * @return The new style.
+         */
         public Style italic() {
             Style style = new Style(this);
             style.italic = true;
             return style;
         }
 
+        /**
+         * Return a new style with strikethrough enabled.
+         * 
+         * @return The new style.
+         */
         public Style strikethrough() {
             Style style = new Style(this);
             style.strikethrough = true;
             return style;
         }
 
+        /**
+         * Return a new style with underline enabled.
+         * 
+         * @return The new style.
+         */
         public Style underline() {
             Style style = new Style(this);
             style.underline = true;
             return style;
         }
 
+        /**
+         * Return a new style with code enabled.
+         * 
+         * @return The new style.
+         */
         public Style code() {
             Style style = new Style(this);
             style.code = true;
             return style;
         }
 
+        /**
+         * Return a new style with a link.
+         * 
+         * @param link The link.
+         * @return The new style.
+         */
         public Style link(String link) {
             Style style = new Style(this);
             style.link = link;

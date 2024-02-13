@@ -133,8 +133,8 @@ public class ResourceSystem {
      * @param config The configuration. Cannot be <code>null</code>.
      */
     public ResourceSystem(ResourceConfig config) {
-        this.publicDir = FileUtils.getCanonicalFile(config.getPrivateDir()).toPath();
-        this.privateDir = FileUtils.getCanonicalFile(config.getPublicDir()).toPath();
+        this.publicDir = FileUtils.getCanonicalFile(config.getPublicDir()).toPath();
+        this.privateDir = FileUtils.getCanonicalFile(config.getPrivateDir()).toPath();
         this.sessionDir = FileUtils.getCanonicalFile(config.getSessionDir()).toPath();
 
         this.fileResourceFactory = (file, mode) -> new FileResource(file.toFile(), mode);

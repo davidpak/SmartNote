@@ -14,7 +14,6 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.smartnote.server.format.notion.NotionRenderer;
@@ -45,7 +44,7 @@ public class NotionAPI {
             System.exit(1);
         }
 
-        String markdown = Files.readString(Paths.get("private", "test.md"));
+        String markdown = Files.readString(Paths.get("private", "output.md"));
 
         Parser parser = Parser.builder().build();
         Node document = parser.parse(markdown);
@@ -53,15 +52,13 @@ public class NotionAPI {
         NotionRenderer renderer = new NotionRenderer();
         JsonObject notionJson = renderer.renderJson(document);
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        System.out.println(gson.toJson(notionJson));
-
         String token = args[0];
         String blockId = args[1];
         String version = "2022-06-28";
 
         NotionAPI api = new NotionAPI().build(token, version);
-        api.appendBlock(blockId, notionJson);
+        int rc = api.appendBlock(blockId, notionJson);
+        System.out.println("Status code: " + rc);
     }
 
     private String token;
@@ -93,27 +90,77 @@ public class NotionAPI {
         return this;
     }
 
-    public void create(JsonObject pageJson) throws IOException {
-
+    /**
+     * Create a Notion page.
+     * 
+     * @param parentId The ID of the parent page.
+     * @param name The name of the page.
+     * @param json The JSON object representing the page.
+     * @throws IOException          If the system does not have the necessary
+     *                              resources to connect to the Notion API.
+     * @throws InterruptedException If the request is interrupted.
+     */
+    public void create(String parentId, String name, JsonObject json) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
-    public void appendBlock(String blockId, JsonObject json) throws IOException, InterruptedException {
-        HttpRequest.Builder builder = append(blockId, json);
-        HttpRequest request = builder.build();
-        System.out.println(request.uri() + " " + request.method() + " " + request.headers());
+    /**
+     * Append a block to a Notion page.
+     * 
+     * @param blockId The ID of the block to append to.
+     * @param json   The JSON object representing the block to append.
+     * @return The status code of the request.
+     * @throws IOException          If the system does not have the necessary
+     *                              resources to connect to the Notion API.
+     * @throws InterruptedException If the request is interrupted.
+     */
+    public int appendBlock(String blockId, JsonObject json) throws IOException, InterruptedException {
+        HttpRequest request = patch("blocks/" + formatId(blockId) + "/children", json).build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("Response: " + response.statusCode());
-        if (response.statusCode() != 200)
-            System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(gson.fromJson(response.body(), JsonObject.class)));
+        return response.statusCode();
     }
 
-    private HttpRequest.Builder append(String blockId, JsonObject body) {
-        String endpoint = "blocks/" + formatId(blockId) + "/children";
+    
+    /**
+     * Build a new POST request builder with the given endpoint and JSON body.
+     * 
+     * @param endpoint The endpoint.
+     * @param body   The JSON body.
+     * @return The new POST request builder.
+     */
+    private HttpRequest.Builder post(String endpoint, JsonObject body) {
+        return auth(to(endpoint).method("POST", jsonPublisher(body))).header("Content-Type", MIME.JSON);
+    }
+
+    /**
+     * Build a new PATCH request builder with the given endpoint and JSON body.
+     * 
+     * @param endpoint The endpoint.
+     * @param body    The JSON body.
+     * @return The new PATCH request builder.
+     */
+    private HttpRequest.Builder patch(String endpoint, JsonObject body) {
         return auth(to(endpoint).method("PATCH", jsonPublisher(body))).header("Content-Type", MIME.JSON);
     }
 
+    /**
+     * Append the Notion API token and version to a request builder.
+     * 
+     * @param b The request builder.
+     * @return The request builder with the Notion API token and version appended.
+     */
     private HttpRequest.Builder auth(HttpRequest.Builder b) {
         return b.header("Authorization", "Bearer " + token).header("Notion-Version", version);
+    }
+
+    /**
+     * Create a new HTTP request body publisher with the given JSON element.
+     * 
+     * @param json The JSON element.
+     * @return The new HTTP request body publisher.
+     */
+    private BodyPublisher jsonPublisher(JsonElement json) {
+        return HttpRequest.BodyPublishers.ofString(gson.toJson(json));
     }
 
     /**
@@ -136,11 +183,13 @@ public class NotionAPI {
         return sb.toString();
     }
 
+    /**
+     * Create a new HTTP request builder with the given Notion endpoint.
+     * 
+     * @param endpoint The endpoint.
+     * @return The new HTTP request builder.
+     */
     private static HttpRequest.Builder to(String endpoint) {
         return HttpRequest.newBuilder().uri(uriOf(endpoint));
-    }
-
-    private static BodyPublisher jsonPublisher(JsonElement json) {
-        return HttpRequest.BodyPublishers.ofString(new Gson().toJson(json));
     }
 }
