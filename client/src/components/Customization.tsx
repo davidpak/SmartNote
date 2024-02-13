@@ -1,5 +1,4 @@
 import { IoMdArrowBack as Arrow } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
 import { twMerge } from 'tailwind-merge';
 
 import H2 from "./H2";
@@ -11,15 +10,17 @@ import Slider from "./Slider";
 
 interface CustomizationType extends React.HTMLAttributes<HTMLDivElement> {
   files: string[];
+  prev: () => void;
+  next: () => void;
 }
 
 const Customization = ({
   files,
+  prev,
+  next,
   className,
   ...rest
 }: CustomizationType) => {
-  const navigate = useNavigate();
-
   async function generateNotes() {
     const options = {
       general: files,
@@ -49,18 +50,18 @@ const Customization = ({
 
   return (
     <div
-      className={twMerge('flex flex-col items-center gap-10 mx-36', className)}
+      className={twMerge('flex flex-col items-center gap-10', className)}
       {...rest}
     >
       <Button
         icon={Arrow}
         variant='tertiary'
-        className='absolute left-0'
-        onClick={() => navigate(-1)}
+        className='absolute left-16'
+        onClick={() => prev()}
       >
         Back
       </Button>
-      <div className='flex flex-col text-center gap-5'>
+      <div className='flex flex-col text-center gap-5 max-w-xl'>
         <H2>Customize Your Notes</H2>
         <Body>
           Toggle the different settings to select which content you want to include
@@ -86,7 +87,10 @@ const Customization = ({
         </div>
       </div>
       <Button
-        onClick={() => generateNotes()}
+        onClick={() => {
+          generateNotes();
+          next();
+        }}
       >
         Generate!
       </Button>
