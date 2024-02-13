@@ -66,7 +66,7 @@ const FileUpload = ({ next }: { next: () => void }) => {
           Streamlining the process of transforming educational content to
           readable, flexible notes.
         </Body>
-        <Link to='/about'>
+        <Link to='/about' tabIndex={-1}>
           <Button variant='secondary'>Learn More</Button>
         </Link>
         <img src={'/home-hero.png'} alt='' className='max-w-xl' />

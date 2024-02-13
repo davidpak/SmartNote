@@ -29,6 +29,9 @@ const Home = () => {
         return <FileUpload next={next} />;
       // add other pages here
       default:
+        // in case something goes wrong, just go back to the initial page
+        setIndex(0);
+        localStorage.setItem('index', '0');
         return null;
     }
   };
