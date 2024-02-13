@@ -28,11 +28,26 @@ public class UploadTest extends BaseRoute {
     public static final byte[] TEST_FILE_CONTENTS;
 
     static {
-        try {
-            TEST_FILE_CONTENTS = Files.readAllBytes(Paths.get("server", "testfiles", TEST_FILE_NAME));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        Path[] paths = {
+            Paths.get("server", "testfiles", TEST_FILE_NAME),
+            Paths.get("testfiles", TEST_FILE_NAME)
+        };
+
+        byte[] contents = null;
+        for (int i = 0; i < paths.length; i++) {
+            Path path = paths[i];
+            if (Files.exists(path)) {
+                try {
+                    contents = Files.readAllBytes(path);
+                    break;
+                } catch (Exception e) {}
+            }
         }
+
+        if (contents == null)
+            throw new RuntimeException("Could not find test file");
+
+        TEST_FILE_CONTENTS = contents;
     }
     
     private Upload upload;
