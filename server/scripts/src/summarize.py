@@ -130,62 +130,77 @@ def process_file(file_path, switches):
         raise Exception(f"Unsupported file type: {ext}")
 
     args, options = parse(sys.argv[1:], switches)
-    query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """"
-    # [Title]
+    print(f"Options: {options}")
+    query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """
+    query += """# [Title]"""
+    
+    if not options["no_general_overview"]:
+        query += """
+        ## General Overview 
+        [Provide a brief summary or introduction of the topic.]
+        """
+    if not options["no_key_concepts"]:
+        query += """
+        ## Key Concepts
 
-    ## General Overview 
-    [Provide a brief summary or introduction of the topic.]
+        - **Concept 1:**
+            - [Brief description or explanation of the first key concept.]
+        - **Concept 2:**
+            - [Brief description or explanation of the second key concept.]
+        - **Concept 3:**
+            - [Brief description or explanation of the third key concept.]
+        """
+    if not options["no_section_by_section"]:
+        query += """
+        ## Section by Section Breakdown
 
-    ## Key Concepts
+        ### 1. Section One Title
+    
+        - [Detailed content or information related to the first section.]
+    
+        ### 2. Section Two Title
+    
+        - [Detailed content or information related to the second section.]
+    
+        ### 3. Section Three Title
+    
+        - [Detailed content or information related to the third section.]
+    
+        ### n. Section n Title
+    
+        - [Detailed content or information related to the nth section]
+        """
+    if not options["no_additional_information"]:
+        query += """
+            ## Additional Information
+            
+            - [Include any additional points, tips, or related information.]
+        """
+    if not options["no_helpful_vocabulary"]:
+        query += """
+            ## Helpful Vocabulary
 
-    - **Concept 1:**
-        - [Brief description or explanation of the first key concept.]
-    - **Concept 2:**
-        - [Brief description or explanation of the second key concept.]
-    - **Concept 3:**
-        - [Brief description or explanation of the third key concept.]
+            - **Term 1:**
+                - [Definition or explanation of the first term.]
+            - **Term 2:**
+                - [Definition or explanation of the second term.]
+            - **Term 3:**
+                - [Definition or explanation of the third term.]
+            - **Term n:**
+                - [Definition or explanation of the nth term.]
+        """
+    if not options["no_explain_to_5th_grader"]:
+        query += """
+            ## Explain it to a 5th grader:
 
-    ## Section by Section Breakdown
+            [Provide an explanation about this topic suitable for a 5th grader]
+        """
+    if not options["no_conclusion"]:
+        query += """
+            ## Conclusion
 
-    ### 1. Section One Title
-
-    - [Detailed content or information related to the first section.]
-
-    ### 2. Section Two Title
-
-    - [Detailed content or information related to the second section.]
-
-    ### 3. Section Three Title
-
-    - [Detailed content or information related to the third section.]
-
-    ### n. Section n Title
-
-    - [Detailed content or information related to the nth section]
-
-    ## Additional Information
-
-    - [Include any additional points, tips, or related information.]
-
-    ## Helpful Vocabulary
-
-    - **Term 1:**
-        - [Definition or explanation of the first term.]
-    - **Term 2:**
-        - [Definition or explanation of the second term.]
-    - **Term 3:**
-        - [Definition or explanation of the third term.]
-    - **Term n:**
-        - [Definition or explanation of the nth term.]
-
-    ## Explain it to a 5th grader:
-
-    [Provide an explanation about this topic suitable for a 5th grader]
-
-    ## Conclusion
-
-    [Summarize the key takeaways or concluding remarks.]
-    """
+            [Summarize the key takeaways or concluding remarks.]
+        """
 
     response, docs = get_response_from_query(db, query)
 
@@ -197,7 +212,14 @@ def process_file(file_path, switches):
 
 if __name__ == "__main__":
     my_switches = [
-        Switch("verbose", short="v", type=bool, value=False),
+        Switch("verbose", short="v", type=float, value=3.0),
+        Switch("no_general_overview", short="g", type=bool, value=False),
+        Switch("no_key_concepts", short="k", type=bool, value=False),
+        Switch("no_section_by_section", short="s", type=bool, value=False),
+        Switch("no_additional_information", short="a", type=bool, value=False),
+        Switch("no_helpful_vocabulary", short="h", type=bool, value=False),
+        Switch("no_explain_to_5th_grader", short="e", type=bool, value=False),
+        Switch("no_conclusion", short="c", type=bool, value=False)
     ]
 
 
