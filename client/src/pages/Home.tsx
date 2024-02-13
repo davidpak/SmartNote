@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
@@ -69,7 +70,9 @@ const Home = () => {
           Streamlining the process of transforming educational content to
           readable, flexible notes.
         </Body>
-        <Button variant='secondary'>Learn More</Button>
+        <Link to='/about'>
+          <Button variant='secondary'>Learn More</Button>
+        </Link>
         <img src={'/home-hero.png'} alt='' className='max-w-xl' />
       </section>
       <section className='flex flex-col gap-6 items-center w-full max-w-xl'>
