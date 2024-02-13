@@ -32,7 +32,7 @@ import spark.Route;
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
  */
-@ServerRoute(method = MethodType.POST, path = "/api/v1/generate")
+@ServerRoute(method = MethodType.POST, path = "/api/v1/export")
 public class Export implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {

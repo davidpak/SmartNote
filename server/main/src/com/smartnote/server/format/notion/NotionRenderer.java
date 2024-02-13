@@ -4,6 +4,7 @@ import org.commonmark.node.Node;
 import org.commonmark.renderer.Renderer;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 /**
  * <p>
@@ -23,12 +24,21 @@ import com.google.gson.Gson;
  */
 public class NotionRenderer implements Renderer {
 
+    /**
+     * Renders the given node as a JSON object.
+     * 
+     * @param node the node to render
+     * @return the JSON object representing the node
+     */
+    public JsonObject renderJson(Node node) {
+        NotionVisitor visitor = new NotionVisitor();
+        node.accept(visitor);
+        return visitor.createJson();
+    }
+
     @Override
     public void render(Node node, Appendable output) {
-        NotionPage page = new NotionPage();
-        NotionVisitor visitor = new NotionVisitor(page);
-        node.accept(visitor);
-        new Gson().toJson(page.writeJSON(), output);
+        new Gson().toJson(renderJson(node), output);
     }
 
     @Override
