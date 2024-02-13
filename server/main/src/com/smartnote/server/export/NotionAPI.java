@@ -14,6 +14,7 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.smartnote.server.format.notion.NotionRenderer;
@@ -40,7 +41,7 @@ public class NotionAPI {
     // For testing
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.err.println("Usage: NotionAPI <token> <blockId>");
+            System.err.println("Usage: NotionAPI <secret> <code>");
             System.exit(1);
         }
 
@@ -52,16 +53,17 @@ public class NotionAPI {
         NotionRenderer renderer = new NotionRenderer();
         JsonObject notionJson = renderer.renderJson(document);
 
-        String token = args[0];
-        String blockId = args[1];
+        String secret = args[0];
+        String code = args[1];
         String version = "2022-06-28";
 
-        NotionAPI api = new NotionAPI().build(token, version);
-        int rc = api.appendBlock(blockId, notionJson);
+        NotionAPI api = new NotionAPI().build(secret, version, code);
+        int rc = api.create("Test Page", notionJson);
         System.out.println("Status code: " + rc);
     }
 
-    private String token;
+    private String secret; // Integration secret
+    private String token; // OAuth token
     private String version;
 
     private Gson gson;
@@ -71,14 +73,20 @@ public class NotionAPI {
     /**
      * Sets up the Notion API.
      * 
-     * @param token   The Notion API token.
-     * @param version The Notion API version.
+     * @param secret      The integration secret.
+     * @param version     The Notion API version.
+     * @param code        The code for the Notion API, as returned by the OAuth
+     *                    process in the <code>code</code> query parameter.
+     * @param redirectUri The redirect URI for the Notion API, as returned by the
+     *                    OAuth process in the <code>redirect_uri</code> query
+     *                    parameter.
      * @return <code>this</code>
      * @throws IOException If the system does not have the necessary
      *                     resources to connect to the Notion API.
      */
-    public NotionAPI build(String token, String version) throws IOException {
-        this.token = token;
+    public NotionAPI build(String secret, String version, String code, String redirectUri)
+            throws IOException, InterruptedException {
+        this.secret = secret;
         this.version = version;
         this.gson = new Gson();
         try {
@@ -87,28 +95,62 @@ public class NotionAPI {
             throw new IOException(e);
         }
 
+        JsonObject oauthObject = new JsonObject();
+        oauthObject.addProperty("grant_type", "authorization_code");
+        oauthObject.addProperty("code", code);
+        oauthObject.addProperty("redirect_uri", redirectUri);
+
+        // Make a request to the Notion API to get the OAuth token
+        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(uriOf("oauth/token"))
+                .header("Content-Type", MIME.JSON)
+                .header("Authorization", "Basic " + secret)
+                .POST(jsonPublisher(oauthObject));
+
+        HttpRequest request = builder.build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200)
+            throw new IOException("Failed to get OAuth token: " + response.body());
+
         return this;
     }
 
     /**
-     * Create a Notion page.
+     * Create a Notion page in the workspace.
      * 
-     * @param parentId The ID of the parent page.
      * @param name The name of the page.
      * @param json The JSON object representing the page.
      * @throws IOException          If the system does not have the necessary
      *                              resources to connect to the Notion API.
      * @throws InterruptedException If the request is interrupted.
      */
-    public void create(String parentId, String name, JsonObject json) throws IOException, InterruptedException {
-        throw new UnsupportedOperationException("Not implemented");
+    public int create(String name, JsonObject json) throws IOException, InterruptedException {
+        JsonObject parent = new JsonObject();
+        parent.addProperty("type", "workspace");
+        parent.addProperty("workspace", true);
+
+        JsonObject properties = new JsonObject();
+        JsonObject nameObject = new JsonObject();
+        JsonArray titleArray = new JsonArray();
+        JsonObject textObject = new JsonObject();
+        textObject.addProperty("content", name);
+        titleArray.add(textObject);
+        nameObject.add("title", titleArray);
+        properties.add("Name", nameObject);
+
+        json.add("parent", parent);
+        json.add("properties", properties);
+
+        HttpRequest request = post("pages", json).build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response.statusCode();
     }
 
     /**
      * Append a block to a Notion page.
      * 
      * @param blockId The ID of the block to append to.
-     * @param json   The JSON object representing the block to append.
+     * @param json    The JSON object representing the block to append.
      * @return The status code of the request.
      * @throws IOException          If the system does not have the necessary
      *                              resources to connect to the Notion API.
@@ -120,12 +162,11 @@ public class NotionAPI {
         return response.statusCode();
     }
 
-    
     /**
      * Build a new POST request builder with the given endpoint and JSON body.
      * 
      * @param endpoint The endpoint.
-     * @param body   The JSON body.
+     * @param body     The JSON body.
      * @return The new POST request builder.
      */
     private HttpRequest.Builder post(String endpoint, JsonObject body) {
@@ -136,7 +177,7 @@ public class NotionAPI {
      * Build a new PATCH request builder with the given endpoint and JSON body.
      * 
      * @param endpoint The endpoint.
-     * @param body    The JSON body.
+     * @param body     The JSON body.
      * @return The new PATCH request builder.
      */
     private HttpRequest.Builder patch(String endpoint, JsonObject body) {
