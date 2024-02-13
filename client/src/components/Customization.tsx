@@ -49,7 +49,7 @@ const Customization = ({
 
   return (
     <div
-      className={twMerge('flex flex-col items-center text-center gap-7 mx-36', className)}
+      className={twMerge('flex flex-col items-center gap-10 mx-36', className)}
       {...rest}
     >
       <Button
@@ -60,12 +60,13 @@ const Customization = ({
       >
         Back
       </Button>
-      <H2>Customize Your Notes</H2>
-      <Body>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nisl, condimentum erat tellus quam
-        nulla mollis. Sed sed felis, ipsum aliquam. Ipsum sed habitant parturient varius odio metus.
-        Lorem senectus quis facilisi iaculis vitae.
-      </Body>
+      <div className='flex flex-col text-center gap-5'>
+        <H2>Customize Your Notes</H2>
+        <Body>
+          Toggle the different settings to select which content you want to include
+          in your notes and adjust the verbosity level to control its level of detail!
+        </Body>
+      </div>
       <div className='flex gap-52'>
         <div className='flex flex-col gap-3'>
           <H3>Content to Include:</H3>
@@ -76,7 +77,7 @@ const Customization = ({
           <Toggle label='5th Grader Explanation'/>
           <Toggle label='Conclusion'/>
         </div>
-        <div>
+        <div className='flex flex-col gap-3'>
           <H3>Additional Customization:</H3>
           <Slider
             label='Verbosity'
