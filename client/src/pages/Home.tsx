@@ -1,20 +1,42 @@
 import { useState } from 'react';
-import Dropzone from '../components/Dropzone';
+import FileUpload from '../components/FileUpload';
 
 const Home = () => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [errors, setErrors] = useState<(string | null)[]>([]);
+  const [index, setIndex] = useState<number>(() => {
+    const i = localStorage.getItem('index');
+    return i ? parseInt(i, 10) : 0;
+  });
 
-  return (
-    <div className='flex flex-col gap-4'>
-      <Dropzone
-        files={files}
-        setFiles={(files) => setFiles(files)}
-        errors={errors}
-        setErrors={(errors) => setErrors(errors)}
-      />
-    </div>
-  );
+  const next = () => {
+    setIndex((prevIndex) => {
+      const newIndex = prevIndex + 1;
+      localStorage.setItem('index', newIndex.toString());
+      return newIndex;
+    });
+  };
+
+  const prev = () => {
+    setIndex((prevIndex) => {
+      const newIndex = prevIndex - 1;
+      localStorage.setItem('index', newIndex.toString());
+      return newIndex;
+    });
+  };
+
+  const renderPage = () => {
+    switch (index) {
+      case 0:
+        return <FileUpload next={next} />;
+      // add other pages here
+      default:
+        // in case something goes wrong, just go back to the initial page
+        setIndex(0);
+        localStorage.setItem('index', '0');
+        return null;
+    }
+  };
+
+  return renderPage();
 };
 
 export default Home;
