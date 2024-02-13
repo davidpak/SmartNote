@@ -145,10 +145,6 @@ public class FunctionalUtils {
         return t -> uv.apply(tu.apply(t));
     }
 
-    public static <T> UnaryOperator<T> unary(UnaryOperator<T> t) {
-        return t;
-    }
-
     /**
      * Memoizes a supplier, meaning it will only be evaluated once.
      * The returned value will evaluate <code>ts</code> once and
