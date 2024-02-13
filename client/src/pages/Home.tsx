@@ -7,6 +7,11 @@ import Warning from '../components/Warning';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
+import Button from '../components/Button';
+import Warning from '../components/Warning';
+import H1 from '../components/H1';
+import H2 from '../components/H2';
+import Body from '../components/Body';
 
 const Home = () => {
   const [files, setFiles] = useState<File[]>([]);
