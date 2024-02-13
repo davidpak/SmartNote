@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import FileUpload from '../components/FileUpload';
+import Customization from '../components/Customization';
 
 const Home = () => {
   const [index, setIndex] = useState<number>(() => {
@@ -27,7 +28,8 @@ const Home = () => {
     switch (index) {
       case 0:
         return <FileUpload next={next} />;
-      // add other pages here
+      case 1:
+        return <Customization files={[]} prev={prev} next={next} />;
       default:
         // in case something goes wrong, just go back to the initial page
         setIndex(0);
