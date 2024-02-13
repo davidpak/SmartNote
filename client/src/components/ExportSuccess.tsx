@@ -1,27 +1,30 @@
 import { IoMdArrowBack as Arrow } from "react-icons/io";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { twMerge } from 'tailwind-merge';
 
 import H2 from "./H2";
 import Body from "./Body";
 import Button from "./Button";
 
+interface ExportSuccessType extends React.HTMLAttributes<HTMLDivElement> {
+  prev: () => void;
+}
+
 const ExportSuccess = ({
+  prev,
   className,
   ...rest
-}: React.HTMLAttributes<HTMLDivElement>) => {
-  const navigate = useNavigate();
-
+}: ExportSuccessType) => {
   return (
     <div
-      className={twMerge('flex flex-col items-center gap-5 mx-36', className)}
+      className={twMerge('flex flex-col items-center gap-5', className)}
       {...rest}
     >
       <Button
         icon={Arrow}
         variant='tertiary'
-        className='absolute left-0'
-        onClick={() => navigate(-1)}
+        className='absolute left-16'
+        onClick={() => prev()}
       >
         Back
       </Button>
@@ -33,7 +36,7 @@ const ExportSuccess = ({
         <Link to='/' tabIndex={-1}>
           <Button variant='secondary'>Home</Button>
         </Link>
-        <a href='https://www.notion.so/' target='_blank'>
+        <a href='https://www.notion.so/' target='_blank' tabIndex={-1}>
           <Button>Go to Notion</Button>
         </a>
       </div>
