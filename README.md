@@ -113,6 +113,7 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [React Dropzone](https://react-dropzone.js.org/) - Used to create Dropzone component.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
 - [React Router](https://reactrouter.com/en/main) - Used for client-side routing.
+- [React Suite](https://rsuitejs.com/) - Used for UI component, specifically a Checkbox Tree.
 - [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
 - [requests](https://requests.readthedocs.io/en/latest/) - Used in Python scripts to make HTTP requests.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.
