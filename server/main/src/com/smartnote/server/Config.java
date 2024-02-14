@@ -4,20 +4,22 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import com.smartnote.server.cli.CommandLineHandler;
 import com.smartnote.server.cli.CommandLineParser;
 import com.smartnote.server.resource.ResourceConfig;
+import com.smartnote.server.util.AbstractConfig;
 import com.smartnote.server.util.FileUtils;
-import com.smartnote.server.util.Validator;
 
 /**
- * <p>Stores configuration information for the server.</p>
+ * <p>
+ * Stores configuration information for the server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Server
  */
-public class Config implements CommandLineHandler, Validator {
+public class Config extends AbstractConfig {
 
     /**
      * Location of the config file.
@@ -28,20 +30,23 @@ public class Config implements CommandLineHandler, Validator {
      * Loads the config file.
      * 
      * @return The config file.
-     * @throws IOException If an I/O error occurs while reading the file.
+     * @throws IOException         If an I/O error occurs while reading the file.
      * @throws JsonSyntaxException If the file is not valid JSON.
      */
     public static Config loadConfig() throws IOException, JsonSyntaxException {
-        Gson gson = new Gson();
-
         String data = null;
         try {
             data = FileUtils.readFile(CONFIG_FILE);
         } catch (Exception e) {
             throw new IOException("Could not load config file", e);
         }
-    
-        return gson.fromJson(data, Config.class);
+
+        Gson gson = new Gson();
+        Config config = new Config();
+
+        JsonObject object = gson.fromJson(data, JsonObject.class);
+        config.loadJSON(object);
+        return config;
     }
 
     /**
@@ -52,7 +57,7 @@ public class Config implements CommandLineHandler, Validator {
      */
     public static void writeConfig(Config config) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        
+
         String data = gson.toJson(config);
         FileUtils.writeFile(CONFIG_FILE, data);
     }
@@ -96,5 +101,21 @@ public class Config implements CommandLineHandler, Validator {
     public void addHandlers(CommandLineParser parser) {
         parser.addHandler(server);
         parser.addHandler(resource);
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        server.writeJSON(json);
+        resource.writeJSON(json);
+        return json;
+    }
+
+    @Override
+    public void loadJSON(JsonObject object) {
+        if (object.has("server"))
+            server.loadJSON(object.getAsJsonObject("server"));
+
+        if (object.has("resource"))
+            resource.loadJSON(object);
     }
 }

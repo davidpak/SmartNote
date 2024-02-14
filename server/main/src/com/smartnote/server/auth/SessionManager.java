@@ -32,6 +32,11 @@ public class SessionManager {
     public static final String ISSUER = "com.smartnote.server";
 
     /**
+     * The name of the session cookie.
+     */
+    public static final String COOKIE_NAME = "session";
+
+    /**
      * The length of the session in seconds.
      */
     public static final long SESSION_LENGTH = 60 * 10; // 10 minutes
@@ -103,8 +108,8 @@ public class SessionManager {
      */
     public Session getSession(Request request) {
         DecodedJWT jwt = null;
-
-        String auth = request.headers("Authorization");
+        
+        String auth = request.cookie(COOKIE_NAME);
         if (auth == null)
             return null;
 

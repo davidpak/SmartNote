@@ -7,10 +7,7 @@ const H1 = ({
 }: React.HTMLAttributes<HTMLHeadingElement>) => {
   return (
     <h1
-      className={twMerge(
-        'font-bold text-[4rem] leading-[3rem] text-accent',
-        className
-      )}
+      className={twMerge('font-bold text-6xl text-accent', className)}
       {...rest}
     >
       {children}

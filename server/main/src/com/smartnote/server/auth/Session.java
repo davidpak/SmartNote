@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Permission;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -17,8 +19,7 @@ import spark.Response;
  * <p>
  * Stores session information. Sessions are implemented using
  * <a href="https://en.wikipedia.org/wiki/JSON_Web_Token">JSON Web Tokens</a>
- * (JWTs). The JWT is stored in the <code>Authorization</code> header
- * within HTTP requests and responses.
+ * (JWTs). The JWT is stored in the <code>session</code> cookie.
  * </p>
  * 
  * <p>
@@ -153,12 +154,22 @@ public class Session {
 
     /**
      * Writes the session token to the response. Will be stored in the
-     * <code>Authorization</code> header.
+     * <code>session</code> cookie.
      * 
      * @param response The response.
      */
     public void writeToResponse(Response response) {
-        response.header("Authorization", jwt.getToken());
+        Instant expr = jwt.getExpiresAtAsInstant();
+        int maxAge = (int) (expr.getEpochSecond() - Instant.now().getEpochSecond());
+        Instant expireInstant = Instant.now().plusSeconds(maxAge);
+
+        DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+        String expires = expireInstant.atZone(ZoneId.of("GMT")).format(formatter);
+
+        String cookie = String.format("%s=%s; Expires=%s; SameSite=Lax", SessionManager.COOKIE_NAME, jwt.getToken(), expires);
+        response.header("Set-Cookie", cookie);
+
+        //response.cookie(SessionManager.COOKIE_NAME, jwt.getToken(), maxAge);
     }
 
     /**
@@ -198,7 +209,7 @@ public class Session {
     /**
      * Store session information in this session's directory.
      */
-    void store() {
+    public void store() {
         try {
             Files.createDirectories(sessionDirectory);
             Files.write(tokenFile, jwt.getToken().getBytes());

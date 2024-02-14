@@ -1,6 +1,5 @@
 import prettyBytes from 'pretty-bytes';
 import { FiX as Remove } from 'react-icons/fi';
-import { FaCircleCheck as Success } from 'react-icons/fa6';
 import { IoMdWarning as Error } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 
@@ -36,15 +35,15 @@ const FileListItem = ({
           alt=''
           className='w-6 drop-shadow-sm'
         />
-        <div className='flex items-end gap-5'>
-          <div className='flex flex-col'>
+        <div className='flex gap-5'>
+          <div className='flex flex-col items-start'>
             <p className='font-medium text-neutral-500'>{name}</p>
-            <div className='flex gap-1'>
-              <p className='text-sm text-neutral-450 w-16'>
+            <div className='flex gap-1 items-start'>
+              <p className='text-sm text-neutral-450 w-16 text-start'>
                 {prettyBytes(size)}
               </p>
               <div className='flex items-center gap-2 text-sm text-neutral-500'>
-                {errorMessage ? (
+                {errorMessage && (
                   <>
                     <Error
                       size={18}
@@ -52,11 +51,6 @@ const FileListItem = ({
                       aria-hidden
                     />
                     <p>{errorMessage}</p>
-                  </>
-                ) : (
-                  <>
-                    <Success className='text-success shrink-0' aria-hidden />
-                    <p>Completed</p>
                   </>
                 )}
               </div>

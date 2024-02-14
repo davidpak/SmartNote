@@ -11,10 +11,16 @@ import org.junit.Test;
 
 import com.smartnote.server.api.v1.Remove;
 import com.smartnote.server.resource.ResourceConfig;
-import com.smartnote.testing.RouteTest;
+import com.smartnote.testing.BaseRoute;
 import com.smartnote.testing.VirtualFileSystem;
 
-public class RemoveTest extends RouteTest {
+/**
+ * <p>Tests the <code>remove</code> RPC.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.api.v1.Remove
+ */
+public class RemoveTest extends BaseRoute {
     public static final String TEST_FILE = "test.txt";
     public static final byte[] TEST_FILE_DATA = "Hello World!".getBytes();
 
@@ -31,11 +37,11 @@ public class RemoveTest extends RouteTest {
 
         ResourceConfig config = Server.getServer().getConfig().getResourceConfig();
 
-        String token = activateSession();
+        activateSession();
 
         publicPath = Paths.get(config.getPublicDir(), TEST_FILE);
         privatePath = Paths.get(config.getPrivateDir(), TEST_FILE);
-        sessionPath = getSession(token).getSessionDirectory().resolve(TEST_FILE);
+        sessionPath = getSession(SESSION_TOKEN).getSessionDirectory().resolve(TEST_FILE);
 
         // write a file to all authorities
         writeTestFile(publicPath);

@@ -9,10 +9,17 @@ import org.junit.*;
 
 import com.smartnote.server.api.v1.Login;
 import com.smartnote.server.auth.Session;
+import com.smartnote.server.auth.SessionManager;
 import com.smartnote.testing.BaseRoute;
 
 import spark.Response;
 
+/**
+ * <p>Tests the <code>login</code> RPC.</p>
+ * 
+ * @author Ethan Vrhel
+ * @see com.smartnote.server.api.v1.Login
+ */
 public class LoginTest extends BaseRoute {
 
     private Login login;
@@ -51,6 +58,12 @@ public class LoginTest extends BaseRoute {
     @Test
     public void testLoginAlreadyAuthenticated() throws Exception {
         activateSession();
-        doApiTest(400);
+        doApiTest(200);
+    }
+
+    @Test
+    public void testLoginInvalidToken() throws Exception {
+        setRequestCookie(SessionManager.COOKIE_NAME, "invalid");
+        doApiTest(200);
     }
 }

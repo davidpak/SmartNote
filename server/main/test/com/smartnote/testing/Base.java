@@ -14,7 +14,6 @@ import com.google.gson.Gson;
  */
 public class Base {
     private VirtualFileSystem vfs;
-    //private SecurityManager securityManager;
     private Gson gson;
 
     /**
@@ -23,10 +22,6 @@ public class Base {
     @Before
     public void setUp() throws Exception {
         this.vfs = new VirtualFileSystem();
-
-        //this.securityManager = new TestingSecurityManager();
-        //System.setSecurityManager(this.securityManager);
-
         this.gson = new Gson();
     }
 
@@ -35,7 +30,6 @@ public class Base {
      */
     @After
     public void tearDown() throws Exception {
-        //System.setSecurityManager(null);
     }
 
     /**
@@ -55,37 +49,4 @@ public class Base {
     public Gson getGson() {
         return gson;
     }
-
-    /**
-     * Asserts that System.exit() was called.
-     * 
-     * @param status the status code passed to System.exit()
-     * @throws ExitException if System.exit() was not called.
-     */
-    public void assertExit(int status) {
-        /*try {
-            verify(securityManager).checkExit(status);
-        } catch (ExitException e) {
-            if (e.getStatus() != status)
-                throw new AssertionError("Expected exit status " + status + ", got " + e.getStatus());
-        }*/
-    }
-
-    /**
-     * SecurityManager used for testing.
-     */
-    /*private class TestingSecurityManager extends SecurityManager {
-
-        @Override
-        public void checkPermission(Permission perm) {
-            // allow everything
-        }
-
-        @Override
-        public void checkExit(int status) {
-            throw new ExitException(status);
-        }
-
-    }*/
-
 }

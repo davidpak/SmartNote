@@ -1,20 +1,57 @@
 import { useState } from 'react';
-import Dropzone from '../components/Dropzone';
+
+import FileUpload from '../components/FileUpload';
+import Customization from '../components/Customization';
+import TopicSelection from '../components/TopicSelection';
+import ConnectToNotion from '../components/ConnectToNotion';
+import ExportSuccess from '../components/ExportSuccess';
 
 const Home = () => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [errors, setErrors] = useState<(string | null)[]>([]);
+  const [index, setIndex] = useState<number>(() => {
+    const i = localStorage.getItem('index');
+    return i ? parseInt(i, 10) : 0;
+  });
 
-  return (
-    <div className='flex flex-col gap-4'>
-      <Dropzone
-        files={files}
-        setFiles={(files) => setFiles(files)}
-        errors={errors}
-        setErrors={(errors) => setErrors(errors)}
-      />
-    </div>
-  );
+  const next = () => {
+    setIndex((prevIndex) => {
+      const newIndex = prevIndex + 1;
+      localStorage.setItem('index', newIndex.toString());
+      return newIndex;
+    });
+  };
+
+  const prev = () => {
+    setIndex((prevIndex) => {
+      const newIndex = prevIndex - 1;
+      localStorage.setItem('index', newIndex.toString());
+      return newIndex;
+    });
+  };
+
+  const goHome = () => {
+    setIndex(0);
+    localStorage.setItem('index', '0');
+  };
+
+  const renderPage = () => {
+    switch (index) {
+      case 0:
+        return <FileUpload next={next} />;
+      case 1:
+        return <Customization files={[]} prev={prev} next={next} />;
+      case 2:
+        return <TopicSelection files={[]} prev={prev} next={next} />;
+      case 3:
+        return <ConnectToNotion prev={prev} next={next} />;
+      case 4:
+        return <ExportSuccess prev={prev} goHome={goHome} />;
+      default:
+        goHome();
+        return null;
+    }
+  };
+
+  return renderPage();
 };
 
 export default Home;

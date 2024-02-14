@@ -2,7 +2,6 @@ package com.smartnote.server.resource;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,19 +36,38 @@ class FileResource implements Resource {
 
     @Override
     public InputStream openInputStream() throws SecurityException, IOException {
-        if (!mode.hasRead())
-            throw new SecurityException("No read permission");
-        if (!file.exists())
-            throw new FileNotFoundException("File does not exist");
-        return new FileInputStream(file);
+        mode.checkRead();
+        return new FileInputStream(checkExists());
     }
 
     @Override
     public OutputStream openOutputStream() throws SecurityException, IOException {
-        if (!mode.hasWrite())
-            throw new SecurityException("No write permission");
+        mode.checkWrite();
         Files.createDirectories(file.getParentFile().toPath());
         return new FileOutputStream(file);
+    }
+
+    @Override
+    public void delete() throws SecurityException, IOException {
+        mode.checkDelete();
+        checkExists().delete();
+    }
+
+    @Override
+    public long size() throws SecurityException, IOException {
+        mode.checkRead();
+        checkExists();
+
+        if (file.isDirectory())
+            return FileUtils.getDirectorySize(file);
+
+        return file.length();
+    }
+
+    @Override
+    public boolean exists() throws SecurityException {
+        mode.checkRead();
+        return file.exists();
     }
 
     @Override
@@ -57,26 +75,9 @@ class FileResource implements Resource {
         return file.toString();
     }
 
-    @Override
-    public void delete() throws SecurityException, IOException {
-        if (!mode.hasDelete())
-            throw new SecurityException("No delete permission");
+    private File checkExists() throws NoSuchResourceException {
         if (!file.exists())
-            throw new FileNotFoundException("File does not exist");
-        file.delete();
-    }
-
-    @Override
-    public long size() throws SecurityException, IOException {
-        if (!mode.hasRead())
-            throw new SecurityException("No read permission");
-
-        if (!file.exists())
-            throw new FileNotFoundException("File does not exist");
-
-        if (file.isDirectory())
-            return FileUtils.getDirectorySize(file);
-
-        return file.length();
+            throw new NoSuchResourceException(file.getName());
+        return file;
     }
 }

@@ -2,7 +2,11 @@ package com.smartnote.server;
 
 import static spark.Spark.*;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +55,11 @@ public class Server {
      */
     private static final Server SERVER = new Server();
 
+    /**
+     * Gets the instance of the server.
+     * 
+     * @return The server.
+     */
     public static Server getServer() {
         return SERVER;
     }
@@ -60,7 +69,11 @@ public class Server {
     private SessionManager sessionManager; // the session manager
 
     public static void main(String[] args) {
-        SERVER.init(args);
+        try {
+            SERVER.init(args);
+        } catch (ExitEarlyEarlyException e) {
+            System.exit(e.getCode());
+        }
     }
 
     // Only allow one instance
@@ -99,7 +112,16 @@ public class Server {
      * 
      * @param args The command line arguments.
      */
-    public int init(String[] args) {
+    public void init(String[] args) {
+        loadConfig(args);
+        initCrypto();
+        initResourceSystem();
+        initSessionManager();
+        initNetworking();
+    }
+
+    // Loads the config file and parses the command line
+    private void loadConfig(String[] args) {
         boolean configLoaded = false;
 
         // load the config file
@@ -132,13 +154,13 @@ public class Server {
             parser.parse();
         } catch (NoSuchSwitchException e) {
             System.err.println("Unknown switch: " + e.getMessage());
-            return 1;
+            throw new ExitEarlyEarlyException(1);
         } catch (ExitEarlyEarlyException e) {
-            return e.getCode();
+            throw e;
         } catch (Exception e) {
             e.printStackTrace();
             printHelp();
-            return 1;
+            throw new ExitEarlyEarlyException(1);
         }
 
         if (configLoaded)
@@ -155,21 +177,34 @@ public class Server {
 
         // validate the config
         config.validate();
+    }
 
+    // Initializes cryptographic utilities
+    private void initCrypto() {
         // initialize the crypto utils
-        try {
+        try {resourceSystem = new ResourceSystem(config.getResourceConfig());
             CryptoUtils.init(null);
         } catch (Exception e) {
             LOG.error("Failed to initialize CryptoUtils");
             e.printStackTrace();
-            return 1;
         }
+    }
 
+    // Initializes the resource system
+    private void initResourceSystem() {
         resourceSystem = new ResourceSystem(config.getResourceConfig());
+    }
 
+    // Initializes the session manager
+    private void initSessionManager() {
         // initialize the session manager
-        this.sessionManager = new SessionManager();
-        this.sessionManager.forceGc();
+        sessionManager = new SessionManager();
+        sessionManager.forceGc();
+    }
+
+    // Initializes the networking stuff (Spark)
+    private void initNetworking() {
+        ServerConfig serverConfig = config.getServerConfig();
 
         // handle exceptions
         exception(Exception.class, (e, req, res) -> {
@@ -178,16 +213,15 @@ public class Server {
             res.body("Internal server error");
         });
 
-        port(config.getServerConfig().getPort());
+        port(serverConfig.getPort());
 
         after((req, res) -> {
             // CORS
-            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Origin", serverConfig.getOrigin());
             res.header("Access-Control-Allow-Methods", "GET, POST");
             res.header("Access-Control-Allow-Credentials", "true");
-            res.header("Access-Control-Allow-Headers",
-                    "Content-Type, Authorization, Access-Control-Allow-Origin, Origin, X-Requested-With, Access-Control-Allow-Credentials, Authorization");
-            res.header("Access-Control-Expose-Headers", "Content-Type, Authorization");
+            res.header("Access-Control-Allow-Headers", "Content-Type");
+            res.header("Access-Control-Expose-Headers", "Content-Type");
         });
 
         // Add RPC routes
@@ -199,8 +233,6 @@ public class Server {
         addRoute(Upload.class);
         addRoute(Remove.class);
         addRoute(RescInfo.class);
-
-        return 0;
     }
 
     /**
@@ -260,6 +292,7 @@ public class Server {
         System.out.printf("Usage: java -jar server.jar [options]\n");
         System.out.printf("Options:\n");
         System.out.printf("  -h, --help               Print this help message\n");
+        System.out.printf("  -v, --version            Print the version\n");
         System.out.printf("  -p, --port <port>        Specify the port to listen on\n");
         System.out.printf("  -s, --ssl                Enable SSL\n");
         System.out.printf("  -i, --insecure           Disable SSL (default)\n");
@@ -267,9 +300,31 @@ public class Server {
         System.out.printf("  -r, --private-dir <dir>  Specify the private directory\n");
         System.out.printf("  -u, --public-dir <dir>   Specify the public directory\n");
         System.out.printf("  -e, --session-dir <dir>  Specify the per-session directory\n");
+        System.out.printf("  -p, --upload-dir <dir>   Specify the upload directory\n");
     }
 
+    /**
+     * Prints the version.
+     */
     private static void printVersion() {
         System.out.printf("SmartNote Server v%s\n", VERSION);
+
+        try {
+            Class<Server> clazz = Server.class;
+            String className = clazz.getSimpleName() + ".class";
+            String classPath = clazz.getResource(className).toString();
+            if (!classPath.startsWith("jar")) {
+                System.out.printf("Built from source\n");
+            } else {
+                String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) +
+                "/META-INF/MANIFEST.MF";
+                Manifest manifest = new Manifest(new URL(manifestPath).openStream());
+                Attributes attr = manifest.getMainAttributes();
+                String buildTime = attr.getValue("Build-Time");
+                System.out.printf("Build time: %s\n", buildTime);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

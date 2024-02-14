@@ -1,17 +1,17 @@
 package com.smartnote.server.resource;
 
-import com.smartnote.server.cli.CommandLineHandler;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.smartnote.server.cli.CommandLineParser;
-import com.smartnote.server.util.Validator;
+import com.smartnote.server.util.AbstractConfig;
 
 /**
  * Stores configuration information for the resource system.
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.Resource
- * @see com.smartnote.server.cli.CommandLineParser
  */
-public class ResourceConfig implements CommandLineHandler, Validator {
+public class ResourceConfig extends AbstractConfig {
     /**
      * Default private directory.
      */
@@ -37,13 +37,20 @@ public class ResourceConfig implements CommandLineHandler, Validator {
      */
     public static final long DEFAULT_SESSION_QUOTA = 1024 * 1024 * 1024; // 1 GiB
 
+    /**
+     * Default upload directory.
+     */
+    public static final String DEFAULT_UPLOAD_DIR = "uploads";
+
     private String privateDir;
     private String publicDir;
     private String sessionDir;
 
     private long maxUploadSize;
     private long sessionQuota;
-    
+
+    private String uploadDir;
+
     /**
      * Creates a new ResourceConfig object with default values.
      */
@@ -53,6 +60,7 @@ public class ResourceConfig implements CommandLineHandler, Validator {
         this.sessionDir = DEFAULT_SESSION_DIR;
         this.maxUploadSize = DEFAULT_MAX_UPLOAD_SIZE;
         this.sessionQuota = DEFAULT_SESSION_QUOTA;
+        this.uploadDir = DEFAULT_UPLOAD_DIR;
     }
 
     /**
@@ -100,23 +108,76 @@ public class ResourceConfig implements CommandLineHandler, Validator {
         return sessionQuota;
     }
 
+    /**
+     * Gets the upload directory.
+     * 
+     * @return The upload directory
+     */
+    public String getUploadDir() {
+        return uploadDir;
+    }
+
     @Override
     public void addHandlers(CommandLineParser parser) {
-        parser.addHandler("private-dir", (p, a) -> {
+        parser.addHandler("privateDir", (p, a) -> {
             privateDir = p.next();
         }, "r");
 
-        parser.addHandler("public-dir", (p, a) -> {
+        parser.addHandler("publicDir", (p, a) -> {
             publicDir = p.next();
         }, "u");
 
-        parser.addHandler("session-dir", (p, a) -> {
+        parser.addHandler("sessionDir", (p, a) -> {
             sessionDir = p.next();
         }, "e");
+
+        parser.addHandler("uploadDir", (p, a) -> {
+            uploadDir = p.next();
+        }, "p");
     }
 
     @Override
     public void validate() throws IllegalStateException {
         // No validation
+    }
+
+    @Override
+    public JsonObject writeJSON(JsonObject json) {
+        json.addProperty("privateDir", privateDir);
+        json.addProperty("publicDir", publicDir);
+        json.addProperty("sessionDir", sessionDir);
+        json.addProperty("maxUploadSize", maxUploadSize);
+        json.addProperty("sessionQuota", sessionQuota);
+        json.addProperty("uploadDir", uploadDir);
+        return json;
+    }
+
+    @Override
+    public void loadJSON(JsonObject json) {
+        JsonElement elem;
+
+        elem = json.get("privateDir");
+        if (elem != null && elem.isJsonPrimitive())
+            privateDir = elem.getAsString();
+
+        elem = json.get("publicDir");
+        if (elem != null && elem.isJsonPrimitive())
+            publicDir = elem.getAsString();
+
+        elem = json.get("sessionDir");
+        if (elem != null && elem.isJsonPrimitive())
+            sessionDir = elem.getAsString();
+
+        elem = json.get("maxUploadSize");
+        if (elem != null && elem.isJsonPrimitive())
+            maxUploadSize = elem.getAsLong();
+
+        elem = json.get("sessionQuota");
+        if (elem != null && elem.isJsonPrimitive())
+            sessionQuota = elem.getAsLong();
+
+        elem = json.get("uploadDir");
+        if (elem != null && elem.isJsonPrimitive())
+            uploadDir = elem.getAsString();
     }
 }

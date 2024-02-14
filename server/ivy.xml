@@ -30,5 +30,10 @@
         <dependency org="org.commonmark" name="commonmark" rev="0.21.0">
             <artifact name="commonmark" type="jar"/>
         </dependency>
+
+        <!-- Tika -->
+        <dependency org="org.apache.tika" name="tika-core" rev="2.9.1">
+            <artifact name="tika-core" type="jar"/>
+        </dependency>
     </dependencies>
 </ivy-module>

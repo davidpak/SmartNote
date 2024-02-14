@@ -23,7 +23,7 @@ It is guaranteed that all `POST` requests will have these fields in the response
 
 ## `login`
 
-Starts a new session by generating a new JWT. The JWT is valid for a finite amount of time and may be renewed by calling any RPC that returns a successful response. Upon successful login, the client will recieve a new JWT in the `Authorization` header of the response which can be used to authenticate future requests.
+Starts a new session by generating a new JWT. The JWT is valid for a finite amount of time and may be renewed by calling any RPC that returns a successful response. Upon successful login, the client will recieve a new JWT in the `session` cookie of the response which can be used to authenticate future requests.
 
 ### Request
 
@@ -41,7 +41,7 @@ No body is expected in the request and will be ignored if present.
 
 #### Success
 
-If the request was successful, the server will respond with `200 OK` and the `Authorization` header will contain the new JWT.
+If the request was successful, the server will respond with `200 OK` and the `session` cookie will contain the new JWT. If the `session` cookie already contained a valid JWT, the server will renew the session and the `session` cookie will contain the renewed JWT. If the `session` cookie contained an expired or invalid JWT, the server will respond with a new JWT in the `session` cookie.
 
 #### Failure
 
@@ -49,7 +49,6 @@ The server will respond with one of the following status codes:
 
 | Status Code | Description |
 | ----------- | ----------- |
-| `400 Bad Request` | The `Authorization` header was present. |
 | `401 Unauthorized` | The session could not be created. |
 | `403 Forbidden` | The client is not allowed to create a session. |
 | `429 Too Many Requests` | The client is trying to create too many sessions. |
@@ -191,12 +190,13 @@ The body must be present in the request.
 | `token` | `string` | A token to use when exporting to a remote location. |
 | `output` | `string` | A resource name to use when exporting to a local file. |
 
-`type` is a case-sensitive `string` describing the type of export to perform. The following types are recognized:
+`type` is a case-insensitive `string` describing the type of export to perform. The following types are recognized:
 
 | Value | Description |
 | ----- | ----------- |
-| `Notion` | Export the notes to a Notion database. |
+| `notion` | Export the notes to a Notion database. |
 | `rtf` | Export the notes to a Rich Text Format (RTF) file. |
+| `json` | Export the notes to a JSON file. |
 
 `token` is a `string` containing a token to use when exporting to a remote location. The token is dependent on the export type.
 
