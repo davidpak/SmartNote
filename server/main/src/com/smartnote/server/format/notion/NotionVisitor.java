@@ -8,6 +8,8 @@ import org.commonmark.node.*;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.smartnote.server.format.Style;
+import com.smartnote.server.format.MarkdownVisitor;
 
 /**
  * <p>
@@ -17,8 +19,8 @@ import com.google.gson.JsonObject;
  * @author Ethan Vrhel
  * @see NotionRenderer
  */
-class NotionVisitor extends AbstractVisitor {
-    private Block block;
+class NotionVisitor extends MarkdownVisitor {
+    private NotionBlock block;
 
     private Stack<String> listStack;
     private Stack<Style> styleStack;
@@ -31,13 +33,8 @@ class NotionVisitor extends AbstractVisitor {
         this.styleStack = new Stack<>();
     }
 
-    /**
-     * Create a Notion-compatible JSON object.
-     * 
-     * @return The JSON object.
-     */
-    public JsonObject createJson() {
-        return block.createJson();
+    public NotionBlock getBlock() {
+        return block;
     }
 
     @Override
@@ -59,7 +56,7 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Document document) {
-        this.block = new Block(null);
+        this.block = new NotionBlock(null);
         this.styleStack.push(new Style());
         visitChildren(document);
         this.styleStack.pop();
@@ -76,7 +73,7 @@ class NotionVisitor extends AbstractVisitor {
         if (language == null || language.length() == 0)
             language = "plain text";
 
-        Block block = new Block("code");
+        NotionBlock block = new NotionBlock("code");
         block.addProperty("language", language);
         block.addRichText(fencedCodeBlock.getLiteral(), styleStack.peek());
 
@@ -90,7 +87,7 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Heading heading) {
-        visitChildren(heading, new Block("heading_" + heading.getLevel()));
+        visitChildren(heading, new NotionBlock("heading_" + heading.getLevel()));
     }
 
     @Override
@@ -125,7 +122,7 @@ class NotionVisitor extends AbstractVisitor {
 
     @Override
     public void visit(ListItem listItem) {
-        visitChildren(listItem, new Block(this.listStack.peek()));
+        visitChildren(listItem, new NotionBlock(this.listStack.peek()));
     }
 
     @Override
@@ -187,263 +184,5 @@ class NotionVisitor extends AbstractVisitor {
         this.styleStack.push(style);
         visitChildren(node);
         this.styleStack.pop();
-    }
-
-    /**
-     * <p>
-     * Represents a block in Notion's internal format.
-     * </p>
-     * 
-     * @author Ethan Vrhel
-     */
-    private static class Block {
-        private String type;
-
-        private List<JsonObject> richText;
-        private List<Block> children;
-
-        private JsonObject more;
-
-        /**
-         * Create a new block.
-         * 
-         * @param type The type of the block. If <code>null</code>,
-         * the block is the root block.
-         */
-        public Block(String type) {
-            this.type = type;
-            this.richText = new ArrayList<>();
-            this.children = new ArrayList<>();
-            this.more = new JsonObject();
-        }
-
-        /**
-         * Add rich text to the block.
-         * 
-         * @param literal The literal text.
-         * @param style  The style of the text.
-         */
-        public void addRichText(String literal, Style style) {      
-            JsonObject textObject = new JsonObject();
-            textObject.addProperty("type", "text");
-
-            JsonObject textDataObject = new JsonObject();
-            textDataObject.addProperty("content", literal);
-
-            if (style.link != null) {
-                JsonObject linkObject = new JsonObject();
-                linkObject.addProperty("url", style.link);
-                textDataObject.add("link", linkObject);
-            }
-
-            textObject.add("text", textDataObject);
-
-            style.addToText(textObject);
-
-            richText.add(textObject);
-        }
-
-        /**
-         * Add a child block to the block.
-         * 
-         * @param block The child block.
-         */
-        public void addChild(Block block) {
-            children.add(block);
-        }
-
-        /**
-         * Add an additional property to the block.
-         * 
-         * @param key  The key.
-         * @param value The value.
-         */
-        public void addProperty(String key, String value) {
-            more.addProperty(key, value);
-        }
-
-        /**
-         * Convert the block to a Notion-compatible JSON object.
-         * 
-         * @return The JSON object.
-         */
-        public JsonObject createJson() {
-            JsonObject objectData = createObjectData();
-            if (type == null) // represents the root block
-                return objectData;
-
-            JsonObject json = new JsonObject();
-
-            // add object and type
-            json.addProperty("object", "block");
-            json.addProperty("type", type); 
-            
-            // only add objectData if it has data
-            if (objectData.size() > 0)
-                json.add(type, objectData);
-
-            return json;
-        }
-
-        private JsonObject createObjectData() {
-            JsonObject objectData = new JsonObject();
-
-            // add rich text
-            if (richText.size() > 0) {
-                JsonArray richTextArray = new JsonArray();
-                for (JsonObject richTextObject : richText)
-                    richTextArray.add(richTextObject);
-                objectData.add("rich_text", richTextArray);
-            }
-
-            // add children
-            if (children.size() > 0) {
-                JsonArray childrenArray = new JsonArray();
-                for (Block child : children)
-                    childrenArray.add(child.createJson());
-                objectData.add("children", childrenArray);
-            }
-
-            // add additional properties
-            for (String key : more.keySet())
-                objectData.add(key, more.get(key));
-
-            return objectData;
-        }
-    }
-
-    /**
-     * Describe a style in Notion's internal format.
-     * 
-     * @author Ethan Vrhel
-     */
-    private static class Style {
-        private boolean bold;
-        private boolean italic;
-        private boolean strikethrough;
-        private boolean underline;
-        private boolean code;
-
-        private String link; // null if no link
-
-        /**
-         * Create a default style.
-         */
-        public Style() {
-            this.bold = false;
-            this.italic = false;
-            this.strikethrough = false;
-            this.underline = false;
-            this.code = false;
-            this.link = null;
-        }
-
-        /**
-         * Copy a style.
-         * 
-         * @param style The style to copy.
-         */
-        public Style(Style style) {
-            this.bold = style.bold;
-            this.italic = style.italic;
-            this.strikethrough = style.strikethrough;
-            this.underline = style.underline;
-            this.code = style.code;
-            this.link = style.link;
-        }
-
-        /**
-         * Add the style to a text JSON object.
-         * 
-         * @param textJson The text JSON object.
-         */
-        public void addToText(JsonObject textJson) {
-            JsonObject json = new JsonObject();
-
-            if (bold)
-                json.addProperty("bold", true);
-
-            if (italic)
-                json.addProperty("italic", true);
-
-            if (strikethrough)
-                json.addProperty("strikethrough", true);
-
-            if (underline)
-                json.addProperty("underline", true);
-
-            if (code)
-                json.addProperty("code", true);
-
-            if (json.size() > 0)
-                textJson.add("annotations", json);
-        }
-
-        /**
-         * Return a new style with bold enabled.
-         * 
-         * @return The new style.
-         */
-        public Style bold() {
-            Style style = new Style(this);
-            style.bold = true;
-            return style;
-        }
-
-        /**
-         * Return a new style with italic enabled.
-         * 
-         * @return The new style.
-         */
-        public Style italic() {
-            Style style = new Style(this);
-            style.italic = true;
-            return style;
-        }
-
-        /**
-         * Return a new style with strikethrough enabled.
-         * 
-         * @return The new style.
-         */
-        public Style strikethrough() {
-            Style style = new Style(this);
-            style.strikethrough = true;
-            return style;
-        }
-
-        /**
-         * Return a new style with underline enabled.
-         * 
-         * @return The new style.
-         */
-        public Style underline() {
-            Style style = new Style(this);
-            style.underline = true;
-            return style;
-        }
-
-        /**
-         * Return a new style with code enabled.
-         * 
-         * @return The new style.
-         */
-        public Style code() {
-            Style style = new Style(this);
-            style.code = true;
-            return style;
-        }
-
-        /**
-         * Return a new style with a link.
-         * 
-         * @param link The link.
-         * @return The new style.
-         */
-        public Style link(String link) {
-            Style style = new Style(this);
-            style.link = link;
-            return style;
-        }
     }
 }
