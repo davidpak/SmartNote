@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import FileUpload from '../components/FileUpload';
 import Customization from '../components/Customization';
+import TopicSelection from '../components/TopicSelection';
 // import ExportSuccess from '../components/ExportSuccess';
 
 const Home = () => {
@@ -36,6 +37,8 @@ const Home = () => {
         return <FileUpload next={next} />;
       case 1:
         return <Customization files={[]} prev={prev} next={next} />;
+      case 2:
+        return <TopicSelection files={[]} prev={prev} next={next} />;
       // case _:
       //   return <ExportSuccess prev={prev} goHome={goHome} />;
       default:
