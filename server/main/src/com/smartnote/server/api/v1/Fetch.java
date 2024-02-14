@@ -66,20 +66,14 @@ public class Fetch implements Route {
             response.status(403);
             return "{\"message\":\"Access denied\"}";
         } catch (FileNotFoundException e) {
-        // File not found
-        response.status(404);
-        return "{\"message\":\"File not found\"}";
+            // File not found
+            response.status(404);
+            return "{\"message\":\"File not found\"}";
         }
 
         response.header("Content-Type", "application/octet-stream");
         response.status(200); // OK
-        response.raw().getOutputStream().write(body);
-        response.raw().getOutputStream().flush();
-        response.raw().getOutputStream().close();
 
-        JsonObject obj = new JsonObject();
-        obj.addProperty("message", "File fetched");
-
-        return new Gson().toJson(obj);
+        return body;
     }
 }
