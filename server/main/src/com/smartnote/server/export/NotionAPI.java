@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -17,6 +18,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.smartnote.server.Config;
+import com.smartnote.server.format.json.JSONRenderer;
 import com.smartnote.server.format.notion.NotionRenderer;
 import com.smartnote.server.util.MIME;
 
@@ -41,7 +44,7 @@ public class NotionAPI {
     // For testing
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.err.println("Usage: NotionAPI <secret> <code>");
+            System.err.println("Usage: NotionAPI <code> <redirect_uri>");
             System.exit(1);
         }
 
@@ -53,18 +56,29 @@ public class NotionAPI {
         NotionRenderer renderer = new NotionRenderer();
         JsonObject notionJson = renderer.renderJson(document);
 
-        String secret = args[0];
-        String code = args[1];
+        Config config = new Config();
+        JsonObject configJson = new Gson().fromJson(Files.readString(Paths.get( "config.json")), JsonObject.class);
+        config.loadJSON(configJson);
+        NotionConfig notionConfig = config.getNotionConfig();
+
+        String code = args[0];
+        String redirectUri = args[1];
         String version = "2022-06-28";
 
-        NotionAPI api = new NotionAPI().build(secret, version, code);
-        int rc = api.create("Test Page", notionJson);
+        NotionAPI api = new NotionAPI().build(notionConfig.getClientId(), notionConfig.getSecret(), version, code, redirectUri);
+        int rc = api.createPage("Test Page", notionJson);
         System.out.println("Status code: " + rc);
     }
 
+    private String clientId; // Notion client ID
     private String secret; // Integration secret
-    private String token; // OAuth token
     private String version;
+
+    private String token; // OAuth token
+    private String botId;
+    private String duplicatedTemplateId;
+    private String workspaceId;
+    private String workspaceName;
 
     private Gson gson;
 
@@ -73,6 +87,7 @@ public class NotionAPI {
     /**
      * Sets up the Notion API.
      * 
+     * @param clientId    The Notion client ID.
      * @param secret      The integration secret.
      * @param version     The Notion API version.
      * @param code        The code for the Notion API, as returned by the OAuth
@@ -82,10 +97,13 @@ public class NotionAPI {
      *                    parameter.
      * @return <code>this</code>
      * @throws IOException If the system does not have the necessary
-     *                     resources to connect to the Notion API.
+     *                     resources to connect to the Notion API or
+     *                     if a client token cannot be obtained.
+     * @throws InterruptedException If the request is interrupted.
      */
-    public NotionAPI build(String secret, String version, String code, String redirectUri)
+    public NotionAPI build(String clientId, String secret, String version, String code, String redirectUri)
             throws IOException, InterruptedException {
+        this.clientId = clientId;
         this.secret = secret;
         this.version = version;
         this.gson = new Gson();
@@ -100,17 +118,33 @@ public class NotionAPI {
         oauthObject.addProperty("code", code);
         oauthObject.addProperty("redirect_uri", redirectUri);
 
+       /*/ String authorization = clientId + ":" + secret;
+
+        // Base64 encode the client ID and secret
+        String encoded = new String(Base64.getEncoder().encode(authorization.getBytes()));
+
         // Make a request to the Notion API to get the OAuth token
         HttpRequest.Builder builder = HttpRequest.newBuilder().uri(uriOf("oauth/token"))
                 .header("Content-Type", MIME.JSON)
-                .header("Authorization", "Basic " + secret)
+                .header("Authorization", "Basic " + encoded)
+                .header("Notion-Version", version)
                 .POST(jsonPublisher(oauthObject));
 
         HttpRequest request = builder.build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        JsonObject responseJson = gson.fromJson(response.body(), JsonObject.class);
+
         if (response.statusCode() != 200)
-            throw new IOException("Failed to get OAuth token: " + response.body());
+            throw new IOException("Failed to get OAuth token: " + responseJson.get("error").getAsString());
+
+        this.token = responseJson.get("access_token").getAsString();
+        this.botId = responseJson.get("bot_id").getAsString();
+        //this.duplicatedTemplateId = responseJson.get("duplicated_template_id").getAsString();
+        this.workspaceId = responseJson.get("workspace_id").getAsString();
+        this.workspaceName = responseJson.get("workspace_name").getAsString();*/
+
+        
 
         return this;
     }
@@ -124,25 +158,54 @@ public class NotionAPI {
      *                              resources to connect to the Notion API.
      * @throws InterruptedException If the request is interrupted.
      */
-    public int create(String name, JsonObject json) throws IOException, InterruptedException {
-        JsonObject parent = new JsonObject();
-        parent.addProperty("type", "workspace");
-        parent.addProperty("workspace", true);
+    public int createPage(String name, JsonObject json) throws IOException, InterruptedException {
+        JsonObject parent;
+        JsonObject properties;
+        JsonObject nameObject;
+        JsonArray titleArray;
+        JsonObject textObject;
+        JsonObject textDataObject;
+        HttpRequest request;
+        HttpResponse<String> response;
 
-        JsonObject properties = new JsonObject();
-        JsonObject nameObject = new JsonObject();
-        JsonArray titleArray = new JsonArray();
-        JsonObject textObject = new JsonObject();
-        textObject.addProperty("content", name);
-        titleArray.add(textObject);
-        nameObject.add("title", titleArray);
-        properties.add("Name", nameObject);
+        JsonObject searchJsonObject = new JsonObject();
+        request = post("search", searchJsonObject).build();
+        response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+        System.out.println(response.body());
+
+        JsonObject responseJson = gson.fromJson(response.body(), JsonObject.class);
+        JsonArray results = responseJson.getAsJsonArray("results");
+        String pageId = results.get(0).getAsJsonObject().get("id").getAsString();
+
+        parent = new JsonObject();
+        parent.addProperty("type", "page_id");
+        parent.addProperty("page_id", pageId);
         json.add("parent", parent);
+
+        //parent.addProperty("type", "page_id");
+       // parent.addProperty("page_id", this.workspaceId);
+
+       //parent.addProperty("type" ,"workspace");
+      // parent.addProperty("workspace", true);
+
+        properties = new JsonObject();
+        titleArray = new JsonArray();
+        textObject = new JsonObject();
+        textDataObject = new JsonObject();
+        textDataObject.addProperty("content", name);
+        textObject.add("text", textDataObject);
+        titleArray.add(textObject);
+        properties.add("title", titleArray);
         json.add("properties", properties);
 
-        HttpRequest request = post("pages", json).build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        //json.remove("children");
+
+        request = post("pages", json).build();
+        response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println(response.body());
+
         return response.statusCode();
     }
 

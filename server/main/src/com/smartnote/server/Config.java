@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.cli.CommandLineParser;
+import com.smartnote.server.export.NotionConfig;
 import com.smartnote.server.resource.ResourceConfig;
 import com.smartnote.server.util.AbstractConfig;
 import com.smartnote.server.util.FileUtils;
@@ -64,6 +65,7 @@ public class Config extends AbstractConfig {
 
     private ServerConfig server;
     private ResourceConfig resource;
+    private NotionConfig notion;
 
     /**
      * Creates a new Config object with default values.
@@ -71,6 +73,7 @@ public class Config extends AbstractConfig {
     public Config() {
         this.server = new ServerConfig();
         this.resource = new ResourceConfig();
+        this.notion = new NotionConfig();
     }
 
     /**
@@ -91,22 +94,34 @@ public class Config extends AbstractConfig {
         return resource;
     }
 
+    /**
+     * Gets the Notion configuration.
+     * 
+     * @return The Notion configuration
+     */
+    public NotionConfig getNotionConfig() {
+        return notion;
+    }
+
     @Override
     public void validate() throws IllegalStateException {
         server.validate();
         resource.validate();
+        notion.validate();
     }
 
     @Override
     public void addHandlers(CommandLineParser parser) {
         parser.addHandler(server);
         parser.addHandler(resource);
+        parser.addHandler(notion);
     }
 
     @Override
     public JsonObject writeJSON(JsonObject json) {
         server.writeJSON(json);
         resource.writeJSON(json);
+        notion.writeJSON(json);
         return json;
     }
 
@@ -116,6 +131,9 @@ public class Config extends AbstractConfig {
             server.loadJSON(object.getAsJsonObject("server"));
 
         if (object.has("resource"))
-            resource.loadJSON(object);
+            resource.loadJSON(object.getAsJsonObject("resource"));
+
+        if (object.has("notion"))
+            notion.loadJSON(object.getAsJsonObject("notion"));
     }
 }
