@@ -5,6 +5,7 @@ import org.commonmark.renderer.Renderer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.smartnote.server.format.Converter;
 
 /**
  * <p>
@@ -22,30 +23,10 @@ import com.google.gson.JsonObject;
  * @author Ethan Vrhel
  * @see NotionVisitor
  */
-public class NotionRenderer implements Renderer {
-
-    /**
-     * Renders the given node as a JSON object.
-     * 
-     * @param node the node to render
-     * @return the JSON object representing the node
-     */
-    public JsonObject renderJson(Node node) {
-        NotionVisitor visitor = new NotionVisitor();
-        node.accept(visitor);
-        return visitor.createJson();
-    }
+public class NotionConverter implements Converter<JsonObject> {
 
     @Override
-    public void render(Node node, Appendable output) {
-        new Gson().toJson(renderJson(node), output);
+    public JsonObject convert(JsonObject document) {
+        
     }
-
-    @Override
-    public String render(Node node) {
-        StringBuilder builder = new StringBuilder();
-        render(node, builder);
-        return builder.toString();
-    }
-
 }

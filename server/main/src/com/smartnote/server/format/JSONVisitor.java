@@ -1,4 +1,6 @@
-package com.smartnote.server.format.json;
+package com.smartnote.server.format;
+
+import java.util.Stack;
 
 import org.commonmark.node.*;
 
@@ -14,6 +16,7 @@ import com.google.gson.*;
  */
 class JSONVisitor extends AbstractVisitor {
     private JsonObject json;
+    private Stack<Style> styleStack;
 
     /**
      * Creates a new JSONVisitor.
@@ -22,6 +25,7 @@ class JSONVisitor extends AbstractVisitor {
      */
     public JSONVisitor(JsonObject root) {
         this.json = root;
+        this.styleStack = new Stack<Style>();
     }
 
     @Override
@@ -33,44 +37,31 @@ class JSONVisitor extends AbstractVisitor {
     @Override
     public void visit(BulletList bulletList) {
         type("bulletList");
-        json.addProperty("bulletMarker", bulletList.getBulletMarker());
         visitChildren(bulletList);
     }
 
     @Override
     public void visit(Code code) {
-        type("code");
-        literal(code.getLiteral());
-        visitChildren(code);
+        emitCode(code.getLiteral(), null);
     }
 
     @Override
     public void visit(Document document) {
         type("document");
+        styleStack.push(new Style());
         visitChildren(document);
+        styleStack.pop();
     }
 
     @Override
     public void visit(Emphasis emphasis) {
-        type("emphasis");
-        openingDelimeter(emphasis.getOpeningDelimiter());
-        closingDelimeter(emphasis.getClosingDelimiter());
-        visitChildren(emphasis);
+        applyStyle(emphasis, styleStack.peek().setItalic());
     }
 
     @Override
     public void visit(FencedCodeBlock fencedCodeBlock) {
         type("fencedCodeBlock");
-
-        json.addProperty("fenceChar", fencedCodeBlock.getFenceChar());
-        json.addProperty("fenceLength", fencedCodeBlock.getFenceLength());
-        json.addProperty("fenceIndent", fencedCodeBlock.getFenceIndent());
-
-        json.addProperty("info", fencedCodeBlock.getInfo());
-
-        literal(fencedCodeBlock.getLiteral());
-
-        visitChildren(fencedCodeBlock);
+        emitCode(fencedCodeBlock.getLiteral(), fencedCodeBlock.getInfo());
     }
 
     @Override
@@ -94,39 +85,28 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(HtmlInline htmlInline) {
-        type("htmlInline");
-        literal(htmlInline.getLiteral());
-        visitChildren(htmlInline);
+        // Ignore
     }
 
     @Override
     public void visit(HtmlBlock htmlBlock) {
-        type("htmlBlock");
-        literal(htmlBlock.getLiteral());
-        visitChildren(htmlBlock);
+        // Ignore
     }
 
     @Override
     public void visit(Image image) {
-        type("image");
-        destination(image.getDestination());
-        title(image.getTitle());
-        visitChildren(image);
+        // Ignore
     }
 
     @Override
     public void visit(IndentedCodeBlock indentedCodeBlock) {
         type("indentedCodeBlock");
-        literal(indentedCodeBlock.getLiteral());
-        visitChildren(indentedCodeBlock);
+        emitCode(indentedCodeBlock.getLiteral(), null);
     }
 
     @Override
     public void visit(Link link) {
-        type("link");
-        destination(link.getDestination());
-        title(link.getTitle());
-        visitChildren(link);
+        applyStyle(link, styleStack.peek().setHref(link.getDestination()));
     }
 
     @Override
@@ -139,7 +119,6 @@ class JSONVisitor extends AbstractVisitor {
     public void visit(OrderedList orderedList) {
         type("orderedList");
         json.addProperty("startNumber", orderedList.getStartNumber());
-        delimeter(orderedList.getDelimiter());
         visitChildren(orderedList);
     }
 
@@ -157,93 +136,137 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(StrongEmphasis strongEmphasis) {
-        type("strongEmphasis");
-        openingDelimeter(strongEmphasis.getOpeningDelimiter());
-        closingDelimeter(strongEmphasis.getClosingDelimiter());
-        visitChildren(strongEmphasis);
+        applyStyle(strongEmphasis, styleStack.peek().setBold());
     }
 
     @Override
     public void visit(Text text) {
-        type("text");
-        literal(text.getLiteral());
-        visitChildren(text);
+        emitLiteral(text.getLiteral());
     }
 
     @Override
     public void visit(LinkReferenceDefinition linkReferenceDefinition) {
-        type("linkReferenceDefinition");
-        label(linkReferenceDefinition.getLabel());
-        destination(linkReferenceDefinition.getDestination());
-        title(linkReferenceDefinition.getTitle());
-        visitChildren(linkReferenceDefinition);
+        applyStyle(linkReferenceDefinition, styleStack.peek().setHref(linkReferenceDefinition.getDestination()));
     }
 
     @Override
     public void visit(CustomBlock customBlock) {
-        type("customBlock");
-        visitChildren(customBlock);
+        // Ignore
     }
 
     @Override
     public void visit(CustomNode customNode) {
-        type("customNode");
-        visitChildren(customNode);
+        // Ignore
+    }
+
+    public void applyStyle(Node parent, Style style) {
+        styleStack.push(style);
+        super.visitChildren(parent);
+        styleStack.pop();
     }
 
     @Override
     public void visitChildren(Node parent) {
-        JsonObject saved = json;
+        JsonObject object = json;
 
         JsonArray children = new JsonArray();
 
-        Node node = parent.getFirstChild();
-        while (node != null) {
+        Node child = parent.getFirstChild();
+        while (child != null) {
             json = new JsonObject();
+            child.accept(this);
             children.add(json);
-
-            Node next = node.getNext();
-            node.accept(this);
-            node = next;
+            child = child.getNext();
         }
 
-        json = saved;
+        json = object;
 
         if (children.size() > 0)
             json.add("children", children);
     }
 
-    // Commonly added properties
-
     private void type(String type) {
         json.addProperty("type", type);
     }
 
-    private void literal(String literal) {
+    private void emitLiteral(String literal) {
+        json.addProperty("type", "text");
         json.addProperty("literal", literal);
+
+        Style style = styleStack.peek();
+        JsonObject styleObject = style.createJson();
+        if (styleObject.size() > 0)
+            json.add("style", styleObject);
+    }
+    
+    private void emitCode(String literal, String language) {
+        styleStack.push(styleStack.peek().setCode());
+        emitLiteral(literal);
+        if (language != null && !language.isEmpty())
+            json.addProperty("language", language);
+        styleStack.pop();
     }
 
-    private void delimeter(char delimeter) {
-        json.addProperty("delimeter", delimeter);
-    }
+    private static class Style {
+        boolean bold;
+        boolean italic;
+        boolean code;
 
-    private void openingDelimeter(String openingDelimeter) {
-        json.addProperty("openingDelimeter", openingDelimeter);
-    }
+        String href;
 
-    private void closingDelimeter(String closingDelimeter) {
-        json.addProperty("closingDelimeter", closingDelimeter);
-    }
+        public Style() {
+            bold = false;
+            italic = false;
+            code = false;
+            href = null;
+        }
 
-    private void label(String label) {
-        json.addProperty("label", label);
-    }
+        public Style(Style style) {
+            bold = style.bold;
+            italic = style.italic;
+            code = style.code;
+            href = style.href;
+        }
+        
+        public JsonObject createJson() {
+            JsonObject json = new JsonObject();
+            if (bold)
+                json.addProperty("bold", true);
 
-    private void destination(String destination) {
-        json.addProperty("destination", destination);
-    }
+            if (italic)
+                json.addProperty("italic", true);
 
-    private void title(String title) {
-        json.addProperty("title", title);
+            if (code)
+                json.addProperty("code", true);
+
+            if (href != null)
+                json.addProperty("href", href);
+
+            return json;
+        }
+
+        public Style setBold() {
+            Style style = new Style(this);
+            style.bold = true;
+            return style;
+        }
+
+        public Style setItalic() {
+            Style style = new Style(this);
+            style.italic = true;
+            return style;
+        }
+
+        public Style setCode() {
+            Style style = new Style(this);
+            style.code = true;
+            return style;
+        }
+
+        public Style setHref(String href) {
+            Style style = new Style(this);
+            style.href = href;
+            return style;
+        }
     }
 }

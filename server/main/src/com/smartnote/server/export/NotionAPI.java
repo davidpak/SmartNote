@@ -19,7 +19,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.smartnote.server.Config;
-import com.smartnote.server.format.json.JSONRenderer;
+import com.smartnote.server.format.JSONRenderer;
 import com.smartnote.server.format.notion.NotionRenderer;
 import com.smartnote.server.util.MIME;
 
@@ -55,6 +55,11 @@ public class NotionAPI {
 
         NotionRenderer renderer = new NotionRenderer();
         JsonObject notionJson = renderer.renderJson(document);
+
+        JSONRenderer jsonRenderer = new JSONRenderer().setPrettyPrinting();
+        String json = jsonRenderer.render(document);
+
+        Files.writeString(Paths.get("private", "output.json"), json);
 
         Config config = new Config();
         JsonObject configJson = new Gson().fromJson(Files.readString(Paths.get( "config.json")), JsonObject.class);

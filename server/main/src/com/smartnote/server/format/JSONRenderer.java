@@ -1,4 +1,4 @@
-package com.smartnote.server.format.json;
+package com.smartnote.server.format;
 
 import org.commonmark.node.Node;
 import org.commonmark.renderer.Renderer;
@@ -23,12 +23,18 @@ public class JSONRenderer implements Renderer {
         return this;
     }
 
-    @Override
-    public void render(Node node, Appendable output) {
+    public JsonObject renderJson(Node node) {
         JsonObject json = new JsonObject();
 
         JSONVisitor visitor = new JSONVisitor(json);
         node.accept(visitor);
+
+        return json;
+    }
+
+    @Override
+    public void render(Node node, Appendable output) {
+        JsonObject json = renderJson(node);
 
         GsonBuilder builder = new GsonBuilder();
         if (prettyPrint)
