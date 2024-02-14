@@ -6,11 +6,13 @@ import Button from './Button';
 interface ExportModalType extends React.HTMLAttributes<HTMLDivElement> {
   exportUrl: string;
   exportFilename: string;
+  onExport: () => void;
 }
 
 const ExportModal = ({
   exportUrl,
   exportFilename,
+  onExport,
   children,
   className,
   ...rest
@@ -24,15 +26,12 @@ const ExportModal = ({
     document.body.appendChild(aTag);
     aTag.click();
     document.body.removeChild(aTag);
+    onExport();
   }
 
   return (
     <div className={className} {...rest}>
-      <Button
-        children='Export'
-        onClick={() => setIsOpen(true)}
-      >
-      </Button>
+      <Button children='Export' onClick={() => setIsOpen(true)}></Button>
 
       <Transition
         show={isOpen}
@@ -45,9 +44,9 @@ const ExportModal = ({
         leaveTo='opacity-0'
       >
         <Dialog onClose={() => setIsOpen(false)}>
-          <div className="fixed inset-0 bg-black/50"/>
-          <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
-            <Dialog.Panel className="w-96 flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-xl transition-all">
+          <div className='fixed inset-0 bg-black/50' />
+          <div className='fixed inset-0 flex items-center justify-center overflow-y-auto'>
+            <Dialog.Panel className='w-96 flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-xl transition-all'>
               {children}
               <div className='flex justify-center gap-3'>
                 <Button
@@ -60,8 +59,7 @@ const ExportModal = ({
                   onClick={() => {
                     download();
                     setIsOpen(false);
-                  }
-                  }
+                  }}
                 />
               </div>
             </Dialog.Panel>
@@ -69,7 +67,7 @@ const ExportModal = ({
         </Dialog>
       </Transition>
     </div>
-  )
+  );
 };
 
 export default ExportModal;

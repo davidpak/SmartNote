@@ -1,7 +1,10 @@
 import { useState } from 'react';
+
 import FileUpload from '../components/FileUpload';
 import Customization from '../components/Customization';
-// import ExportSuccess from '../components/ExportSuccess';
+import TopicSelection from '../components/TopicSelection';
+import ConnectToNotion from '../components/ConnectToNotion';
+import ExportSuccess from '../components/ExportSuccess';
 
 const Home = () => {
   const [index, setIndex] = useState<number>(() => {
@@ -36,8 +39,12 @@ const Home = () => {
         return <FileUpload next={next} />;
       case 1:
         return <Customization files={[]} prev={prev} next={next} />;
-      // case _:
-      //   return <ExportSuccess prev={prev} goHome={goHome} />;
+      case 2:
+        return <TopicSelection files={[]} prev={prev} next={next} />;
+      case 3:
+        return <ConnectToNotion prev={prev} next={next} />;
+      case 4:
+        return <ExportSuccess prev={prev} goHome={goHome} />;
       default:
         goHome();
         return null;
