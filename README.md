@@ -11,6 +11,15 @@ SmartNote is an automated note-taking organization application that aims to revo
 - Generation Customization (Inputting specialized AI prompts and toggles for specific settings)
 - Output categories identified from the document and allow the user to select which ones should be included or discluded in the generated notes
 
+## Use Cases
+
+-  User wishes to create detailed notes from PDFs
+-  User wishes to create detailed notes from Video/Audio Transcript Files
+-  User wishes to export notes to their Notion workspace
+-  User wishes to customize notes generation settings (operational)
+-  User wishes to select specific topics to include in notes
+-  User wishes to generate notes from multiple files
+
 ## Layout
 
 - `client/` - Client resources
@@ -42,6 +51,9 @@ Unless otherwise specified, all commands should be run from the `client/` direct
 Dependencies are specified in `package.json`. To download them, use:
 
 `npm install`
+
+To run tests, do:
+`npm test`
 
 Then, to build the client, do:
 
