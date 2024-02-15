@@ -50,7 +50,12 @@ public class ResourceSystem {
     public static final String[] SUPPORTED_MIME_TYPES = {
         MIME.PDF,
         MIME.PPTX,
-        MIME.PPT
+        MIME.PPT,
+
+        // TODO: remove these later, they are for testing
+        MIME.TEXT,
+        MIME.JSON,
+        MIME.MARKDOWN
     };
 
     /**
@@ -208,7 +213,7 @@ public class ResourceSystem {
 
         // parse authority and path
         String authority = name.substring(0, colonIndex);
-        Path path = Paths.get(name.substring(colonIndex + 1));
+        Path path = Paths.get(name.substring(authority.length() + 1));
 
         for (Path part : path) {
             String pathString = part.toString();

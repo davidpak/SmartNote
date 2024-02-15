@@ -6,8 +6,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
+import com.smartnote.server.format.ParsedMarkdown;
 
 public class BaseMarkdown extends Base {
     public static final Path TEST_FILES_DIR = Paths.get("server", "testfiles", "markdown");
@@ -48,7 +47,7 @@ public class BaseMarkdown extends Base {
         super.tearDown();
     }
 
-    public Node parseMarkdown(String name) {
-        return Parser.builder().build().parse(files.get(name));
+    public ParsedMarkdown parseMarkdown(String name) {
+        return ParsedMarkdown.parse(files.get(name));
     }
 }

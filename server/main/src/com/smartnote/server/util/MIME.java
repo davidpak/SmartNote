@@ -26,6 +26,7 @@ public class MIME {
     public static final String TEXT_CSV = "text/csv";
     public static final String TEXT_PHP = "application/x-httpd-php";
     public static final String TEXT_XHTML = "application/xhtml+xml";
+    public static final String TEXT_MARKDOWN = "text/markdown";
 
     // Document MIME types
     public static final String APPLICATION_PDF = "application/pdf";
@@ -80,6 +81,7 @@ public class MIME {
     public static final String CSV = TEXT_CSV;
     public static final String PHP = TEXT_PHP;
     public static final String XHTML = TEXT_XHTML;
+    public static final String MARKDOWN = TEXT_MARKDOWN;
     public static final String PDF = APPLICATION_PDF;
     public static final String PPTX = APPLICATION_PPTX;
     public static final String PPT = APPLICATION_PPT;
@@ -134,6 +136,7 @@ public class MIME {
         EXT_TO_MIME.put("csv", TEXT_CSV);
         EXT_TO_MIME.put("php", TEXT_PHP);
         EXT_TO_MIME.put("xhtml", TEXT_XHTML);
+        EXT_TO_MIME.put("md", TEXT_MARKDOWN);
 
         // Documents
         EXT_TO_MIME.put("pdf", APPLICATION_PDF);

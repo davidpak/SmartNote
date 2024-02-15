@@ -25,7 +25,7 @@ import spark.Route;
  * @author Ethan Vrhel
  * @see com.smartnote.server.resource.Resource
  */
-@ServerRoute(path = "/api/v1/remove", method = MethodType.POST)
+@ServerRoute(path = "/api/v1/remove", method = MethodType.DELETE)
 public class Remove implements Route {
 
     @Override
