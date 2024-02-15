@@ -65,17 +65,14 @@ public class Upload implements Route {
 
         filename = filename.trim();
 
-        String ext = FileUtils.getExtension(filename).toLowerCase();
-        String inferredMIME = MIME.fromExtension(ext);
-        if (inferredMIME == null) {
-            response.status(406);
-            return "{\"message\": \"Unsupported file type\"}";
-        }
-        
         String type = request.contentType();
-        if (type == null) type = inferredMIME;
-        
-        if (!ResourceSystem.isSupportedType(type)) {
+
+        if (type == null) {
+            String ext = FileUtils.getExtension(filename).toLowerCase();
+            type = MIME.fromExtension(ext);
+        }
+
+        if (type != null && !ResourceSystem.isSupportedType(type)) {
             response.status(406);
             return "{\"message\": \"Unsupported content type\"}";
         }
@@ -102,14 +99,14 @@ public class Upload implements Route {
 
         Tika tika = new Tika();
         String contentMIME = tika.detect(body);
-        if (!contentMIME.equals(MIME.PDF) && !contentMIME.equals(MIME.PPTX)) {
+        if (!ResourceSystem.isSupportedType(contentMIME)) {
             response.status(406);
             return "{\"message\": \"Unsupported file type\"}";
         }
 
         // if the MIME types don't match, change the extension
-        if (!contentMIME.equals(inferredMIME))
-            filename = FileUtils.removeExtension(filename) + "." + MIME.toExtension(contentMIME);
+        //if (!contentMIME.equals(inferredMIME))
+        //    filename = FileUtils.removeExtension(filename) + "." + MIME.toExtension(contentMIME);
 
         filename = UPLOAD_DIR + filename;
 

@@ -11,6 +11,15 @@ SmartNote is an automated note-taking organization application that aims to revo
 - Generation Customization (Inputting specialized AI prompts and toggles for specific settings)
 - Output categories identified from the document and allow the user to select which ones should be included or discluded in the generated notes
 
+## Use Cases
+
+- User wishes to create detailed notes from PDFs
+- User wishes to create detailed notes from Video/Audio Transcript Files
+- User wishes to export notes to their Notion workspace
+- User wishes to customize notes generation settings (operational)
+- User wishes to select specific topics to include in notes
+- User wishes to generate notes from multiple files
+
 ## Layout
 
 - `client/` - Client resources
@@ -42,6 +51,9 @@ Unless otherwise specified, all commands should be run from the `client/` direct
 Dependencies are specified in `package.json`. To download them, use:
 
 `npm install`
+
+To run tests, do:
+`npm test`
 
 Then, to build the client, do:
 
@@ -89,10 +101,10 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [Apache Tika](https://tika.apache.org/) - Used to detect MIME types.
 - [commonmark](https://commonmark.org/) - Used to parse Markdown.
 - [python-dotenv](https://github.com/theskumar/python-dotenv) - Used to load environment variables from `.env` files.
-- [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
 - [Headless UI](https://headlessui.com/) - Used for UI components.
 - [java-jwt](https://github.com/auth0/java-jwt) - Used for JSON Web Token (JWT) creation and verification.
+- [Jest](https://jestjs.io/) - Used for testing React components.
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
 - [LangChain](https://www.langchain.com/) - Used for LLM interaction to generate summaries.
 - [Mockito 5](https://site.mockito.org/) - Used with JUnit for mocking.
@@ -101,6 +113,7 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 - [React Dropzone](https://react-dropzone.js.org/) - Used to create Dropzone component.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
 - [React Router](https://reactrouter.com/en/main) - Used for client-side routing.
+- [React Suite](https://rsuitejs.com/) - Used for UI component, specifically a Checkbox Tree.
 - [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
 - [requests](https://requests.readthedocs.io/en/latest/) - Used in Python scripts to make HTTP requests.
 - [Spark](https://sparkjava.com/) - Used as the backend web framework.

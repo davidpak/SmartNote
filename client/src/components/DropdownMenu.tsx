@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
-import { LuChevronDown as Chevron } from "react-icons/lu";
+import { LuChevronDown as Chevron } from 'react-icons/lu';
 import { twMerge } from 'tailwind-merge';
 
 interface DropdownMenuType extends React.HTMLAttributes<HTMLDivElement> {
@@ -26,14 +26,18 @@ const DropdownMenu = ({
         selectOption(e);
       }}
     >
-      <div className={twMerge('flex justify-between gap-2', className)} {...rest}>
+      <div
+        className={twMerge('flex justify-between gap-2 relative', className)}
+        {...rest}
+      >
         <Listbox.Label className='font-bold'>{label}</Listbox.Label>
         <div className='w-1/2'>
-          <Listbox.Button
-            className='flex justify-end gap-1 w-full'
-          >
+          <Listbox.Button className='flex justify-end gap-1 w-full'>
             {selected}
-            <Chevron className='self-center shrink-0 text-neutral-450' aria-hidden='true' />
+            <Chevron
+              className='self-center shrink-0 text-neutral-450'
+              aria-hidden='true'
+            />
           </Listbox.Button>
           <Transition
             as={Fragment}
@@ -41,7 +45,7 @@ const DropdownMenu = ({
             leaveFrom='opacity-100'
             leaveTo='opacity-0'
           >
-            <Listbox.Options className='absolute bg-white z-10 rounded-lg shadow-lg border border-neutral-300 p-1'>
+            <Listbox.Options className='absolute right-0 bg-white z-10 rounded-lg shadow-lg border border-neutral-300 p-1'>
               {options.map((option, index) => (
                 <Listbox.Option
                   key={index}

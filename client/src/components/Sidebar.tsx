@@ -9,7 +9,7 @@ import H2 from './H2';
 
 type FileType = 'text' | 'audio' | 'video';
 
-interface File {
+export interface File {
   name: string;
   type: FileType;
 }
@@ -29,7 +29,7 @@ const Sidebar = ({
 }: SidebarType) => {
   return (
     <div className={className} {...rest}>
-      <H2 className='text-base mb-2 px-8'>Uploaded Files</H2>
+      <H2 className='text-base mb-2 px-8'>Files</H2>
       <ul className='p-0 list-none'>
         {files.map((file, index) => (
           <li key={index}>
