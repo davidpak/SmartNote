@@ -21,6 +21,7 @@ import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -71,7 +72,7 @@ public class Fetch implements Route {
             return "{\"message\":\"File not found\"}";
         }
 
-        response.header("Content-Type", "application/octet-stream");
+        response.header("Content-Type", MIME.fromExtension(name.split(":")[0]));
         response.status(200); // OK
 
         return body;
