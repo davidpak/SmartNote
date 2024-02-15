@@ -2,19 +2,21 @@ package com.smartnote.server;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.junit.Test;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.smartnote.server.format.ParsedMarkdown;
+import com.smartnote.server.format.Style;
 import com.smartnote.server.format.notion.NotionBlock;
 import com.smartnote.server.format.notion.NotionConverter;
+import com.smartnote.server.format.notion.RichText;
 import com.smartnote.testing.BaseMarkdown;
 
 /**
- * <p>Tests the NotionConverter class.</p>
+ * <p>
+ * Tests the NotionConverter class.
+ * </p>
  * 
  * @author Ethan Vrhel
  */
@@ -28,92 +30,196 @@ public class NotionConverterTest extends BaseMarkdown {
         super.setUp();
         convert = new NotionConverter();
     }
-    
+
     private void createBlock(String name) {
         ParsedMarkdown md = parseMarkdown(name);
         block = convert.convert(md);
         assertNotNull(block);
     }
 
-    private void assertType(String type) {
-        assertEquals(type, block.getType());
+    private void assertDeepEquals(NotionBlock expected, NotionBlock actual) {
+        assertEquals(expected.getType(), actual.getType());
+
+        List<NotionBlock> expectedChildren = expected.getChildren();
+        List<NotionBlock> actualChildren = actual.getChildren();
+
+        assertEquals(expectedChildren.size(), actualChildren.size());
+
+        for (int i = 0; i < expectedChildren.size(); i++)
+            assertDeepEquals(expectedChildren.get(i), actualChildren.get(i));
+
+        List<RichText> expectedRichText = expected.getRichText();
+        List<RichText> actualRichText = actual.getRichText();
+
+        assertEquals(expectedRichText.size(), actualRichText.size());
+
+        for (int i = 0; i < expectedRichText.size(); i++)
+            assertEquals(expectedRichText.get(i), actualRichText.get(i));
+
     }
-    
+
+    private NotionBlock block(String type) {
+        return new NotionBlock(type);
+    }
+
+    private NotionBlock block(String type, String text, Style style) {
+        NotionBlock block = block(type);
+        block.addRichText(text, style);
+        return block;
+    }
+
+    private NotionBlock block(String type, String text) {
+        return block(type, text, null);
+    }
+
+    private NotionBlock paragraph() {
+        return block("paragraph");
+    }
+
+    private NotionBlock paragraph(String text, Style style) {
+        return block("paragraph", text, style);
+    }
+
+    private NotionBlock paragraph(String text) {
+        return paragraph(text, null);
+    }
+
+    private NotionBlock bulletedListItem(String text) {
+        return block("bulleted_list_item", text);
+    }
+
+    private NotionBlock orderedListItem(String text) {
+        return block("numbered_list_item", text);
+    }
+
+    private NotionBlock code(String text, String language, Style style) {
+        if (language == null || language.length() == 0)
+            language = "plain text";
+
+        NotionBlock block = block("code");
+        block.addProperty("language", language);
+        block.addRichText(text, style);
+
+        return block;
+    }
+
+    private NotionBlock heading(String text, int level, Style style) {
+        return block("heading_" + level, text, style);
+    }
+
     @Test
     public void testBasicText() {
-        // TODO: add these with new API
-        /*createBlock(BASIC_TEXT);
-        
-        var children = block.getChildren();
-        assertEquals(1, children.size());
-        
-        NotionBlock paragraph = children.get(0);
-        assertType("paragraph");
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        root.addChild(paragraph("Hello World!"));
 
-        var richText = paragraph.getRichText();
-        assertEquals(1, richText.size());
+        createBlock(BASIC_TEXT);
 
-        assertNotNull(richText.get(0));*/
+        assertDeepEquals(root, this.block);
     }
 
     @Test
     public void testBulletList() {
-        // TODO: reimplement with new API
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        root.addChild(bulletedListItem("Item 1"));
+        root.addChild(bulletedListItem("Item 2"));
+        root.addChild(bulletedListItem("Item 3"));
+
+        createBlock(BULLET_LIST);
+
+        assertDeepEquals(root, this.block);
     }
 
     @Test
     public void testCodeBlock() {
-        // TODO: reimplement with new API
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        root.addChild(code("// JavaScript\nconsole.log(\"Hello, World!\");\n", "javascript", null));
+        root.addChild(code("# Python\nprint(\"Hello, World!\")\n", "python", null));
+        root.addChild(code("// C\nprintf(\"Hello, World!\\n\");\n", "c", null));
+
+        createBlock(CODE_BLOCK);
+
+        assertDeepEquals(root, this.block);
     }
 
     @Test
     public void testHeadings() {
-        // TODO: reimplement with new API
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        root.addChild(heading("Heading 1", 1, null));
+        root.addChild(heading("Heading 2", 2, null));
+        root.addChild(heading("Heading 3", 3, null));
+
+        createBlock(HEADINGS);
+
+        assertDeepEquals(root, this.block);
     }
 
     @Test
     public void testNestedBulletList() {
-        // TODO: reimplement with new API
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        NotionBlock list1 = bulletedListItem("Item 1");
+        list1.addChild(bulletedListItem("Item 1.1"));
+        list1.addChild(bulletedListItem("Item 1.2"));
+        root.addChild(list1);
+        NotionBlock list2 = bulletedListItem("Item 2");
+        list2.addChild(bulletedListItem("Item 2.1"));
+        list2.addChild(bulletedListItem("Item 2.2"));
+        root.addChild(list2);
+
+        createBlock(NESTED_BULLET_LIST);
+
+        assertDeepEquals(root, this.block);
     }
 
     @Test
     public void testOrderedList() {
-        // TODO: reimplement with new API
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        root.addChild(orderedListItem("Item 1"));
+        root.addChild(orderedListItem("Item 2"));
+        root.addChild(orderedListItem("Item 3"));
+
+        createBlock(ORDERED_LIST);
+
+        assertDeepEquals(root, this.block);
     }
 
     @Test
     public void testRichText() {
-        // TODO: reimplement with new API
-    }
-    
-    private void validateRichText(JsonObject richText) {
-        assertNotNull(richText);
+        // Expected structure
+        NotionBlock root = new NotionBlock(null);
+        Style style = new Style();
 
-        String type = getString(richText.get("type"));
-        assertEquals("text", type);
+        NotionBlock p1 = paragraph();
+        p1.addRichText("Example ", style);
+        p1.addRichText("rich", style.withItalic());
+        p1.addRichText(" ", style);
+        p1.addRichText("text", style.withBold());
+        p1.addRichText(" with ", style);
+        p1.addRichText("multiple", style.withItalic());
+        p1.addRichText(" ", style);
+        p1.addRichText("styles", style.withBold());
+        p1.addRichText(" and ", style);
+        p1.addRichText("links", style.withLink("https://www.notion.so/"));
+        p1.addRichText(".", style);
+        root.addChild(p1);
 
-        JsonObject text = getObject(richText.get(type));
-        assertTrue(text.has("content"));
-        
-        // Ignore annotations for now, they are optional
-    }
+        NotionBlock p2 = paragraph();
+        p2.addRichText("A second paragraph with a ", style);
+        p2.addRichText("link", style.withLink("https://www.notion.so/"));
+        p2.addRichText(" and a ");
+        p2.addRichText("second link", style.withLink("https://www.notion.so/"));
+        p2.addRichText(". Even some ", style);
+        p2.addRichText("inline code", style.withCode());
+        p2.addRichText("!", style);
+        root.addChild(p2);
 
-    private JsonObject getObject(JsonElement elem) {
-        assertNotNull(elem);
-        return elem.getAsJsonObject();
-    }
+        createBlock(RICH_TEXT);
 
-    private JsonArray getArray(JsonElement elem) {
-        assertNotNull(elem);
-        return elem.getAsJsonArray();
-    }
-
-    private JsonPrimitive getPrimitive(JsonElement elem) {
-        assertNotNull(elem);
-        return elem.getAsJsonPrimitive();
-    }
-
-    private String getString(JsonElement elem) {
-        return getPrimitive(elem).getAsString();
+        assertDeepEquals(root, this.block);
     }
 }

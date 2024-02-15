@@ -9,6 +9,9 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.security.Permission;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.smartnote.server.Server;
@@ -37,6 +40,8 @@ public class NotionExporter implements RemoteExporter {
      */
     public static final String DEFAULT_PAGE_NAME = "Exported Page";
 
+    private static final Logger LOG = LoggerFactory.getLogger(NotionExporter.class);
+
     @Override
     public JsonObject export(ExportOptions options, Permission permission) throws SecurityException,
             InvalidPathException, IOException, ExportException, MalformedExportOptionsException {
@@ -54,15 +59,18 @@ public class NotionExporter implements RemoteExporter {
                 // Create a new page
                 if (nopts.page == null) {
                     QueryPagesResult paResult = notionAPI.queryAvailablePages();
-                    if (!paResult.success())
+                    if (!paResult.success()) {
+                        LOG.info("Notion API error: " + paResult.message);
                         throw new ExportServiceUnavailableException(paResult.message);
+                    }
 
-                    if (paResult.pages.size() == 0)
+                    if (paResult.pages.size() == 0) {
+                        LOG.info("No pages available");
                         throw new ExportServiceUnavailableException("No pages available");
+                    }
 
                     nopts.page = paResult.pages.get(0).id();
                 }
-
 
                 CreatePageResult pResult = notionAPI.createPage(nopts.pageName, nopts.page, nopts.json);
                 response.addProperty("url", pResult.url);
@@ -89,11 +97,15 @@ public class NotionExporter implements RemoteExporter {
                 throw new MalformedExportOptionsException("Invalid mode: " + nopts.mode);
             }
 
-            if (!result.success())
+            if (!result.success()) {
+                LOG.info("Notion API error: " + result.message);
                 throw new ExportServiceUnavailableException(result.message);
+            }
         } catch (IOException e) {
+            LOG.info("Notion API error: " + e.getMessage());
             throw new ExportServiceUnavailableException("Could not connect to Notion API");
         } catch (InterruptedException e) {
+            LOG.info("Notion API error: " + e.getMessage());
             throw new ExportServiceTimeoutException("Connection to Notion API timed out");
         }
 
@@ -139,7 +151,8 @@ public class NotionExporter implements RemoteExporter {
                     if (token == null && clientId == null && secret == null)
                         throw new MalformedExportOptionsException("Integration: No secret provided");
                     if (token != null && (clientId != null || secret != null))
-                        throw new MalformedExportOptionsException("Integration: Token only valid without client ID or secret");
+                        throw new MalformedExportOptionsException(
+                                "Integration: Token only valid without client ID or secret");
                     if (clientId != null && (secret == null || token != null))
                         throw new MalformedExportOptionsException("Integration: Secret not provided with client ID");
 
@@ -154,8 +167,9 @@ public class NotionExporter implements RemoteExporter {
             }
 
             pageName = options.getOutput();
-            
-            if (secret == null) secret = config.getSecret();
+
+            if (secret == null)
+                secret = config.getSecret();
         }
 
         public void load(String inputData) {
@@ -177,28 +191,31 @@ public class NotionExporter implements RemoteExporter {
             }
         }
 
-        public NotionAPI createApi(Permission permission) throws IOException, InterruptedException, ExportServiceUnavailableException {
+        public NotionAPI createApi(Permission permission)
+                throws IOException, InterruptedException, ExportServiceUnavailableException {
             NotionAPI notionAPI = new NotionAPI();
 
             // initialize and load oauth token
-            notionAPI.build(null);     
+            notionAPI.build(null);
             loadToken(notionAPI, permission);
 
             return notionAPI;
         }
 
-        private void loadToken(NotionAPI notion, Permission permission) throws IOException, InterruptedException, ExportServiceUnavailableException {
+        private void loadToken(NotionAPI notion, Permission permission)
+                throws IOException, InterruptedException, ExportServiceUnavailableException {
             ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
-            
+
             if (token != null) {
                 notion.authenticate(token);
                 return;
             }
-    
+
             // read token
             InputStream in = null;
             try {
-                Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"), permission);
+                Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"),
+                        permission);
                 in = tokenResource.openInputStream();
                 token = new String(in.readAllBytes());
             } catch (Exception e) {
@@ -207,15 +224,15 @@ public class NotionExporter implements RemoteExporter {
                 if (in != null)
                     in.close();
             }
-    
+
             if (token != null) {
                 notion.authenticate(token);
                 return;
             }
-    
+
             if (code == null)
                 throw new IllegalArgumentException("No code or token provided");
-    
+
             CreateTokenResult result = notion.createToken(clientId, secret, code, redirectUri);
             if (!result.success())
                 throw new ExportServiceUnavailableException(result.message);
@@ -223,11 +240,12 @@ public class NotionExporter implements RemoteExporter {
             token = result.token;
 
             notion.authenticate(token);
-    
+
             // save token
             OutputStream out = null;
             try {
-                Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"), permission);
+                Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"),
+                        permission);
                 out = tokenResource.openOutputStream();
                 out.write(token.getBytes());
             } catch (Exception e) {

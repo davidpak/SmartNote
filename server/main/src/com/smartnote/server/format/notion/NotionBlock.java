@@ -19,7 +19,7 @@ import com.smartnote.server.util.JSONObjectSerializable;
 public class NotionBlock implements JSONObjectSerializable {
     private String type;
 
-    private List<JsonObject> richText;
+    private List<RichText> richText;
     private List<NotionBlock> children;
 
     private JsonObject more;
@@ -37,32 +37,31 @@ public class NotionBlock implements JSONObjectSerializable {
         this.more = new JsonObject();
     }
 
+    public NotionBlock addRichText(RichText richText) {
+        this.richText.add(richText);
+        return this;
+    }
+
     /**
      * Add rich text to the block.
      * 
      * @param literal The literal text.
-     * @param style   The style of the text.
+     * @param style   The style of the text. If <code>null</code>,
+     *                the text will be plain.
+     * @return <code>this</code>
      */
-    public void addRichText(String literal, Style style) {
-        JsonObject textObject = new JsonObject();
-        textObject.addProperty("type", "text");
+    public NotionBlock addRichText(String literal, Style style) {
+        return addRichText(new RichText(literal, style));
+    }
 
-        JsonObject textDataObject = new JsonObject();
-        textDataObject.addProperty("content", literal);
-
-        if (style.link() != null) {
-            JsonObject linkObject = new JsonObject();
-            linkObject.addProperty("url", style.link());
-            textDataObject.add("link", linkObject);
-        }
-
-        textObject.add("text", textDataObject);
-
-        JsonObject annotations = style.writeJSON();
-        if (annotations.size() > 0)
-            textObject.add("annotations", annotations);
-
-        richText.add(textObject);
+    /**
+     * Add rich text to the block.
+     * 
+     * @param literal The literal text.
+     * @return <code>this</code>
+     */
+    public NotionBlock addRichText(String literal) {
+        return addRichText(literal, null);
     }
 
     public List<NotionBlock> findInChildren(String type) {
@@ -113,7 +112,7 @@ public class NotionBlock implements JSONObjectSerializable {
      * 
      * @return The rich text of this block.
      */
-    public List<JsonObject> getRichText() {
+    public List<RichText> getRichText() {
         return Collections.unmodifiableList(richText);
     }
 
@@ -126,7 +125,7 @@ public class NotionBlock implements JSONObjectSerializable {
         if (richText.size() == 0)
             return null;
 
-        JsonObject textObject = richText.get(0);
+        JsonObject textObject = richText.get(0).writeJSON();
         JsonObject textDataObject = textObject.getAsJsonObject("text");
         return textDataObject.get("content").getAsString();
     }
@@ -178,8 +177,8 @@ public class NotionBlock implements JSONObjectSerializable {
         // add rich text
         if (richText.size() > 0) {
             JsonArray richTextArray = new JsonArray();
-            for (JsonObject richTextObject : richText)
-                richTextArray.add(richTextObject);
+            for (RichText text : richText)
+                richTextArray.add(text.writeJSON());
             json.add("rich_text", richTextArray);
         }
 
