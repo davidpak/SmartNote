@@ -1,57 +1,57 @@
 package com.smartnote.server.format;
 
 public abstract class MarkdownVisitor {
-    public void visitBlockQuote(ParsedMarkdown blockQuote) {
-        visitChildren(blockQuote);
+    public void visitBlockQuote(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitBulletList(ParsedMarkdown bulletList) {
-        visitChildren(bulletList);
+    public void visitBulletList(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitCode(ParsedMarkdown code, Style style) {
+    public void visitDocument(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitDocument(ParsedMarkdown document) {
-        visitChildren(document);
+    public void visitFencedCodeBlock(ParsedMarkdown md) {
     }
 
-    public void visitFencedCodeBlock(ParsedMarkdown fencedCodeBlock, Style style, String language) {
+    public void visitHardLineBreak(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitHardLineBreak(ParsedMarkdown hardLineBreak) {
-        visitChildren(hardLineBreak);
+    public void visitHeading(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitHeading(ParsedMarkdown heading, int level) {
-        visitChildren(heading);
+    public void visitThematicBreak(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitThematicBreak(ParsedMarkdown thematicBreak) {
-        visitChildren(thematicBreak);
+    public void visitIndentedCodeBlock(ParsedMarkdown md) {
     }
 
-    public void visitIndentedCodeBlock(ParsedMarkdown indentedCodeBlock, Style style) {
+    public void visitListItem(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitListItem(ParsedMarkdown listItem) {
-        visitChildren(listItem);
+    public void visitOrderedList(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitOrderedList(ParsedMarkdown orderedList) {
-        visitChildren(orderedList);
+    public void visitParagraph(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitParagraph(ParsedMarkdown paragraph) {
-        visitChildren(paragraph);
+    public void visitSoftLineBreak(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
-    public void visitSoftLineBreak(ParsedMarkdown softLineBreak) {
-        visitChildren(softLineBreak);
+    public void visitText(ParsedMarkdown md) {
     }
 
-    public void visitChildren(ParsedMarkdown markdown) {
-        for (ParsedMarkdown child : markdown.getChildren())
+    public void visitChildren(ParsedMarkdown md) {
+        for (ParsedMarkdown child : md.getChildren())
             child.accept(this);
     }
 }

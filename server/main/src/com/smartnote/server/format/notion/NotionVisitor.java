@@ -1,15 +1,9 @@
 package com.smartnote.server.format.notion;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 
-import org.commonmark.node.*;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.smartnote.server.format.Style;
 import com.smartnote.server.format.MarkdownVisitor;
+import com.smartnote.server.format.ParsedMarkdown;
 
 /**
  * <p>
@@ -23,14 +17,12 @@ class NotionVisitor extends MarkdownVisitor {
     private NotionBlock block;
 
     private Stack<String> listStack;
-    private Stack<Style> styleStack;
 
     /**
      * Constructs a new NotionVisitor.
      */
     public NotionVisitor() {
         this.listStack = new Stack<>();
-        this.styleStack = new Stack<>();
     }
 
     public NotionBlock getBlock() {
@@ -38,151 +30,88 @@ class NotionVisitor extends MarkdownVisitor {
     }
 
     @Override
-    public void visit(BlockQuote blockQuote) {
-        visitChildren(blockQuote);
-    }
-
-    @Override
-    public void visit(BulletList bulletList) {
+    public void visitBulletList(ParsedMarkdown md) {
         this.listStack.push("bulleted_list_item");
-        visitChildren(bulletList);
+        visitChildren(md);
         this.listStack.pop();
     }
 
     @Override
-    public void visit(Code code) {
-        block.addRichText(code.getLiteral(), styleStack.peek().code());
-    }
-
-    @Override
-    public void visit(Document document) {
+    public void visitDocument(ParsedMarkdown md) {
         this.block = new NotionBlock(null);
-        this.styleStack.push(new Style());
-        visitChildren(document);
-        this.styleStack.pop();
+        visitChildren(md);
     }
 
     @Override
-    public void visit(Emphasis emphasis) {
-        visitChildren(emphasis, styleStack.peek().italic());
-    }
-
-    @Override
-    public void visit(FencedCodeBlock fencedCodeBlock) {
-        String language = fencedCodeBlock.getInfo();
+    public void visitFencedCodeBlock(ParsedMarkdown md) {
+        String language = md.getLanguage();
         if (language == null || language.length() == 0)
             language = "plain text";
 
         NotionBlock block = new NotionBlock("code");
         block.addProperty("language", language);
-        block.addRichText(fencedCodeBlock.getLiteral(), styleStack.peek());
+        block.addRichText(md.getLiteral(), md.getStyle());
 
         this.block.addChild(block);
     }
 
     @Override
-    public void visit(HardLineBreak hardLineBreak) {
+    public void visitHardLineBreak(ParsedMarkdown md) {
         // Ignore
     }
 
     @Override
-    public void visit(Heading heading) {
-        visitChildren(heading, new NotionBlock("heading_" + heading.getLevel()));
+    public void visitHeading(ParsedMarkdown md) {
+        visitChildren(md, new NotionBlock("heading_" + md.getLevel()));
     }
 
     @Override
-    public void visit(ThematicBreak thematicBreak) {
+    public void visitThematicBreak(ParsedMarkdown md) {
         // Ignore
     }
 
     @Override
-    public void visit(HtmlInline htmlInline) {
-        // Ignore
+    public void visitIndentedCodeBlock(ParsedMarkdown md) {
+        visitChildren(md);
     }
 
     @Override
-    public void visit(HtmlBlock htmlBlock) {
-        // Ignore
+    public void visitListItem(ParsedMarkdown md) {
+        visitChildren(md, new NotionBlock(this.listStack.peek()));
     }
 
     @Override
-    public void visit(Image image) {
-        // Ignore
-    }
-
-    @Override
-    public void visit(IndentedCodeBlock indentedCodeBlock) {
-        visitChildren(indentedCodeBlock);
-    }
-
-    @Override
-    public void visit(Link link) {
-        visitChildren(link, styleStack.peek().link(link.getDestination()));
-    }
-
-    @Override
-    public void visit(ListItem listItem) {
-        visitChildren(listItem, new NotionBlock(this.listStack.peek()));
-    }
-
-    @Override
-    public void visit(OrderedList orderedList) {
+    public void visitOrderedList(ParsedMarkdown md) { 
         this.listStack.push("numbered_list_item");
-        visitChildren(orderedList);
+        visitChildren(md);
         this.listStack.pop();
     }
 
     @Override
-    public void visit(Paragraph paragraph) {
+    public void visitParagraph(ParsedMarkdown md) {
         if (listStack.size() > 0) {
-            visitChildren(paragraph);
+            visitChildren(md);
             return;
         }
 
-        visitChildren(paragraph, new Block("paragraph"));
+        visitChildren(md, new NotionBlock("paragraph"));
     }
 
     @Override
-    public void visit(SoftLineBreak softLineBreak) {
+    public void visitSoftLineBreak(ParsedMarkdown md) {
         // Ignore
     }
 
     @Override
-    public void visit(StrongEmphasis strongEmphasis) {
-        visitChildren(strongEmphasis, styleStack.peek().bold());
+    public void visitText(ParsedMarkdown md) {
+        block.addRichText(md.getLiteral(), md.getStyle());
     }
-
-    @Override
-    public void visit(Text text) {
-        block.addRichText(text.getLiteral(), styleStack.peek());
-    }
-
-    @Override
-    public void visit(LinkReferenceDefinition linkReferenceDefinition) {
-        // Ignore
-    }
-
-    @Override
-    public void visit(CustomBlock customBlock) {
-        visitChildren(customBlock);
-    }
-
-    @Override
-    public void visit(CustomNode customNode) {
-        visitChildren(customNode);
-    }
-
-    private void visitChildren(Node node, Block block) {
-        Block oldBlock = this.block;
+    
+    private void visitChildren(ParsedMarkdown md, NotionBlock block) {
+        NotionBlock oldBlock = this.block;
         this.block.addChild(block);
         this.block = block;
-        visitChildren(node);
+        visitChildren(md);
         this.block = oldBlock;
-    }
-
-    private void visitChildren(Node node, Style style) {
-        this.styleStack.push(style);
-        visitChildren(node);
-        this.styleStack.pop();
     }
 }

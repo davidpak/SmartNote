@@ -57,7 +57,7 @@ public class NotionBlock implements JSONObjectSerializable {
 
         textObject.add("text", textDataObject);
 
-        JsonObject annotations = style.createJson();
+        JsonObject annotations = style.writeJSON();
         if (annotations.size() > 0)
             textObject.add("annotations", annotations);
 

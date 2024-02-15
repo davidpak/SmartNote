@@ -10,7 +10,10 @@ import org.commonmark.parser.Parser;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.smartnote.server.format.notion.NotionRenderer;
+import com.smartnote.server.Server;
+import com.smartnote.server.format.ParsedMarkdown;
+import com.smartnote.server.format.notion.NotionBlock;
+import com.smartnote.server.format.notion.NotionConverter;
 
 /**
  * <p>
@@ -31,14 +34,15 @@ public class NotionExporter implements RemoteExporter {
         String pageId = getPageId(options);
         NotionAPI notionAPI = new NotionAPI();
 
-        Parser parser = Parser.builder().build();
-        Node document = parser.parse(data);
+        ParsedMarkdown md = ParsedMarkdown.parse(data);
+        NotionConverter notionConverter = new NotionConverter();
+        NotionBlock block = notionConverter.convert(md);
+        JsonObject json = block.writeJSON();
 
-        NotionRenderer renderer = new NotionRenderer();
-        JsonObject json = renderer.renderJson(document);
+        NotionConfig config = Server.getServer().getConfig().getNotionConfig();
 
         try {
-            notionAPI.build(token, NOTION_VERSION);
+            notionAPI.build(config.getClientId(), config.getSecret(), NOTION_VERSION);
             int rc = notionAPI.appendBlock(pageId, json);
             if (rc != 200)
                 throw new ExportServiceUnavailableException("Notion API returned " + rc + " status code");

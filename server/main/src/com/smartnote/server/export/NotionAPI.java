@@ -19,8 +19,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.smartnote.server.Config;
-import com.smartnote.server.format.JSONRenderer;
-import com.smartnote.server.format.notion.NotionRenderer;
+import com.smartnote.server.format.ParsedMarkdown;
+import com.smartnote.server.format.notion.NotionBlock;
+import com.smartnote.server.format.notion.NotionConverter;
 import com.smartnote.server.util.MIME;
 
 /**
@@ -49,17 +50,22 @@ public class NotionAPI {
         }
 
         String markdown = Files.readString(Paths.get("private", "output.md"));
+        ParsedMarkdown md = ParsedMarkdown.parse(markdown);
+        
+        Files.writeString(Paths.get("private", "output.json"), md.prettyPrint());
 
-        Parser parser = Parser.builder().build();
+        NotionConverter notionConverter = new NotionConverter();
+        NotionBlock block = notionConverter.convert(md);
+        JsonObject notionJson = block.writeJSON();
+
+        /*Parser parser = Parser.builder().build();
         Node document = parser.parse(markdown);
 
         NotionRenderer renderer = new NotionRenderer();
         JsonObject notionJson = renderer.renderJson(document);
 
         JSONRenderer jsonRenderer = new JSONRenderer().setPrettyPrinting();
-        String json = jsonRenderer.render(document);
-
-        Files.writeString(Paths.get("private", "output.json"), json);
+        String json = jsonRenderer.render(document);*/
 
         Config config = new Config();
         JsonObject configJson = new Gson().fromJson(Files.readString(Paths.get( "config.json")), JsonObject.class);
@@ -95,18 +101,13 @@ public class NotionAPI {
      * @param clientId    The Notion client ID.
      * @param secret      The integration secret.
      * @param version     The Notion API version.
-     * @param code        The code for the Notion API, as returned by the OAuth
-     *                    process in the <code>code</code> query parameter.
-     * @param redirectUri The redirect URI for the Notion API, as returned by the
-     *                    OAuth process in the <code>redirect_uri</code> query
-     *                    parameter.
+     * 
      * @return <code>this</code>
      * @throws IOException If the system does not have the necessary
-     *                     resources to connect to the Notion API or
-     *                     if a client token cannot be obtained.
+     *                     resources to connect to the Notion API.
      * @throws InterruptedException If the request is interrupted.
      */
-    public NotionAPI build(String clientId, String secret, String version, String code, String redirectUri)
+    public NotionAPI build(String clientId, String secret, String version)
             throws IOException, InterruptedException {
         this.clientId = clientId;
         this.secret = secret;
@@ -118,12 +119,28 @@ public class NotionAPI {
             throw new IOException(e);
         }
 
+        return this;
+    }
+
+    /**
+     * Create a token from the given OAuth code and redirect URI.
+     * 
+     * @param code        The code for the Notion API, as returned by the OAuth
+     *                    process in the <code>code</code> query parameter.
+     * @param redirectUri The redirect URI for the Notion API, as returned by the
+     *                    OAuth process in the <code>redirect_uri</code> query
+     *                    parameter.
+     * @return The OAuth token. Will also be stored in this object.
+     * @throws IOException If the token cannot be obtained.
+     * @throws InterruptedException If the request is interrupted.
+     */
+    public String createToken(String code, String redirectUri) throws IOException, InterruptedException {
         JsonObject oauthObject = new JsonObject();
         oauthObject.addProperty("grant_type", "authorization_code");
         oauthObject.addProperty("code", code);
         oauthObject.addProperty("redirect_uri", redirectUri);
 
-       /*/ String authorization = clientId + ":" + secret;
+        String authorization = clientId + ":" + secret;
 
         // Base64 encode the client ID and secret
         String encoded = new String(Base64.getEncoder().encode(authorization.getBytes()));
@@ -143,16 +160,8 @@ public class NotionAPI {
         if (response.statusCode() != 200)
             throw new IOException("Failed to get OAuth token: " + responseJson.get("error").getAsString());
 
-        this.token = responseJson.get("access_token").getAsString();
-        this.botId = responseJson.get("bot_id").getAsString();
-        //this.duplicatedTemplateId = responseJson.get("duplicated_template_id").getAsString();
-        this.workspaceId = responseJson.get("workspace_id").getAsString();
-        this.workspaceName = responseJson.get("workspace_name").getAsString();*/
-
-        
-
-        return this;
-    }
+        return responseJson.get("access_token").getAsString();
+    } 
 
     /**
      * Create a Notion page in the workspace.
