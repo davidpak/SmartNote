@@ -42,7 +42,7 @@ public interface ResourceExporter extends Exporter {
             throw new IOException("Error converting markdown to resource");
 
         String output = obj.toString();
-        String source = options.getName();
+        String source = options.getSource();
 
         String dest = source + "_exported";
 

@@ -50,7 +50,12 @@ public class ResourceSystem {
     public static final String[] SUPPORTED_MIME_TYPES = {
         MIME.PDF,
         MIME.PPTX,
-        MIME.PPT
+        MIME.PPT,
+
+        // TODO: remove these later, they are for testing
+        MIME.TEXT,
+        MIME.JSON,
+        MIME.MARKDOWN
     };
 
     /**

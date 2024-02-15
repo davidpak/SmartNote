@@ -2,7 +2,6 @@ package com.smartnote.server;
 
 import static org.junit.Assert.*;
 
-import org.commonmark.node.Node;
 import org.junit.Test;
 
 import com.google.gson.JsonArray;

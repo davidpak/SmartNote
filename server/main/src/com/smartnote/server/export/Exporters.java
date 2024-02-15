@@ -3,6 +3,7 @@ package com.smartnote.server.export;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * <p>Maintains <code>Exporter</code> instances that can be used to
@@ -95,8 +96,13 @@ public final class Exporters {
      * @param name The name of the exporter.
      * @return The requested exporter or <code>null</code> if no
      *         exporter is registered with the given name.
+     * @throws NoSuchElementException If no exporter is registered
+     *                                with the given name.
      */
-    public Exporter getExporter(String name) {
-        return exporters.get(name.toLowerCase());
+    public Exporter getExporter(String name) throws NoSuchElementException {
+        Exporter exporter = exporters.get(name.toLowerCase());
+        if (exporter == null)
+            throw new NoSuchElementException(name);
+        return exporter;
     }
 }

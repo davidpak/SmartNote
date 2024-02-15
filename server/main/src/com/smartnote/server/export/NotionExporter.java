@@ -1,5 +1,7 @@
 package com.smartnote.server.export;
 
+import static com.smartnote.server.util.JSONUtil.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -7,10 +9,13 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.security.Permission;
 
-import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.smartnote.server.Server;
+import com.smartnote.server.export.NotionAPI.CreatePageResult;
+import com.smartnote.server.export.NotionAPI.CreateTokenResult;
+import com.smartnote.server.export.NotionAPI.NotionResult;
+import com.smartnote.server.export.NotionAPI.QueryPagesResult;
 import com.smartnote.server.format.ParsedMarkdown;
 import com.smartnote.server.format.notion.NotionBlock;
 import com.smartnote.server.format.notion.NotionConverter;
@@ -27,144 +32,210 @@ import com.smartnote.server.resource.ResourceSystem;
  */
 @ExporterInfo(name = "notion")
 public class NotionExporter implements RemoteExporter {
-    public static final String NOTION_VERSION = "2022-06-28";
+    /**
+     * The default page name.
+     */
+    public static final String DEFAULT_PAGE_NAME = "Exported Page";
 
     @Override
     public JsonObject export(ExportOptions options, Permission permission) throws SecurityException,
             InvalidPathException, IOException, ExportException, MalformedExportOptionsException {
+        JsonObject response = new JsonObject();
 
-        String parentPage = getParentPage(options.getRemote());
-        String code = getCode(options.getRemote());
-        String secret = getSecret(options.getRemote()); // TODO: Use secret
-        String redirectUri = getRedirectUri(options.getRemote());
-        String token = getToken(options.getRemote());
-        NotionAPI notionAPI = new NotionAPI();
-
-        ParsedMarkdown md = ParsedMarkdown.parse(options.readInputData(permission));
-        NotionConverter notionConverter = new NotionConverter();
-        NotionBlock block = notionConverter.convert(md);
-        JsonObject json = block.writeJSON();
-
-        NotionConfig config = Server.getServer().getConfig().getNotionConfig();
-
-        if (secret == null)
-            secret = config.getSecret();
+        NotionExportOptions nopts = new NotionExportOptions();
+        nopts.parse(options);
+        nopts.load(options.readInputData(permission));
 
         try {
-            notionAPI.build(config.getClientId(), secret, NOTION_VERSION);
-            
-            if (token == null)
-                readToken(notionAPI, permission, code, redirectUri);
-            else
-                notionAPI.oauth(token);
-           
-            int rc = notionAPI.createPage(parentPage, json);
-            if (rc != 200)
-                throw new ExportServiceUnavailableException("Notion API returned " + rc + " status code");
+            NotionAPI notionAPI = nopts.createApi(permission);
+            NotionResult result;
 
+            if (nopts.mode.equalsIgnoreCase("new")) {
+                // Create a new page
+                if (nopts.page == null) {
+                    QueryPagesResult paResult = notionAPI.queryAvailablePages();
+                    if (!paResult.success())
+                        throw new ExportServiceUnavailableException(paResult.message);
+
+                    if (paResult.pages.size() == 0)
+                        throw new ExportServiceUnavailableException("No pages available");
+
+                    nopts.page = paResult.pages.get(0).id();
+                }
+
+
+                CreatePageResult pResult = notionAPI.createPage(nopts.pageName, nopts.page, nopts.json);
+                response.addProperty("url", pResult.url);
+                response.addProperty("id", pResult.id);
+                result = pResult;
+            } else if (nopts.mode.equalsIgnoreCase("update")) {
+                // Replace the contents of a page
+                if (nopts.page == null)
+                    throw new MalformedExportOptionsException("No page provided for update");
+
+                throw new UnsupportedOperationException("update not implemented");
+            } else if (nopts.mode.equalsIgnoreCase("append")) {
+                // Append to a page
+                if (nopts.page == null)
+                    throw new MalformedExportOptionsException("No page provided for append");
+
+                // append only allows children
+                JsonArray children = nopts.json.getAsJsonArray("children");
+                JsonObject apppendObject = new JsonObject();
+                apppendObject.add("children", children);
+
+                result = notionAPI.appendBlock(nopts.page, apppendObject);
+            } else {
+                throw new MalformedExportOptionsException("Invalid mode: " + nopts.mode);
+            }
+
+            if (!result.success())
+                throw new ExportServiceUnavailableException(result.message);
         } catch (IOException e) {
-            throw new ExportServiceUnavailableException(e);
-        } catch (Exception e) {
-            throw new ExportServiceConnectionException(e);
+            throw new ExportServiceUnavailableException("Could not connect to Notion API");
+        } catch (InterruptedException e) {
+            throw new ExportServiceTimeoutException("Connection to Notion API timed out");
         }
 
-        return new JsonObject();
+        response.addProperty("name", nopts.pageName);
+
+        return response;
     }
 
-    private static String getParentPage(JsonObject remote) throws MalformedExportOptionsException {
-        JsonElement parentPageElement = remote.get("parent");
-        if (parentPageElement == null)
-            throw new MalformedExportOptionsException("No parent provided");
+    private static class NotionExportOptions {
+        private String mode;
+        private String page;
+        private String code;
+        private String redirectUri;
 
-        JsonPrimitive parentPagePrimitive = parentPageElement.getAsJsonPrimitive();
-        if (!parentPagePrimitive.isString())
-            throw new MalformedExportOptionsException("parent is not a string");
+        // integration
+        private String secret;
+        private String clientId;
+        private String token;
 
-        return parentPagePrimitive.getAsString();
-    }
+        private String pageName;
+        private JsonObject json;
 
-    private static String getCode(JsonObject remote) throws MalformedExportOptionsException {
-        JsonElement codeElement = remote.get("code");
-        if (codeElement == null)
-            return null;
+        public void parse(ExportOptions options) throws MalformedExportOptionsException {
+            NotionConfig config = Server.getServer().getConfig().getNotionConfig();
 
-        JsonPrimitive codePrimitive = codeElement.getAsJsonPrimitive();
-        if (!codePrimitive.isString())
-            return null;
+            JsonObject json = options.getRemote();
 
-        return codePrimitive.getAsString();
-    }
+            try {
+                // basic
+                mode = getStringOrException(json, "mode");
+                page = getStringOrNull(json, "page");
+                code = getStringOrNull(json, "code");
+                redirectUri = getStringOrNull(json, "redirectUri");
 
-    private static String getSecret(JsonObject remote) throws MalformedExportOptionsException {
-        JsonElement secretElement = remote.get("secret");
-        if (secretElement == null)
-            return null;
+                // integration
+                JsonObject integration = getObjectOrNull(json, "integration");
+                if (integration != null) {
+                    secret = getStringOrNull(integration, "secret");
+                    clientId = getStringOrNull(integration, "clientId");
+                    token = getStringOrNull(integration, "token");
 
-        JsonPrimitive secretPrimitive = secretElement.getAsJsonPrimitive();
-        if (!secretPrimitive.isString())
-            return null;
+                    // Enforce integration rules
+                    if (token == null && clientId == null && secret == null)
+                        throw new MalformedExportOptionsException("Integration: No secret provided");
+                    if (token != null && (clientId != null || secret != null))
+                        throw new MalformedExportOptionsException("Integration: Token only valid without client ID or secret");
+                    if (clientId != null && (secret == null || token != null))
+                        throw new MalformedExportOptionsException("Integration: Secret not provided with client ID");
 
-        return secretPrimitive.getAsString();
-    }
+                } else if (!config.allowRemoteIntegrations()) {
+                    throw new MalformedExportOptionsException("Remote integrations are not allowed");
+                } else {
+                    secret = config.getSecret();
+                    clientId = config.getClientId();
+                }
+            } catch (IllegalArgumentException e) {
+                throw new MalformedExportOptionsException(e.getMessage());
+            }
 
-    private static String getRedirectUri(JsonObject remote) throws MalformedExportOptionsException {
-        JsonElement redirectUriElement = remote.get("redirectUri");
-        if (redirectUriElement == null)
-            return null;
-
-        JsonPrimitive redirectUriPrimitive = redirectUriElement.getAsJsonPrimitive();
-        if (!redirectUriPrimitive.isString())
-            return null;
-
-        return redirectUriPrimitive.getAsString();
-    }
-
-    private static String getToken(JsonObject remote) throws MalformedExportOptionsException {
-        JsonElement tokenElement = remote.get("token");
-        if (tokenElement == null)
-            return null;
-
-        JsonPrimitive tokenPrimitive = tokenElement.getAsJsonPrimitive();
-        if (!tokenPrimitive.isString())
-            return null;
-
-        return tokenPrimitive.getAsString();
-    }
-
-    private static void readToken(NotionAPI notion, Permission permission, String code, String redirectUri) throws IOException, InterruptedException {
-        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
-        
-        String token = null;
-
-        // read token
-        try {
-            Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"), permission);
-            InputStream in = tokenResource.openInputStream();
-            token = new String(in.readAllBytes());
-            in.close();
-        } catch (Exception e) {
-            // Ignore
+            pageName = options.getOutput();
+            
+            if (secret == null) secret = config.getSecret();
         }
 
-        if (token != null) {
-            notion.oauth(token);
-            return;
+        public void load(String inputData) {
+            // Convert markdown to Notion JSON
+            ParsedMarkdown md = ParsedMarkdown.parse(inputData);
+            NotionConverter notionConverter = new NotionConverter();
+            NotionBlock block = notionConverter.convert(md);
+            json = block.writeJSON();
+
+            if (pageName == null) {
+                // set page name to first heading
+                NotionBlock heading = block.findFirstOf("heading_1");
+                if (heading != null)
+                    pageName = heading.getPlainText();
+
+                // default page name
+                if (pageName == null)
+                    pageName = DEFAULT_PAGE_NAME;
+            }
         }
 
+        public NotionAPI createApi(Permission permission) throws IOException, InterruptedException, ExportServiceUnavailableException {
+            NotionAPI notionAPI = new NotionAPI();
 
-        if (code == null)
-            throw new IllegalArgumentException("No code or token provided");
+            // initialize and load oauth token
+            notionAPI.build(null);     
+            loadToken(notionAPI, permission);
 
-        token = notion.createToken(code, redirectUri);
+            return notionAPI;
+        }
 
-        // save token
-        try {
-            Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"), permission);
-            OutputStream out = tokenResource.openOutputStream();
-            out.write(token.getBytes());
-            out.close();
-        } catch (Exception e) {
-            // Ignore
+        private void loadToken(NotionAPI notion, Permission permission) throws IOException, InterruptedException, ExportServiceUnavailableException {
+            ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+            
+            if (token != null) {
+                notion.authenticate(token);
+                return;
+            }
+    
+            // read token
+            InputStream in = null;
+            try {
+                Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"), permission);
+                in = tokenResource.openInputStream();
+                token = new String(in.readAllBytes());
+            } catch (Exception e) {
+                // Ignore
+            } finally {
+                if (in != null)
+                    in.close();
+            }
+    
+            if (token != null) {
+                notion.authenticate(token);
+                return;
+            }
+    
+            if (code == null)
+                throw new IllegalArgumentException("No code or token provided");
+    
+            CreateTokenResult result = notion.createToken(clientId, secret, code, redirectUri);
+            if (!result.success())
+                throw new ExportServiceUnavailableException(result.message);
+
+            token = result.token;
+
+            notion.authenticate(token);
+    
+            // save token
+            OutputStream out = null;
+            try {
+                Resource tokenResource = resourceSystem.findActualResource("session", Paths.get(".notion_token"), permission);
+                out = tokenResource.openOutputStream();
+                out.write(token.getBytes());
+            } catch (Exception e) {
+                // Ignore
+            } finally {
+                if (out != null)
+                    out.close();
+            }
         }
     }
 }

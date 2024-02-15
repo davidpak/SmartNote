@@ -75,6 +75,21 @@ public class NotionBlock implements JSONObjectSerializable {
         return blocks;
     }
 
+    public NotionBlock findFirstOf(String type) {
+        for (NotionBlock block : children) {
+            if (block.getType().equals(type))
+                return block;
+        }
+
+        for (NotionBlock block : children) {
+            NotionBlock found = block.findFirstOf(type);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
     /**
      * Returns the type of this block.
      * 
@@ -100,6 +115,20 @@ public class NotionBlock implements JSONObjectSerializable {
      */
     public List<JsonObject> getRichText() {
         return Collections.unmodifiableList(richText);
+    }
+
+    /**
+     * Infers the plain text from the rich text.
+     * 
+     * @return The plain text.
+     */
+    public String getPlainText() {
+        if (richText.size() == 0)
+            return null;
+
+        JsonObject textObject = richText.get(0);
+        JsonObject textDataObject = textObject.getAsJsonObject("text");
+        return textDataObject.get("content").getAsString();
     }
 
     /**

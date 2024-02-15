@@ -2,9 +2,11 @@ package com.smartnote.server.api.v1;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
+import java.util.NoSuchElementException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.export.ExportException;
@@ -13,7 +15,6 @@ import com.smartnote.server.export.ExportServiceConnectionException;
 import com.smartnote.server.export.ExportServiceTimeoutException;
 import com.smartnote.server.export.ExportServiceUnavailableException;
 import com.smartnote.server.export.Exporter;
-import com.smartnote.server.export.Exporters;
 import com.smartnote.server.export.MalformedExportOptionsException;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.util.MethodType;
@@ -40,18 +41,34 @@ public class Export implements Route {
             response.status(401);
             return "{\"message\":\"No session\"}";
         }
+
+        String body = request.body();
+        if (body == null) {
+            response.status(400);
+            return "{\"message\":\"Missing export options\"}";
+        }
+
+        Gson gson = new Gson();
+        JsonObject options;
+        try {
+            options = gson.fromJson(body, JsonObject.class);
+        } catch (JsonSyntaxException e) {
+            response.status(400);
+            return "{\"message\":\"Malformed export options\"}";
+        }
   
         ExportOptions exportOptions = new ExportOptions();
-        String message = exportOptions.parse(request, response);
-        if (message != null)
-            return message;
-
-        // Find exporter for requested type
-        Exporter exporter = Exporters.getExporters().getExporter(exportOptions.getType());
-        if (exporter == null) {
+        try {
+            exportOptions.parse(options);
+        } catch (IllegalArgumentException e) {
             response.status(400);
-            return "{\"message\":\"Invalid export type\"}";
+            return "{\"message\":\"Missing or invalid export option: " + e.getMessage() + "\"}";
+        } catch (NoSuchElementException e) {
+            response.status(400);
+            return "{\"message\":\"Missing or invalid export option: " + e.getMessage() + "\"}";
         }
+
+        Exporter exporter = exportOptions.getExporter();
 
         // Export the resource
         JsonObject result;

@@ -9,6 +9,8 @@ import cmdline as cl
 import json
 import serverutil as su
 
+redirect_uri = 'http://localhost'
+
 base_url = 'http://localhost:4567'
 
 file_name = 'output.md'
@@ -24,6 +26,10 @@ with open('../../private/notion_token', 'r') as f:
 
 with open('../../private/notion_parent', 'r') as f:
     parent = f.read().strip()
+    f.close()
+
+with open('../../private/notion_code', 'r') as f:
+    code = f.read().strip()
     f.close()
 
 session = None
@@ -50,14 +56,22 @@ result = json.loads(r.text)
 resource = result['name']
 print('resource:', resource)
 
+integration_information = {
+    'token': token
+}
+
 remote_information = {
-    'parent': parent,
-    'token': token,
+    'mode': 'new',
+    #'page': parent,
+    'code': code,
+    'redirectUri': redirect_uri,
+    #'integration': integration_information
 }
 
 export_options = {
-    'name': resource,
-    'type': 'notion',
+    'source': resource,
+    'output': 'I specified the name in JSON',
+    'exporter': 'notion',
     'remote': remote_information,
 }
 

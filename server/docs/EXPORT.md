@@ -16,45 +16,63 @@ The body must be a JSON object with the following fields:
 
 | Name | Type | Contents |
 | ---- | ---- | ----------- |
-| `name` | `string` | The name of the summary resource to export. |
-| `type` | `string` | The type of export to perform. |
+| `source` | `string` | The name of the summary resource to export. |
+| `exporter` | `string` | The exporter to use. |
 | `output` | `string` | A resource name to use when exporting to a local file. Optional. |
 | `remote` | `object` | Remote export location information. |
 
-`type` is a case-insensitive `string` describing the type of export to perform. The following types are recognized:
+`exporter` is a case-insensitive `string` describing the type of export to perform. The following types are recognized:
 
 | Value | Description |
 | ----- | ----------- |
-| `notion` | Export the notes to a Notion database. |
-| `rtf` | Export the notes to a Rich Text Format (RTF) file. |
-| `json` | Export the notes to a JSON file. |
-| `md` | Export the notes to a Markdown file. |
+| `notion` | Exports  to a Notion database. |
+| `rtf` | Exports to a Rich Text Format (RTF) file. |
+| `json` | Exports to a JSON file. |
+| `md` | Exports to a Markdown file. |
 
-`output` is a `string` containing the name of the export resource to write to. The resource will be overwritten if it already exists. The resource will be associated with the client's session and can be fetched using the [`fetch`](FETCH.md) RPC. If `output` is not specified, the server will generate a unique name for the resource which will be returned in the response body. If a remote location is specified, this field will be ignored.
+`output` is a `string` containing the name of the export resource to write to. The resource will be overwritten if it already exists. The resource will be associated with the client's session and can be fetched using the [`fetch`](FETCH.md) RPC. If `output` is not specified, the server will generate a unique name for the resource which will be returned in the response body. This has special behavior if the export type is remote.
 
-`remote` is an object containing information on how to export to a remote location. The fields of `remote` depend on the type of export to perform. This is only required if the export type is remote. If the export is local, this field will be ignored.
+`remote` is an object containing information on how to export to a remote location. The fields of `remote` depend on the type of export to perform. This is only required if the export is to a remote location. If the export is local, this field will be ignored.
 
 #### Notion
-    
-When exporting to Notion, the `remote` object may have the following fields:
+
+When exporting to Notion, the `output` field specifies the title of the page to create. If it is not specified, the server will choose a title based on the content of the document. If it could not be determined, a default title will be used. The `remote` object may have the following fields:
 
 | Name | Type | Contents |
 | ---- | ---- | -------- |
-| `parent` | `string` | The ID of the parent page to export to. |
+| `mode` | `string` | How the content should be outputted in Notion. |
+| `page` | `string` | A Notion page ID. Semantics depend on the `mode` field. |
 | `code` | `string` | Code returned by the Notion OAuth flow to get an access token. |
 | `redirectUri` | `string` | The redirect URI used in the Notion OAuth flow. |
-| `secret` | `string` | The Notion secret associated with the integration. **See below.** |
-| `token` | `string` | The Notion access token to use. **See below.** |
+| `integration` | `string` | The Notion integration to use. **See below**. |
 
-`parent` is is a Notion page ID, obtained by looking at the 32-character sequence at the end of the URL of the page. For example, if the URL of the page is `https://www.notion.so/My-Page-1234567890abcdef`, the `parent` field should be `1234567890abcdef`. The integration must be given access to this page explicitly. Consult the [Notion API documentation](https://developers.notion.com/) for more information on how to do this.
+`mode` can be one of the following values:
+
+| Value | Description |
+| ----- | ----------- |
+| `new` | Create a new page in Notion; `page` specifies the parent page. |
+| `update` | Update an existing page in Notion; `page` specifies an existing page. |
+| `append` | Append to an existing page in Notion; `page` specifies an existing page. |
+
+`page` is is a Notion page ID, obtained by looking at the 32-character sequence at the end of the URL of the page. For example, if the URL of the page is `https://www.notion.so/My-Page-1234567890abcdef`, the `parent` field should be `1234567890abcdef`. The integration must be given access to this page explicitly or through the OAuth flow. Consult the [Notion API documentation](https://developers.notion.com/) for more information on how to do this. This is required if the `mode` is not `new`. If `mode` is `new` and `field` is not specified, the server will choose the most recently created page to be the parent. If no such page can be found, the request fails.
 
 `code` is a temporary code returned by the Notion OAuth flow. This is only required if the client has not yet obtained an access token for Notion. The server will use the access token associated with the client's session if it has already been obtained. See the how [Notion authorization](https://developers.notion.com/docs/authorization) works for more information.
 
 `code` can be omitted if the client has already obtained an access token for Notion. The server will use the access token associated with the client's session. The first successful export to Notion will require the client to provide a temporary code so the integration can generate an access token. If the code is provided after a token has been generated, the server will ignore it. The same applies to the `redirectUri` field.
 
-**Note**: `secret` is the Notion secret associated with a Notion integration. If specifying this in a request without `code`, the server will use this secret as the access token to allow interfacing with internal integrations. If `code` is specified, the server will create a new integration token with the given secret and use that to interface with Notion in the future. This field is only allowed if the server has been configured to allow it. See the [configuration](CONFIGURATION.md) documentation for more information.
+**Note**: `integration` defines a custom Notion integration to use, called *remote integrations*. If specified, the server will use this object as the integration to use. If not, it will use its own integration. Note, however, that this is only allowed if the server is configured to allow it. See the [configuration](CONFIGURATION.md) documentation for more information. They layout of the `integration` object is as follows:
 
-**Note**: `token` is the Notion access token to use. If this is specified, the server will use this token to interface with Notion. This field is only allowed if the server has been configured to allow it. See the [configuration](CONFIGURATION.md) documentation for more information.
+| Name | Type | Contents |
+| ---- | ---- | -------- |
+| `secret` | `string` | The OAuth client secret or the internal integration secret. Optional. |
+| `clientId` | `string` | The OAuth client ID of the integration. Optional. |
+| `token` | `string` | The authorization token to use. Optional. |
+
+**Restrictions**:
+
+- If both `token` and `clientId` are not specified, the `secret` field is required.
+- If `token` is specified, `secret` and `clientId` must not be specified.
+- If `clientId` is specified, the `secret` field is required and the `token` field must not be specified.
 
 ## Response
 
@@ -74,11 +92,15 @@ If the request was successful, the server will respond with `200 OK`. The respon
 
 #### Notion
 
+If `mode` is `new`, the response will include the following fields:
+
 | Name | Type | Contents |
 | ---- | ---- | -------- |
 | `url` | `string` | The URL of the Notion page containing the exported notes. |
 | `name` | `string` | The name of the page containing the exported notes. |
 | `id` | `string` | The ID of the page containing the exported notes. |
+
+Other modes do not include any additional fields.
 
 ### Failure
 

@@ -210,7 +210,12 @@ public class Server {
         exception(Exception.class, (e, req, res) -> {
             e.printStackTrace();
             res.status(500);
-            res.body("Internal server error");
+            res.body("{\"message\":\"Internal server error\"}");
+        });
+
+        exception(UnsupportedOperationException.class, (e, req, res) -> {
+            res.status(501);
+            res.body("{\"message\":\"Unsupported operation\"}");
         });
 
         port(serverConfig.getPort());
