@@ -14,7 +14,7 @@ import com.smartnote.server.format.MarkdownConverter;
 @ExporterInfo(name = "json")
 public class JSONExporter implements ResourceExporter {
     @Override
-    public MarkdownConverter<JsonObject> createConverter(JsonObject options, Permission permission) {
+    public MarkdownConverter<JsonObject> createConverter(ExportOptions options, Permission permission) {
         return (md) -> md.getParsedJson();
     }
 

@@ -22,7 +22,7 @@ import com.smartnote.server.resource.Resource;
 public interface ResourceExporter extends Exporter {
 
     /**
-     * Create the renderer for the exporter.
+     * Create the converter for the exporter.
      * 
      * @param options The options for the renderer.
      * @param permission The permission of the user.
@@ -30,17 +30,19 @@ public interface ResourceExporter extends Exporter {
      * @throws IllegalArgumentException If the options are invalid.
      * @throws SecurityException If the user does not have the permission to create the renderer.
      */
-    MarkdownConverter<?> createConverter(JsonObject options, Permission permission) throws IllegalArgumentException, SecurityException;
+    MarkdownConverter<?> createConverter(ExportOptions options, Permission permission) throws IllegalArgumentException, SecurityException;
 
     @Override
-    default JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException, MalformedExportOptionsException {
+    default JsonObject export(ExportOptions options, Permission permission) throws SecurityException, InvalidPathException, IOException, MalformedExportOptionsException {
+        String data = options.readInputData(permission);
+
         ParsedMarkdown md = ParsedMarkdown.parse(data);
         Object obj = createConverter(options, permission).convert(md);
         if (obj == nullable(null))
             throw new IOException("Error converting markdown to resource");
 
         String output = obj.toString();
-        String source = options.get("name").getAsString();
+        String source = options.getName();
 
         String dest = source + "_exported";
 

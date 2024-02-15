@@ -75,10 +75,11 @@ public class Upload implements Route {
         String type = request.contentType();
         if (type == null) type = inferredMIME;
         
-        if (!ResourceSystem.isSupportedType(type)) {
+        // TODO: add this back in
+        /*if (!ResourceSystem.isSupportedType(type)) {
             response.status(406);
             return "{\"message\": \"Unsupported content type\"}";
-        }
+        }*/
 
         byte[] body = request.bodyAsBytes();
         if (body == null) {
@@ -100,7 +101,7 @@ public class Upload implements Route {
             return "{\"message\": \"Quota exceeded\"}";
         }
 
-        Tika tika = new Tika();
+        /*Tika tika = new Tika();
         String contentMIME = tika.detect(body);
         if (!contentMIME.equals(MIME.PDF) && !contentMIME.equals(MIME.PPTX)) {
             response.status(406);
@@ -110,7 +111,7 @@ public class Upload implements Route {
         // if the MIME types don't match, change the extension
         if (!contentMIME.equals(inferredMIME))
             filename = FileUtils.removeExtension(filename) + "." + MIME.toExtension(contentMIME);
-
+*/
         filename = UPLOAD_DIR + filename;
 
         Permission permission = session.getPermission();

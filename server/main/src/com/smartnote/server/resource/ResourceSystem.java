@@ -208,7 +208,7 @@ public class ResourceSystem {
 
         // parse authority and path
         String authority = name.substring(0, colonIndex);
-        Path path = Paths.get(name.substring(colonIndex + 1));
+        Path path = Paths.get(name.substring(authority.length() + 1));
 
         for (Path part : path) {
             String pathString = part.toString();

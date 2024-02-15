@@ -16,14 +16,12 @@ import com.google.gson.JsonObject;
  * @author Ethan Vrhel
  * @see com.smartnote.server.export.Exporters
  */
-@FunctionalInterface
 public interface Exporter {
 
     /**
      * Export the summary.
      * 
-     * @param data The data to export.
-     * @param options The options for the export.
+     * @param options The export options.
      * @param permission The permission of the user.
      * @return A JSON object containing the export information. This
      * object will be sent to the client. See the documentation for
@@ -39,5 +37,5 @@ public interface Exporter {
      * @throws MalformedExportOptionsException If the export options
      *                                         are malformed.
      */
-    JsonObject export(String data, JsonObject options, Permission permission) throws SecurityException, InvalidPathException, IOException, ExportException, MalformedExportOptionsException;
+    JsonObject export(ExportOptions options, Permission permission) throws SecurityException, InvalidPathException, IOException, ExportException, MalformedExportOptionsException;
 }
