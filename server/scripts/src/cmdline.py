@@ -117,9 +117,13 @@ def parse(argv: list[str],
     """
 
     result_switches: dict[str, SwitchValue] = {}
-    
+
     i = 1
     if switches is not None:
+        # Initialize switches with default values
+        for switch in switches:
+            result_switches[switch.name] = switch.value
+
         # place switches into dict for easy lookup
         switch_dict: dict[str, Switch] = {}
         for switch in switches:
@@ -139,8 +143,6 @@ def parse(argv: list[str],
             i, rc = switch.handle(argv, i + 1)
             if rc is not None:
                 return rc
-            
-            # add to result
-            result_switches[switch.name] = switch.value
-            
+
     return (argv[i:], result_switches)
+
