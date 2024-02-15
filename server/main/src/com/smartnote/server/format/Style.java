@@ -1,17 +1,16 @@
 package com.smartnote.server.format;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.smartnote.server.util.JSONObjectSerializable;
+import com.smartnote.server.format.notion.NotionBlock;
 
 /**
- * Describe a style in Notion's internal format.
+ * <p>
+ * Describes a rich text style.
+ * </p>
  * 
  * @author Ethan Vrhel
+ * @see NotionBlock
  */
-public record Style(boolean bold, boolean italic, boolean strikethrough, boolean underline, boolean code, String link)
-        implements JSONObjectSerializable {
+public record Style(boolean bold, boolean italic, boolean strikethrough, boolean underline, boolean code, String link) {
     /**
      * Create a default style.
      */
@@ -74,60 +73,37 @@ public record Style(boolean bold, boolean italic, boolean strikethrough, boolean
         return new Style(bold, italic, strikethrough, underline, code, link);
     }
 
-    public static Style fromJSON(JsonObject json) {
-        JsonElement e;
-        JsonPrimitive p;
+    @Override
+    public boolean equals(Object o) {
+        if (o == null)
+            return false;
 
-        boolean bold = false;
-        boolean italic = false;
-        boolean strikethrough = false;
-        boolean underline = false;
-        boolean code = false;
-        String link = null;
+        if (o instanceof Style s) {
+            boolean b = s.bold == bold && s.italic == italic && s.strikethrough == strikethrough
+                    && s.underline == underline
+                    && s.code == code;
 
-        if ((e = json.get("bold")) != null && e.isJsonPrimitive() && (p = e.getAsJsonPrimitive()).isBoolean())
-            bold = p.getAsBoolean();
+            if (!b)
+                return false;
 
-        if ((e = json.get("italic")) != null && e.isJsonPrimitive() && (p = e.getAsJsonPrimitive()).isBoolean())
-            italic = p.getAsBoolean();
+            if (s.link == null)
+                return link == null;
 
-        if ((e = json.get("strikethrough")) != null && e.isJsonPrimitive() && (p = e.getAsJsonPrimitive()).isBoolean())
-            strikethrough = p.getAsBoolean();
+            return s.link.equals(link);
+        }
 
-        if ((e = json.get("underline")) != null && e.isJsonPrimitive() && (p = e.getAsJsonPrimitive()).isBoolean())
-            underline = p.getAsBoolean();
-
-        if ((e = json.get("code")) != null && e.isJsonPrimitive() && (p = e.getAsJsonPrimitive()).isBoolean())
-            code = p.getAsBoolean();
-
-        if ((e = json.get("link")) != null && e.isJsonPrimitive() && (p = e.getAsJsonPrimitive()).isString())
-            link = p.getAsString();
-
-        return new Style(bold, italic, strikethrough, underline, code, link);
+        return false;
     }
 
     @Override
-    public JsonObject writeJSON(JsonObject json) {
-        if (bold)
-            json.addProperty("bold", true);
-
-        if (italic)
-            json.addProperty("italic", true);
-
-        if (strikethrough)
-            json.addProperty("strikethrough", true);
-
-        if (underline)
-            json.addProperty("underline", true);
-
-        if (code)
-            json.addProperty("code", true);
-
-        return json;
+    public int hashCode() {
+        return Boolean.hashCode(bold) + Boolean.hashCode(italic) + Boolean.hashCode(strikethrough)
+                + Boolean.hashCode(underline) + Boolean.hashCode(code) + link.hashCode();
     }
 
     @Override
-    public void loadJSON(JsonObject json) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Cannot load a Style from JSON");
+    public String toString() {
+        return "Style [bold=" + bold + ", italic=" + italic + ", strikethrough=" + strikethrough + ", underline="
+                + underline + ", code=" + code + ", link=" + link + "]";
     }
 }

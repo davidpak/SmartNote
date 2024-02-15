@@ -32,6 +32,10 @@ with open('../../private/notion_code', 'r') as f:
     code = f.read().strip()
     f.close()
 
+if len(sys.argv) > 1:
+    code = sys.argv[1]
+    print('code manually set to', code)
+
 session = None
 
 r = su.login(base_url)
@@ -70,7 +74,7 @@ remote_information = {
 
 export_options = {
     'source': resource,
-    'output': 'I specified the name in JSON',
+    #'output': 'I specified the name in JSON',
     'exporter': 'notion',
     'remote': remote_information,
 }

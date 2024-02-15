@@ -105,7 +105,7 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Link link) {
-        applyStyle(link, styleStack.peek().setHref(link.getDestination()));
+        applyStyle(link, styleStack.peek().setLink(link.getDestination()));
     }
 
     @Override
@@ -145,7 +145,7 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(LinkReferenceDefinition linkReferenceDefinition) {
-        applyStyle(linkReferenceDefinition, styleStack.peek().setHref(linkReferenceDefinition.getDestination()));
+        applyStyle(linkReferenceDefinition, styleStack.peek().setLink(linkReferenceDefinition.getDestination()));
     }
 
     @Override
@@ -198,7 +198,7 @@ class JSONVisitor extends AbstractVisitor {
                 json.add("style", styleObject);
         }
     }
-    
+
     private void emitCode(String type, String literal, String language, boolean omitStyle) {
         styleStack.push(styleStack.peek().setCode());
         emitLiteral(type, literal, omitStyle);
@@ -212,22 +212,22 @@ class JSONVisitor extends AbstractVisitor {
         boolean italic;
         boolean code;
 
-        String href;
+        String link;
 
         public Style() {
             bold = false;
             italic = false;
             code = false;
-            href = null;
+            link = null;
         }
 
         public Style(Style style) {
             bold = style.bold;
             italic = style.italic;
             code = style.code;
-            href = style.href;
+            link = style.link;
         }
-        
+
         public JsonObject createJson() {
             JsonObject json = new JsonObject();
             if (bold)
@@ -239,8 +239,8 @@ class JSONVisitor extends AbstractVisitor {
             if (code)
                 json.addProperty("code", true);
 
-            if (href != null)
-                json.addProperty("href", href);
+            if (link != null)
+                json.addProperty("link", link);
 
             return json;
         }
@@ -263,9 +263,9 @@ class JSONVisitor extends AbstractVisitor {
             return style;
         }
 
-        public Style setHref(String href) {
+        public Style setLink(String link) {
             Style style = new Style(this);
-            style.href = href;
+            style.link = link;
             return style;
         }
     }

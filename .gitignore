@@ -45,7 +45,7 @@ __pycache__
 server/config.json
 server/private
 server/test-results
-server/.session
+.session
 
 #####################################################################
 # General
