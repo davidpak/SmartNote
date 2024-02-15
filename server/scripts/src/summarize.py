@@ -204,7 +204,7 @@ def process_file(file_path, switches):
 
     response, docs = get_response_from_query(db, query)
 
-    output_file_path = "../out/output.md"
+    output_file_path = "../../out/output.md"
     with open(output_file_path, "w", encoding="utf-8") as file:
         file.write(response)
     print(f"Cleaned response has been saved to: {output_file_path}")
