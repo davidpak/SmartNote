@@ -278,6 +278,15 @@ public class Server {
                     return "{\"message\":\"OK\"}";
                 });
                 break;
+            case DELETE:
+                delete(path, r);
+                options(path, (req, res) -> {
+                    res.status(200);
+                    res.header("Allow", "DELETE");
+                    res.type("application/json");
+                    return "{\"message\":\"OK\"}";
+                });
+                break;
             default:
                 throw new IllegalArgumentException("Unknown method type: " + route.method());
         }

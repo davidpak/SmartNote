@@ -1,6 +1,7 @@
 package com.smartnote.server.format.notion;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.gson.JsonArray;
@@ -62,6 +63,43 @@ public class NotionBlock implements JSONObjectSerializable {
             textObject.add("annotations", annotations);
 
         richText.add(textObject);
+    }
+
+    public List<NotionBlock> findInChildren(String type) {
+        List<NotionBlock> blocks = new ArrayList<>();
+        for (NotionBlock block : children) {
+            if (block.getType().equals(type))
+                blocks.add(block);
+            blocks.addAll(block.findInChildren(type));
+        }
+        return blocks;
+    }
+
+    /**
+     * Returns the type of this block.
+     * 
+     * @return The type of this block.
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * Returns the children of this block.
+     * 
+     * @return The children of this block.
+     */
+    public List<NotionBlock> getChildren() {
+        return Collections.unmodifiableList(children);
+    }
+
+    /**
+     * Returns the rich text of this block.
+     * 
+     * @return The rich text of this block.
+     */
+    public List<JsonObject> getRichText() {
+        return Collections.unmodifiableList(richText);
     }
 
     /**

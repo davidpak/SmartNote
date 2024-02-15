@@ -42,7 +42,7 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Code code) {
-        emitCode(code.getLiteral(), null);
+        emitCode("text", code.getLiteral(), null, false);
     }
 
     @Override
@@ -60,8 +60,7 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(FencedCodeBlock fencedCodeBlock) {
-        type("fencedCodeBlock");
-        emitCode(fencedCodeBlock.getLiteral(), fencedCodeBlock.getInfo());
+        emitCode("fencedCodeBlock", fencedCodeBlock.getLiteral(), fencedCodeBlock.getInfo(), true);
     }
 
     @Override
@@ -101,7 +100,7 @@ class JSONVisitor extends AbstractVisitor {
     @Override
     public void visit(IndentedCodeBlock indentedCodeBlock) {
         type("indentedCodeBlock");
-        emitCode(indentedCodeBlock.getLiteral(), null);
+        emitCode("indentedCodeBlock", indentedCodeBlock.getLiteral(), null, true);
     }
 
     @Override
@@ -141,7 +140,7 @@ class JSONVisitor extends AbstractVisitor {
 
     @Override
     public void visit(Text text) {
-        emitLiteral(text.getLiteral());
+        emitLiteral("text", text.getLiteral(), false);
     }
 
     @Override
@@ -189,19 +188,20 @@ class JSONVisitor extends AbstractVisitor {
         json.addProperty("type", type);
     }
 
-    private void emitLiteral(String literal) {
-        json.addProperty("type", "text");
+    private void emitLiteral(String type, String literal, boolean omitStyle) {
+        type(type);
         json.addProperty("literal", literal);
-
         Style style = styleStack.peek();
-        JsonObject styleObject = style.createJson();
-        if (styleObject.size() > 0)
-            json.add("style", styleObject);
+        if (!omitStyle) {
+            JsonObject styleObject = style.createJson();
+            if (styleObject.size() > 0)
+                json.add("style", styleObject);
+        }
     }
     
-    private void emitCode(String literal, String language) {
+    private void emitCode(String type, String literal, String language, boolean omitStyle) {
         styleStack.push(styleStack.peek().setCode());
-        emitLiteral(literal);
+        emitLiteral(type, literal, omitStyle);
         if (language != null && !language.isEmpty())
             json.addProperty("language", language);
         styleStack.pop();

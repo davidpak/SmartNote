@@ -1,6 +1,6 @@
 # `generate`
 
-Generates summaries from uploaded files. The summaries are associated with the client's session and are stored on the server until the session expires. The summaries can be exported to an external location using the [`export`](#export) RPC. Use the [`upload`](#upload) RPC to upload files to generate summaries for.
+Generates summaries from uploaded files. The summaries are associated with the client's session and are stored on the server until the session expires. The summaries can be exported to an external location using the [`export`](EXPORT.md) RPC. Use the [`upload`](UPLOAD.md) RPC to upload files to generate summaries for.
 
 ## Request
 
@@ -33,7 +33,7 @@ If the request was successful, the server will respond with `200 OK`. The respon
 | `result` | `object` | A JSON object containing the results of the generation. |
 
 When the server successfully generates the summaries, it will respond with `200 OK`. The `name` field will contain the name of the summary resource. The `time` field will contain the time taken to generate the summaries and is tracked across timeouts. `name` may be used in the 
-[`export`](#export) RPC to export the generated summary.
+[`export`](EXPORT.md) RPC to export the generated summary.
 
 The `result` field is a JSON object containing the contents of the generated summaries. It's format is closely tied to markdown and its format is as follows:
 

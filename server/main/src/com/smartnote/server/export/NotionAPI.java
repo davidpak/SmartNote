@@ -11,9 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -58,15 +55,6 @@ public class NotionAPI {
         NotionBlock block = notionConverter.convert(md);
         JsonObject notionJson = block.writeJSON();
 
-        /*Parser parser = Parser.builder().build();
-        Node document = parser.parse(markdown);
-
-        NotionRenderer renderer = new NotionRenderer();
-        JsonObject notionJson = renderer.renderJson(document);
-
-        JSONRenderer jsonRenderer = new JSONRenderer().setPrettyPrinting();
-        String json = jsonRenderer.render(document);*/
-
         Config config = new Config();
         JsonObject configJson = new Gson().fromJson(Files.readString(Paths.get( "config.json")), JsonObject.class);
         config.loadJSON(configJson);
@@ -76,7 +64,22 @@ public class NotionAPI {
         String redirectUri = args[1];
         String version = "2022-06-28";
 
-        NotionAPI api = new NotionAPI().build(notionConfig.getClientId(), notionConfig.getSecret(), version, code, redirectUri);
+        NotionAPI api = new NotionAPI().build(notionConfig.getClientId(), notionConfig.getSecret(), version);
+        String token = null;
+
+        try {
+            token = Files.readString(Paths.get("private", "notion_token"));
+        } catch (IOException e) {
+            // Ignore
+        }
+       
+        if (token == null) {
+            token = api.createToken(code, redirectUri);
+            Files.writeString(Paths.get("private", "notion_token"), token);
+        } else {
+            api.oauth(token);
+        }
+
         int rc = api.createPage("Test Page", notionJson);
         System.out.println("Status code: " + rc);
     }
@@ -112,6 +115,11 @@ public class NotionAPI {
         this.clientId = clientId;
         this.secret = secret;
         this.version = version;
+        this.token = null;
+        this.botId = null;
+        this.duplicatedTemplateId = null;
+        this.workspaceId = null;
+        this.workspaceName = null;
         this.gson = new Gson();
         try {
             this.client = HttpClient.newHttpClient();
@@ -119,6 +127,13 @@ public class NotionAPI {
             throw new IOException(e);
         }
 
+        return this;
+    }
+
+    public NotionAPI oauth(String token) {
+        if (this.token != null)
+            throw new IllegalStateException("Token already set");
+        this.token = token;
         return this;
     }
 
@@ -175,12 +190,14 @@ public class NotionAPI {
     public int createPage(String name, JsonObject json) throws IOException, InterruptedException {
         JsonObject parent;
         JsonObject properties;
-        JsonObject nameObject;
         JsonArray titleArray;
         JsonObject textObject;
         JsonObject textDataObject;
         HttpRequest request;
         HttpResponse<String> response;
+
+        if (token == null)
+            throw new IllegalStateException("No token provided");
 
         JsonObject searchJsonObject = new JsonObject();
         request = post("search", searchJsonObject).build();
@@ -192,17 +209,13 @@ public class NotionAPI {
         JsonArray results = responseJson.getAsJsonArray("results");
         String pageId = results.get(0).getAsJsonObject().get("id").getAsString();
 
+        // Parent
         parent = new JsonObject();
         parent.addProperty("type", "page_id");
         parent.addProperty("page_id", pageId);
         json.add("parent", parent);
 
-        //parent.addProperty("type", "page_id");
-       // parent.addProperty("page_id", this.workspaceId);
-
-       //parent.addProperty("type" ,"workspace");
-      // parent.addProperty("workspace", true);
-
+        // Title
         properties = new JsonObject();
         titleArray = new JsonArray();
         textObject = new JsonObject();
@@ -212,8 +225,6 @@ public class NotionAPI {
         titleArray.add(textObject);
         properties.add("title", titleArray);
         json.add("properties", properties);
-
-        //json.remove("children");
 
         request = post("pages", json).build();
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -234,6 +245,9 @@ public class NotionAPI {
      * @throws InterruptedException If the request is interrupted.
      */
     public int appendBlock(String blockId, JsonObject json) throws IOException, InterruptedException {
+        if (token == null)
+            throw new IllegalStateException("No token provided");
+
         HttpRequest request = patch("blocks/" + formatId(blockId) + "/children", json).build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         return response.statusCode();
