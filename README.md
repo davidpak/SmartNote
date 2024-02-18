@@ -96,6 +96,40 @@ If you have built a JAR file of the server, you may run either `server.bat [args
 
 When using an IDE, you may need to setup run configurations to target buildfile `server/build.xml`. Some IDEs may be able to build without Ant, but you may need to set up the classpath within your IDE's configuration. It must include all of the `jar` files in the `server/lib/` directory. Ensure your IDE has set the working directory to the `server/` directory.
 
+## Testing
+
+### Jest
+
+Jest is used in the frontend to test React components.
+
+### JUnit
+
+JUnit 4 is used for testing server functionality. Test files are located in `server/main/test`. Within this directory, there are two important packages:
+
+- `com.smartnote.server` - Contains the JUnit tests for testing the server.
+- `com.smartnote.testing` - Contains utilities for writing tests for the server.
+
+#### Adding a test
+
+Tests are written as Java classes and should go in `server/main/test/com/smartnote/server` (although anywhere within the `test` directory will work). For a class to be treated as a test, it must have the word `Test` somewhere inside its class name. The style for SmartNote is to write test names in the format `[Behavior to test]Test.java`, e.g. `ExportTest.java`.
+
+After the file is created, tests can be written as normal JUnit tests, using the `@Test` annotation to mark a method as being a test.
+
+Since many objects in the server are networked, the testing framework also uses Mockito 5 to emulate the behavior of some of the networked objects (such as `Request` and `Response` objects). This library is tedious to set up, but is used in almost every test, so there exist some base classes that automatically set up these objects for you, all located in the `com.smartnote.testing` package. These are:
+
+- `Base` - Base class for most tests, contains features like a pseudo filesystem (`VirtualFileSystem`) and an instance of a `Gson` object for reading and writing JSON.
+- `BaseMarkdown` - Extends `Base`, and is the base class for tests who are testing the Markdown transpilers.
+- `BaseRoute` - Extends `BaseServer`, and is the base class for testing endpoints (i.e. the server's RPCs).
+- `BaseServer` - Extends `Base`, and is the base class for testing functionality interacts with commonly used networking objects (such as `Session` objects).
+
+#### Running the tests
+
+From within the `server` directory, run `ant test`. This will run the `ant build-test` target then run all JUnit tests, whose results will be outputted into `server/test-results`.
+
+### pytest
+
+pytest is used for testing the Python scripts responsible for interfacing with the LLM.
+
 ## Third-Party Libraries
 
 - [Apache Tika](https://tika.apache.org/) - Used to detect MIME types.
