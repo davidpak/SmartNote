@@ -138,6 +138,28 @@ From within the `server` directory, run `ant test`. This will run the `ant build
 
 pytest is used for testing the Python scripts responsible for interfacing with the LLM.
 
+#### Adding a test
+1. Create a file with a `.py` extension in `/server/scripts/test.
+2. Write test cases using `pytest` functions to test the functionality of your Python scripts.
+
+#### Running the Tests
+
+From within the project directory, run the following command to execute tests:
+
+`pytest [filename.py]`
+
+Replace [filename.py] with the name of the file containing your tests.
+
+Alternatively, to run all tests, use:
+
+`pytest`
+
+This command will discover and run all tests in the project.
+
+**Note: **Ensure you have `pytest` installed in your Python environment before running tests:
+
+`pip install pytest`
+
 ## Third-Party Libraries
 
 - [Apache Tika](https://tika.apache.org/) - Used to detect MIME types.
