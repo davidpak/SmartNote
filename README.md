@@ -100,7 +100,15 @@ When using an IDE, you may need to setup run configurations to target buildfile 
 
 ### Jest
 
-Jest is used in the frontend to test React components.
+Jest is used in the frontend to test React components. Test files are located in `client/src/tests`.
+
+#### Adding a test
+
+Create a file with a `.test.tsx` extension in `client/src/tests`. Then use Jest functions to write the test cases for a component or function.
+
+#### Running the tests
+
+From within the `client` directory, run `npx jest [filename]` to run the test with the given filename. Alternatively, run `npm run test` to run all tests.
 
 ### JUnit
 
