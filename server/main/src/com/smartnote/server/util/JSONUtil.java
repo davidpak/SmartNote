@@ -162,6 +162,18 @@ public class JSONUtil {
         return primitive.getAsInt();
     }
 
+    public static double getNumberOrDefault(JsonObject json, String key, double def) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return def;
+        if (!element.isJsonPrimitive())
+            return def;
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isNumber())
+            return def;
+        return primitive.getAsDouble();
+    }
+
     // Prevent instantiation
     private JSONUtil() {
     }
