@@ -69,7 +69,7 @@ public class Generate implements Route {
             return "{\"message\":\"Missing field llm\"}";
         }
 
-        double velocity = getNumberOrDefault(llmOptions, "velocity", 0.5);
+        double verbosity = getNumberOrDefault(llmOptions, "verbosity", 0.5);
 
         // TODO: replace with actual implementation
         final String DEBUG_RESOURCE = "public:output.md";
