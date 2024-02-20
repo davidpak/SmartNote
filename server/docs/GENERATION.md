@@ -29,4 +29,4 @@ These options are used to control the behavior of the LLM summarizer. The follow
 
 | Field | Type | Description |
 | ----- | ---- | ----------- |
-| `velocity` | `number` | The velocity of the LLM summarizer. `[0.0, 1.0]` |
+| `verbosity` | `number` | The verbosity of the LLM summarizer. `[0.0, 1.0]` |
