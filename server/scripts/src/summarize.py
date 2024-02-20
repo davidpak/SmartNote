@@ -193,13 +193,11 @@ def process_file(file_path: str, switches: dict) -> None:
         raise Exception(f"Unsupported file type: {ext}")
 
     args, options = parse_summarize(sys.argv[1:], switches)
-    print(f"Options: {options}")
-    verbosity_dict = {
-        1.0: 300,
-        2.0: 500,
-        3.0: 700
-    }
-    query = f"Take notes on this video/PDF/PowerPoint in this format. Limit the output to {verbosity_dict[options['verbose']]} words. Make sure that you properly newline throughout the page: """
+    # Linear interpolation for verbose switch
+    verbosity_min = 300
+    verbosity_max = 700
+    verbosity = verbosity_min + (options["verbose"] * (verbosity_max - verbosity_min))
+    query = f"Take notes on this video/PDF/PowerPoint in this format. Limit the output to {int(verbosity)} words. Make sure that you properly newline throughout the page: """
 
     query += """# [Title]"""
 
