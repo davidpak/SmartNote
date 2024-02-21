@@ -32,11 +32,15 @@ public class NotionConfig extends AbstractConfig {
 
     @Override
     public void validate() throws IllegalStateException {
+        System.out.println("notion.allowRemoteIntegrations=" + allowRemoteIntegrations);
+
         if (clientId == null)
-            throw new IllegalStateException("Notion client ID not set");
+            throw new IllegalStateException("Notion client ID not set in notion.cliendId");
+        System.out.println("notion.clientId=`" + clientId + "`");
 
         if (secret == null)
-            throw new IllegalStateException("Notion secret not set");
+            throw new IllegalStateException("Notion secret not set in notion.secret");
+        System.out.println("notion.secret=<hidden>");
     }
 
     @Override

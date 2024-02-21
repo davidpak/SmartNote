@@ -103,10 +103,10 @@ public class NotionExporter implements RemoteExporter {
             }
         } catch (IOException e) {
             LOG.info("Notion API error: " + e.getMessage());
-            throw new ExportServiceUnavailableException("Could not connect to Notion API");
+            throw new ExportServiceUnavailableException("Could not connect to Notion API: " + e.getMessage());
         } catch (InterruptedException e) {
             LOG.info("Notion API error: " + e.getMessage());
-            throw new ExportServiceTimeoutException("Connection to Notion API timed out");
+            throw new ExportServiceTimeoutException("Connection to Notion API timed out: " + e.getMessage());
         }
 
         response.addProperty("name", nopts.pageName);
@@ -143,6 +143,9 @@ public class NotionExporter implements RemoteExporter {
                 // integration
                 JsonObject integration = getObjectOrNull(json, "integration");
                 if (integration != null) {
+                    if (!config.allowRemoteIntegrations())
+                        throw new MalformedExportOptionsException("Remote integrations are not allowed");
+
                     secret = getStringOrNull(integration, "secret");
                     clientId = getStringOrNull(integration, "clientId");
                     token = getStringOrNull(integration, "token");
@@ -155,9 +158,6 @@ public class NotionExporter implements RemoteExporter {
                                 "Integration: Token only valid without client ID or secret");
                     if (clientId != null && (secret == null || token != null))
                         throw new MalformedExportOptionsException("Integration: Secret not provided with client ID");
-
-                } else if (!config.allowRemoteIntegrations()) {
-                    throw new MalformedExportOptionsException("Remote integrations are not allowed");
                 } else {
                     secret = config.getSecret();
                     clientId = config.getClientId();

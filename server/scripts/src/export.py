@@ -16,13 +16,13 @@ base_url = 'http://localhost:4567'
 file_name = 'output.md'
 input_file = f'../../private/{file_name}'
 
-with open(input_file, 'rb') as f:
-    data = f.read()
-    f.close()
+#with open(input_file, 'rb') as f:
+#    data = f.read()
+ #   f.close()
 
-with open('../../private/notion_token', 'r') as f:
-    token = f.read().strip()
-    f.close()
+#with open('../../private/notion_token', 'r') as f:
+#    token = f.read().strip()
+#    f.close()
 
 with open('../../private/notion_parent', 'r') as f:
     parent = f.read().strip()
@@ -50,19 +50,19 @@ print('session token:', session.token)
 
 endpoint = f'api/v1/upload?name={file_name}'
 
-r = su.post(base_url, f'api/v1/upload?name={file_name}', data=data, session=session)
-print('upload returned', r.status_code)
-if r.status_code != 200:
-    print(r.text)
-    sys.exit(1)
+#r = su.post(base_url, f'api/v1/upload?name={file_name}', data=data, session=session)
+#print('upload returned', r.status_code)
+#if r.status_code != 200:
+#    print(r.text)
+#    sys.exit(1)
 
-result = json.loads(r.text)
-resource = result['name']
-print('resource:', resource)
+#result = json.loads(r.text)
+#resource = result['name']
+#print('resource:', resource)
 
-integration_information = {
-    'token': token
-}
+#integration_information = {
+#    'token': token
+#}
 
 remote_information = {
     'mode': 'new',
@@ -73,7 +73,7 @@ remote_information = {
 }
 
 export_options = {
-    'source': resource,
+    'source': 'public:output.md',
     #'output': 'I specified the name in JSON',
     'exporter': 'notion',
     'remote': remote_information,

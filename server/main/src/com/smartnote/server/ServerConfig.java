@@ -51,7 +51,7 @@ public class ServerConfig extends AbstractConfig {
         this.host = DEFAULT_HOST;
         this.usessl = false;
         this.certFile = DEFAULT_CERT_FILE;
-        this.origin = DEFAULT_ORIGIN;
+        this.origin = null;
     }
 
     /**
@@ -129,13 +129,20 @@ public class ServerConfig extends AbstractConfig {
     @Override
     public void validate() throws IllegalStateException {
         if (port < 0 || port > 65535)
-            throw new IllegalStateException("Port must be between 0 and 65535");
+            throw new IllegalStateException("server.port must be between 0 and 65535");
+        System.out.println("server.port=`" + port + "`");
 
         if (usessl)
-            throw new IllegalStateException("SSL is not yet supported");
+            throw new IllegalStateException("SSL is not yet supported, but is enabled through server.ssl");
+        System.out.println("server.usessl=" + usessl);
 
         if (usessl && !new File(certFile).exists())
-            throw new IllegalStateException("Certificate file does not exist");
+            throw new IllegalStateException("server.certFile does not exist");
+        System.out.println("server.certFile=`" + certFile + "`");
+
+        if (origin == null)
+            throw new IllegalStateException("Origin must be set through server.origin");
+        System.out.println("server.origin=`" + origin + "`");
     }
 
     @Override
