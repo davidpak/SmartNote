@@ -139,6 +139,12 @@ public class ResourceConfig extends AbstractConfig {
     @Override
     public void validate() throws IllegalStateException {
         // No validation
+        System.out.println("resource.privateDir=`" + privateDir + "`");
+        System.out.println("resource.publicDir=`" + publicDir + "`");
+        System.out.println("resource.sessionDir=`" + sessionDir + "`");
+        System.out.println("resource.maxUploadSize=" + maxUploadSize);
+        System.out.println("resource.sessionQuota=" + sessionQuota);
+        System.out.println("resource.uploadDir=`" + uploadDir + "`");
     }
 
     @Override
