@@ -41,9 +41,9 @@ const FileUpload = ({
     if (!isLoggedIn) {
       throw new Error('not authenticated');
     }
-    const reader = new FileReader();
 
     files.forEach(async (file) => {
+      const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async () => {
         const res = await fetch(

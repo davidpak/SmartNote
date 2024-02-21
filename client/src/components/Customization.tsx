@@ -33,8 +33,6 @@ const Customization = ({
       },
     };
 
-    console.log(options);
-
     try {
       const res = await fetch('http://localhost:4567/api/v1/generate', {
         method: 'POST',
