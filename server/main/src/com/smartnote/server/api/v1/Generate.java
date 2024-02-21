@@ -10,6 +10,7 @@ import static com.smartnote.server.util.JSONUtil.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.smartnote.server.GeneratorConfig;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -25,7 +26,9 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Generates summaries from uploaded files.</p>
+ * <p>
+ * Generates summaries from uploaded files.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
@@ -37,6 +40,8 @@ public class Generate implements Route {
     public Object handle(Request request, Response response) throws Exception {
         SessionManager sessionManager = Server.getServer().getSessionManager();
         ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+        GeneratorConfig generatorConfig = Server.getServer().getConfig().getGeneratorConfig();
+        String summarizer = generatorConfig.getSummarizer();
 
         long startTime = System.currentTimeMillis();
 
@@ -48,36 +53,34 @@ public class Generate implements Route {
 
         Permission permission = session.getPermission();
 
-        Gson gson = new Gson();
-        JsonObject generateJson = gson.fromJson(request.body(), JsonObject.class);
-
-        JsonObject generalOptions = getObjectOrNull(generateJson, "general");
-        if (generalOptions == null) {
-            response.status(400);
-            return "{\"message\":\"Missing field general\"}";
+        String resourceName;
+        if (generatorConfig.isDebug()) {
+            resourceName = generatorConfig.getDebugResource();
+        } else {
+            try {
+                resourceName = generate(summarizer, request.body(), session, permission);
+            } catch (IllegalArgumentException e) {
+                response.status(400);
+                return "{\"message\":" + e.getMessage() + "\"}";
+            } catch (NoSuchResourceException e) {
+                response.status(404);
+                return "{\"message\":\"Resource not found\"}";
+            } catch (SecurityException e) {
+                response.status(403);
+                return "{\"message\":\"Permission denied\"}";
+            } catch (IOException e) {
+                response.status(500);
+                return "{\"message\":\"Generation failed\"}";
+            } catch (InterruptedException e) {
+                response.status(500);
+                return "{\"message\":\"Data generation interrupted\"}";
+            }
         }
-
-        JsonArray files = getArrayOrNull(generalOptions, "files");
-        if (files == null) {
-            response.status(400);
-            return "{\"message\":\"Missing field general.files\"}";
-        }
-
-        JsonObject llmOptions = getObjectOrNull(generateJson, "llm");
-        if (llmOptions == null) {
-            response.status(400);
-            return "{\"message\":\"Missing field llm\"}";
-        }
-
-        double verbosity = getNumberOrDefault(llmOptions, "verbosity", 0.5);
-
-        // TODO: replace with actual implementation
-        final String DEBUG_RESOURCE = "public:output.md";
 
         Resource resource;
-        
+
         try {
-            resource = resourceSystem.findResource(DEBUG_RESOURCE, permission);
+            resource = resourceSystem.findResource(resourceName, permission);
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\":\"Permission denied\"}";
@@ -117,10 +120,50 @@ public class Generate implements Route {
         long endTime = System.currentTimeMillis();
 
         JsonObject resObject = new JsonObject();
-        resObject.addProperty("name", DEBUG_RESOURCE);
+        resObject.addProperty("name", resourceName);
         resObject.addProperty("time", (endTime - startTime) / 1000.0);
         resObject.add("result", md.writeJSON());
 
-        return gson.toJson(resObject);
+        return new Gson().toJson(resObject);
+    }
+
+    private String generate(String summarizer, String body, Session session,
+            Permission permission)
+            throws IllegalArgumentException, NoSuchResourceException, SecurityException, IOException,
+            InterruptedException {
+        JsonObject generateJson = new Gson().fromJson(body, JsonObject.class);
+
+        JsonObject generalOptions = getObjectOrNull(generateJson, "general");
+        if (generalOptions == null)
+            throw new IllegalArgumentException("Missing field general");
+
+        JsonArray files = getArrayOrNull(generalOptions, "files");
+        if (files == null)
+            throw new IllegalArgumentException("Missing field general.files");
+
+        if (files.size() == 0)
+            throw new IllegalArgumentException("No files specified");
+
+        JsonObject llmOptions = getObjectOrNull(generateJson, "llm");
+        if (llmOptions == null)
+            throw new IllegalArgumentException("Missing field llm");
+
+        double verbosity = getNumberOrDefault(llmOptions, "verbosity", 0.5);
+
+        String first = files.get(0).getAsString();
+        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+        Resource resource = resourceSystem.findResource(first, permission);
+
+        String path = resource.getPath().toString();
+
+        ProcessBuilder pb = new ProcessBuilder("python3", summarizer, path);
+        Process p = pb.start();
+
+        int exitCode = p.waitFor();
+
+        if (exitCode != 0)
+            throw new IOException("Summarizer exited with non-zero exit code");
+
+        return null;
     }
 }
