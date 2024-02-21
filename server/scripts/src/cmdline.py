@@ -1,4 +1,5 @@
 from typing import *
+import argparse
 
 SwitchValue = Union[None, str, int, float, bool, Callable[[], Union[int, None]]]
 SwitchType = Union[None, type[str], type[int], type[float], type[bool]]
@@ -96,6 +97,20 @@ class Switch:
         
         return (i, rc)
 
+    def handle_summarize(self, args) -> None:
+        """
+        Handle the switch by updating its value in the args namespace.
+
+        Parameters:
+        - `args`: Namespace object containing command-line argument values.
+        """
+        value = getattr(args, self.name, self.value)
+
+        if callable(value):
+            value = value()
+
+        setattr(args, self.name, value)
+
 
 def parse(argv: list[str],
           switches: Union[list[Switch],None]=None
@@ -145,4 +160,34 @@ def parse(argv: list[str],
                 return rc
 
     return (argv[i:], result_switches)
+
+
+def parse_summarize(argv: list[str], switches: Union[list[Switch], None] = None) -> Union[argparse.Namespace, dict]:
+    """
+    Parse command line arguments.
+
+    Parameters:
+    - `argv`: Command line arguments, including the program name. The program name is ignored.
+    - `switches`: List of Switch objects representing command line switches. None means no switches, equivalent to an empty list.
+
+    Returns:
+    Either a Namespace object containing parsed arguments or a dictionary of switch values.
+    """
+    result_switches = {}
+
+    parser = argparse.ArgumentParser(description='Script summarizer')
+
+    if switches is not None:
+        for switch in switches:
+            parser.add_argument(f'-{switch.short}', f'--{switch.name}', type=switch.type, default=switch.value,
+                                help=f'Description for {switch.name} (default: {switch.value})')
+
+    args, _ = parser.parse_known_args(argv)
+
+    if switches is not None:
+        for switch in switches:
+            switch.handle_summarize(args)
+            result_switches[switch.name] = getattr(args, switch.name)
+
+    return args, result_switches
 

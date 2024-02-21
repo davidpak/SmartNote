@@ -2,7 +2,7 @@ import sys
 import os
 from typing import Union, List
 from urllib.parse import urlparse
-from cmdline import Switch, parse
+from cmdline import Switch, parse_summarize
 
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
@@ -24,7 +24,16 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 
-def create_db_from_youtube_video_url(video_url):
+def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
+    """
+    Create an FAISS index and list of documents from a YouTube video URL.
+
+    Parameters:
+    - `video_url`: YouTube video URL.
+
+    Returns:
+    A tuple containing the FAISS index and a list of documents.
+    """
     loader = YoutubeLoader.from_youtube_url(video_url)
     transcript = loader.load()
 
@@ -35,7 +44,16 @@ def create_db_from_youtube_video_url(video_url):
     return db, docs
 
 
-def extract_youtube_link_from_file(file_path):
+def extract_youtube_link_from_file(file_path: str) -> str:
+    """
+    Extract a YouTube video URL from a file.
+
+    Parameters:
+    - `file_path`: Path to the file containing the YouTube video URL.
+
+    Returns:
+    The extracted YouTube video URL.
+    """
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             content = file.read().strip()
@@ -45,17 +63,34 @@ def extract_youtube_link_from_file(file_path):
         sys.exit(1)
 
 
-def is_youtube_link(input_str):
-    # Check if the input string is a valid YouTube link
+def is_youtube_link(input_str: str) -> bool:
+    """
+    Check if the input string is a valid YouTube video URL.
+
+    Parameters:
+    - `input_str`: Input string to check.
+
+    Returns:
+    True if the input string is a valid YouTube video URL, False otherwise.
+    """
     parsed_url = urlparse(input_str)
     return (
-        parsed_url.netloc == "www.youtube.com"
-        and "/watch" in parsed_url.path
-        and "v=" in parsed_url.query
+            parsed_url.netloc == "www.youtube.com"
+            and "/watch" in parsed_url.path
+            and "v=" in parsed_url.query
     )
 
 
-def create_db_from_powerpoint_file(pptx_file):
+def create_db_from_powerpoint_file(pptx_file: str) -> tuple[FAISS, List]:
+    """
+    Create an FAISS index and list of documents from a PowerPoint file.
+
+    Parameters:
+    - `pptx_file`: Path to the PowerPoint file.
+
+    Returns:
+    A tuple containing the FAISS index and a list of documents.
+    """
     loader = UnstructuredPowerPointLoader(pptx_file)
     data = loader.load()
 
@@ -65,7 +100,17 @@ def create_db_from_powerpoint_file(pptx_file):
     db = FAISS.from_documents(docs, embeddings)
     return db, docs
 
-def create_db_from_pdf(pdf_file):
+
+def create_db_from_pdf(pdf_file: str) -> tuple[FAISS, List]:
+    """
+    Create an FAISS index and list of documents from a PDF file.
+
+    Parameters:
+    - `pdf_file`: Path to the PDF file.
+
+    Returns:
+    A tuple containing the FAISS index and a list of documents.
+    """
     loader = PyPDFLoader(pdf_file)
     pages = loader.load_and_split()
 
@@ -76,7 +121,18 @@ def create_db_from_pdf(pdf_file):
     return db, docs
 
 
-def get_response_from_query(db, query, k=4):
+def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, List]:
+    """
+    Get a response and list of documents from a query using an FAISS index.
+
+    Parameters:
+    - `db`: FAISS index.
+    - `query`: Query string.
+    - `k`: Number of documents to retrieve.
+
+    Returns:
+    A tuple containing the response and a list of documents.
+    """
     docs = db.similarity_search(query, k=k)
     docs_page_content = " ".join([d.page_content for d in docs])
 
@@ -84,7 +140,7 @@ def get_response_from_query(db, query, k=4):
 
     # Template to use for the system message prompt
     template = """
-        You are a helpful assistant that that can answer questions about youtube videos, pdfs, and powerpoint files 
+        You are a helpful assistant that can answer questions about YouTube videos, PDFs, and PowerPoint files 
         based on: {docs}
 
         Only use the factual information from the transcript to answer the question.
@@ -109,7 +165,14 @@ def get_response_from_query(db, query, k=4):
     return response, docs
 
 
-def process_file(file_path, switches):
+def process_file(file_path: str, switches: dict) -> None:
+    """
+    Process a file based on user-defined options.
+
+    Parameters:
+    - `file_path`: Path to the input file.
+    - `switches`: User-defined options.
+    """
     _, ext = os.path.splitext(file_path)
 
     if ext == ".pptx":
@@ -129,11 +192,15 @@ def process_file(file_path, switches):
     else:
         raise Exception(f"Unsupported file type: {ext}")
 
-    args, options = parse(sys.argv[1:], switches)
-    print(f"Options: {options}")
-    query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """
+    args, options = parse_summarize(sys.argv[1:], switches)
+    # Linear interpolation for verbose switch
+    verbosity_min = 300
+    verbosity_max = 700
+    verbosity = verbosity_min + (options["verbose"] * (verbosity_max - verbosity_min))
+    query = f"Take notes on this video/PDF/PowerPoint in this format. Limit the output to {int(verbosity)} words. Make sure that you properly newline throughout the page: """
+
     query += """# [Title]"""
-    
+
     if not options["no_general_overview"]:
         query += """
         ## General Overview 
@@ -155,25 +222,25 @@ def process_file(file_path, switches):
         ## Section by Section Breakdown
 
         ### 1. Section One Title
-    
+
         - [Detailed content or information related to the first section.]
-    
+
         ### 2. Section Two Title
-    
+
         - [Detailed content or information related to the second section.]
-    
+
         ### 3. Section Three Title
-    
+
         - [Detailed content or information related to the third section.]
-    
+
         ### n. Section n Title
-    
+
         - [Detailed content or information related to the nth section]
         """
     if not options["no_additional_information"]:
         query += """
             ## Additional Information
-            
+
             - [Include any additional points, tips, or related information.]
         """
     if not options["no_helpful_vocabulary"]:
@@ -201,6 +268,7 @@ def process_file(file_path, switches):
 
             [Summarize the key takeaways or concluding remarks.]
         """
+    print(f"Query {query}")
 
     response, docs = get_response_from_query(db, query)
 
@@ -217,15 +285,14 @@ if __name__ == "__main__":
         Switch("no_key_concepts", short="k", type=bool, value=False),
         Switch("no_section_by_section", short="s", type=bool, value=False),
         Switch("no_additional_information", short="a", type=bool, value=False),
-        Switch("no_helpful_vocabulary", short="h", type=bool, value=False),
+        Switch("no_helpful_vocabulary", short="he", type=bool, value=False),
         Switch("no_explain_to_5th_grader", short="e", type=bool, value=False),
         Switch("no_conclusion", short="c", type=bool, value=False)
     ]
 
-
     if len(sys.argv) < 2:
-        print("Usage: python script.py <file_path> [options]")
+        print("Usage: python script.py [options] <file_path>")
         sys.exit(1)
 
-    file_path = sys.argv[1]
+    file_path = sys.argv[-1]
     process_file(file_path, my_switches)
