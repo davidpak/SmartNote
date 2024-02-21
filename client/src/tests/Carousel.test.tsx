@@ -46,29 +46,30 @@ const carousel =
     ]}
   />;
 
-function testImage(path: string, button?: number) {
+// buttonIndex => 0 for clicking left, 1 for clicking right
+function testImage(path: string, buttonIndex?: number) {
   render(carousel);
-  if (button != null) {
+  if (buttonIndex != null) {
     const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[button]);
+    fireEvent.click(buttons[buttonIndex]);
   }
   expect(screen.getByRole('img')).toHaveAttribute('src', path);
 }
 
-function testHeading(text: string, button?: number) {
+function testHeading(text: string, buttonIndex?: number) {
   render(carousel);
-  if (button != null) {
+  if (buttonIndex != null) {
     const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[button]);
+    fireEvent.click(buttons[buttonIndex]);
   }
   expect(screen.getByRole('heading')).toHaveTextContent(text);
 }
 
-function testDescription(text: string, button?: number) {
+function testDescription(text: string, buttonIndex?: number) {
   render(carousel);
-  if (button != null) {
+  if (buttonIndex != null) {
     const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[button]);
+    fireEvent.click(buttons[buttonIndex]);
   }
   const elts = screen.getAllByRole('generic');
   expect(elts[1]).toHaveTextContent(text);
