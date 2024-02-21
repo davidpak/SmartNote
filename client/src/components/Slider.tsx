@@ -4,9 +4,16 @@ import { twMerge } from 'tailwind-merge';
 interface SliderType extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
   levels: string[];
+  updateLevel: (level: number) => void;
 }
 
-const Slider = ({ label, levels, className, ...rest }: SliderType) => {
+const Slider = ({
+  label,
+  levels,
+  updateLevel,
+  className,
+  ...rest
+}: SliderType) => {
   const [level, setLevel] = useState(0);
 
   return (
@@ -24,6 +31,7 @@ const Slider = ({ label, levels, className, ...rest }: SliderType) => {
         onChange={(e) => {
           const val = parseInt(e.target.value);
           setLevel(val);
+          updateLevel(val / (levels.length - 1)); // scale to between 0 and 1
           e.target.style.backgroundSize =
             (val / (levels.length - 1)) * 100 + '%';
         }}

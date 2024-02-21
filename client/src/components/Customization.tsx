@@ -8,6 +8,7 @@ import Button from './Button';
 import Toggle from './Toggle';
 import Slider from './Slider';
 import Carousel from './Carousel';
+import { useState } from 'react';
 
 interface CustomizationType extends React.HTMLAttributes<HTMLDivElement> {
   files: string[];
@@ -22,15 +23,22 @@ const Customization = ({
   className,
   ...rest
 }: CustomizationType) => {
+  const [verbosity, setVerbosity] = useState(0.0);
+
   async function generateNotes() {
     const options = {
-      general: files,
-      llm: null
+      general: { files: files },
+      llm: {
+        verbosity: verbosity,
+      },
     };
+
+    console.log(options);
 
     try {
       const res = await fetch('http://localhost:4567/api/v1/generate', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -66,25 +74,27 @@ const Customization = ({
         <div className='flex flex-col text-center gap-5 max-w-xl'>
           <H2>Customize Your Notes</H2>
           <Body>
-            Toggle the different settings to select which content you want to include
-            in your notes and adjust the verbosity level to control its level of detail!
+            Toggle the different settings to select which content you want to
+            include in your notes and adjust the verbosity level to control its
+            level of detail!
           </Body>
         </div>
         <div className='flex gap-52'>
           <div className='flex flex-col gap-3'>
             <H3>Content to Include:</H3>
-            <Toggle label='General Overview'/>
-            <Toggle label='Key Concepts'/>
-            <Toggle label='Sections Breakdown'/>
-            <Toggle label='Vocab Words'/>
-            <Toggle label='5th Grader Explanation'/>
-            <Toggle label='Conclusion'/>
+            <Toggle label='General Overview' />
+            <Toggle label='Key Concepts' />
+            <Toggle label='Sections Breakdown' />
+            <Toggle label='Vocab Words' />
+            <Toggle label='5th Grader Explanation' />
+            <Toggle label='Conclusion' />
           </div>
           <div className='flex flex-col gap-3'>
             <H3>Additional Customization:</H3>
             <Slider
               label='Verbosity'
               levels={['Low', 'Medium', 'High']}
+              updateLevel={(level) => setVerbosity(level)}
             />
           </div>
         </div>
@@ -106,7 +116,7 @@ const Customization = ({
             '/section-breakdown-ex.png',
             '/vocab-ex.png',
             '/5th-grader-ex.png',
-            '/conclusion-ex.png'
+            '/conclusion-ex.png',
           ]}
           titles={[
             'General Overview:',
@@ -114,7 +124,7 @@ const Customization = ({
             'Sections Breakdown:',
             'Vocab words:',
             '5th Grader Explanation:',
-            'Conclusion:'
+            'Conclusion:',
           ]}
           descriptions={[
             'A top-level breakdown that captures a succinct summary of the uploaded file contents.',
@@ -122,7 +132,7 @@ const Customization = ({
             'The core content breakdown, the bread and butter of your notes.',
             'Capture vocabulary words and definitions in a convenient and concise manner.',
             'An intuitive and easy-to-comprehend summary.',
-            'Finish off your notes with a comprehensive, succinct conclusion.'
+            'Finish off your notes with a comprehensive, succinct conclusion.',
           ]}
         />
       </section>
