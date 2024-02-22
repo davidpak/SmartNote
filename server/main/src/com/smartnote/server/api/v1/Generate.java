@@ -53,53 +53,36 @@ public class Generate implements Route {
 
         Permission permission = session.getPermission();
 
-        String resourceName;
-        if (generatorConfig.isDebug()) {
-            resourceName = generatorConfig.getDebugResource();
-        } else {
-            try {
-                resourceName = generate(summarizer, request.body(), session, permission);
-            } catch (IllegalArgumentException e) {
-                response.status(400);
-                return "{\"message\":" + e.getMessage() + "\"}";
-            } catch (NoSuchResourceException e) {
-                response.status(404);
-                return "{\"message\":\"Resource not found\"}";
-            } catch (SecurityException e) {
-                response.status(403);
-                return "{\"message\":\"Permission denied\"}";
-            } catch (IOException e) {
-                response.status(500);
-                return "{\"message\":\"Generation failed\"}";
-            } catch (InterruptedException e) {
-                response.status(500);
-                return "{\"message\":\"Data generation interrupted\"}";
-            }
-        }
-
-        Resource resource;
-
+        Resource outResource;
         try {
-            resource = resourceSystem.findResource(resourceName, permission);
-        } catch (SecurityException e) {
-            response.status(403);
-            return "{\"message\":\"Permission denied\"}";
-        } catch (InvalidPathException e) {
+            if (generatorConfig.isDebug())
+                outResource = resourceSystem.findResource(generatorConfig.getDebugResource(), permission);
+            else
+                outResource = generate(summarizer, request.body(), session, permission);
+        } catch (IllegalArgumentException e) {
             response.status(400);
-            return "{\"message\":\"Invalid path\"}";
+            return "{\"message\":" + e.getMessage() + "\"}";
         } catch (NoSuchResourceException e) {
             response.status(404);
             return "{\"message\":\"Resource not found\"}";
+        } catch (SecurityException e) {
+            response.status(403);
+            return "{\"message\":\"Permission denied\"}";
         } catch (IOException e) {
             response.status(500);
-            return "{\"message\":\"Internal server error\"}";
+            return "{\"message\":\"Generation failed\"}";
+        } catch (InterruptedException e) {
+            response.status(500);
+            return "{\"message\":\"Data generation interrupted\"}";
         }
 
+        String markdownString;
         ParsedMarkdown md;
         InputStream in = null;
         try {
-            in = resource.openInputStream();
-            md = ParsedMarkdown.parse(new String(in.readAllBytes()));
+            in = outResource.openInputStream();
+            markdownString = new String(in.readAllBytes());
+            md = ParsedMarkdown.parse(markdownString);
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\":\"Permission denied\"}";
@@ -120,14 +103,15 @@ public class Generate implements Route {
         long endTime = System.currentTimeMillis();
 
         JsonObject resObject = new JsonObject();
-        resObject.addProperty("name", resourceName);
+        resObject.addProperty("name", outResource.getName());
         resObject.addProperty("time", (endTime - startTime) / 1000.0);
         resObject.add("result", md.writeJSON());
+        resObject.addProperty("markdown", markdownString);
 
         return new Gson().toJson(resObject);
     }
 
-    private String generate(String summarizer, String body, Session session,
+    private Resource generate(String summarizer, String body, Session session,
             Permission permission)
             throws IllegalArgumentException, NoSuchResourceException, SecurityException, IOException,
             InterruptedException {
@@ -174,6 +158,6 @@ public class Generate implements Route {
         if (exitCode != 0)
             throw new IOException("Summarizer exited with non-zero exit code");
 
-        return null;
+        return outResource;
     }
 }
