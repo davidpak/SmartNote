@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
@@ -11,6 +11,8 @@ const componentSmokeTest = ({
   props?: Record<string, any>;
   children?: React.ReactNode;
 }) => {
+  afterEach(cleanup);
+
   it('should render without errors', () => {
     render(
       <Component {...props} data-testid='test-id'>
