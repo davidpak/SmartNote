@@ -72,10 +72,10 @@ public class Upload implements Route {
             type = MIME.fromExtension(ext);
         }
 
-        if (type != null && !ResourceSystem.isSupportedType(type)) {
+        /*if (type != null && !ResourceSystem.isSupportedType(type)) {
             response.status(406);
             return "{\"message\": \"Unsupported content type\"}";
-        }
+        }*/
 
         byte[] body = request.bodyAsBytes();
         if (body == null) {
@@ -97,12 +97,12 @@ public class Upload implements Route {
             return "{\"message\": \"Quota exceeded\"}";
         }
 
-        Tika tika = new Tika();
+        /*Tika tika = new Tika();
         String contentMIME = tika.detect(body);
         if (!ResourceSystem.isSupportedType(contentMIME)) {
             response.status(406);
             return "{\"message\": \"Unsupported file type\"}";
-        }
+        }*/
 
         // if the MIME types don't match, change the extension
         //if (!contentMIME.equals(inferredMIME))

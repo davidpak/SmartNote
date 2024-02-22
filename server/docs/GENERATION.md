@@ -16,6 +16,8 @@ These options are used to control the general behavior of the summary generation
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | `files` | `array` | List of files to summarize. |
+| `includeJson` | `boolean` | Whether to include the generated JSON in the response. Default is `false`. |
+| `includeMarkdown` | `boolean` | Whether to include the generated markdown in the response. Default is `false`. |
 
 ### `files`
 
@@ -30,3 +32,10 @@ These options are used to control the behavior of the LLM summarizer. The follow
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | `verbosity` | `number` | The verbosity of the LLM summarizer. `[0.0, 1.0]` |
+| `generalOverview` | `boolean` | Whether to include a general overview. |
+| `keyConcepts` | `boolean` | Whether to include key concepts. |
+| `sectionBySection` | `boolean` | Whether to include section-by-section summaries. |
+| `additionalInformation` | `boolean` | Whether to include additional information. |
+| `helpfulVocabulary` | `boolean` | Whether to include helpful vocabulary. |
+| `explainToFifthGrader` | `boolean` | Whether to include explanations for a fifth grader. |
+| `conclusion` | `boolean` | Whether to include a conclusion. |

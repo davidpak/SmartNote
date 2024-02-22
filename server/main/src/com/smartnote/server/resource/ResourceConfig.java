@@ -138,12 +138,18 @@ public class ResourceConfig extends AbstractConfig {
 
     @Override
     public void validate() throws IllegalStateException {
-        // No validation
         System.out.println("resource.privateDir=`" + privateDir + "`");
         System.out.println("resource.publicDir=`" + publicDir + "`");
         System.out.println("resource.sessionDir=`" + sessionDir + "`");
+
+        if (maxUploadSize < 0)
+            throw new IllegalStateException("resource.maxUploadSize must be greater than or equal to 0");
         System.out.println("resource.maxUploadSize=" + maxUploadSize);
+
+        if (sessionQuota < 0)
+            throw new IllegalStateException("resource.sessionQuota must be greater than or equal to 0");
         System.out.println("resource.sessionQuota=" + sessionQuota);
+        
         System.out.println("resource.uploadDir=`" + uploadDir + "`");
     }
 
@@ -166,13 +172,22 @@ public class ResourceConfig extends AbstractConfig {
         if (elem != null && elem.isJsonPrimitive())
             privateDir = elem.getAsString();
 
+        if (privateDir == null)
+            privateDir = DEFAULT_PRIVATE_DIR;
+
         elem = json.get("publicDir");
         if (elem != null && elem.isJsonPrimitive())
             publicDir = elem.getAsString();
 
+        if (publicDir == null)
+            publicDir = DEFAULT_PUBLIC_DIR;
+
         elem = json.get("sessionDir");
         if (elem != null && elem.isJsonPrimitive())
             sessionDir = elem.getAsString();
+
+        if (sessionDir == null)
+            sessionDir = DEFAULT_SESSION_DIR;
 
         elem = json.get("maxUploadSize");
         if (elem != null && elem.isJsonPrimitive())
@@ -185,5 +200,8 @@ public class ResourceConfig extends AbstractConfig {
         elem = json.get("uploadDir");
         if (elem != null && elem.isJsonPrimitive())
             uploadDir = elem.getAsString();
+
+        if (uploadDir == null)
+            uploadDir = DEFAULT_UPLOAD_DIR;
     }
 }

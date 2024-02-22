@@ -44,3 +44,19 @@ The `notion` object contains the configuration for the Notion integration. It ha
 | `allowRemoteIntegrations` | `boolean` | Whether to allow remote integrations. Only use for development. |
 | `clientId` | `string` | The OAuth client ID. |
 | `secret` | `string` | The OAuth client secret or internal integration secret. |
+
+## `generator`
+
+The `generator` object contains the configuration for the summary generator. It has the following fields:
+
+| Name | Type | Contents |
+| ---- | ---- | -------- |
+| `summarizer` | `string` | Path to the summarizer script. |
+| `env` | `string` | Path to the `.env` file used to configure the summarizer. |
+| `python` | `string` | Path to the Python interpreter to use. |
+| `debug` | `boolean` | Whether to enable debug mode. |
+| `debugResource` | `string` | The resource to use for debug mode. |
+
+Note that the Pyhon interpreter must be able to run the summarizer script. That is, it must have the required dependencies installed. This will likely be the location of an Anaconda environment or a virtual environment.
+
+**Note**: If `debug` is `true`, the generator script will not be ran, and instead the server will treat the contents of `debugResource` as the result of the generation. This is useful for development and testing and to avoid making requests to the LLM, which may cost money.

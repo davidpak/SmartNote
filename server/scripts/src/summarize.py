@@ -20,9 +20,7 @@ from langchain.prompts.chat import (
 )
 import textwrap
 
-load_dotenv(find_dotenv())
-embeddings = OpenAIEmbeddings()
-
+embeddings = None
 
 def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     """
@@ -91,6 +89,8 @@ def create_db_from_powerpoint_file(pptx_file: str) -> tuple[FAISS, List]:
     Returns:
     A tuple containing the FAISS index and a list of documents.
     """
+    global embeddings
+
     loader = UnstructuredPowerPointLoader(pptx_file)
     data = loader.load()
 
@@ -111,6 +111,8 @@ def create_db_from_pdf(pdf_file: str) -> tuple[FAISS, List]:
     Returns:
     A tuple containing the FAISS index and a list of documents.
     """
+    global embeddings
+
     loader = PyPDFLoader(pdf_file)
     pages = loader.load_and_split()
 
@@ -165,34 +167,42 @@ def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, Lis
     return response, docs
 
 
-def process_file(file_path: str, switches: dict) -> None:
+def process_path(path: str, output: str, switches: dict) -> None:
     """
-    Process a file based on user-defined options.
+    Process a path based on user-defined options.
 
     Parameters:
-    - `file_path`: Path to the input file.
+    - `path`: Path to the input.
     - `switches`: User-defined options.
     """
-    _, ext = os.path.splitext(file_path)
-
-    if ext == ".pptx":
-        db, docs = create_db_from_powerpoint_file(file_path)
-    elif ext == ".pdf":
-        db, docs = create_db_from_pdf(file_path)
-    elif ext == '.txt':
-        input_str = extract_youtube_link_from_file(file_path)
-        if is_youtube_link(input_str):
-            try:
-                db, docs = create_db_from_youtube_video_url(input_str)
-            except Exception as e:
-                print(f"Error processing YouTube link: {e}")
-                sys.exit(1)
-        else:
-            raise Exception(f"Invalid YouTube link in the file: {file_path}")
-    else:
-        raise Exception(f"Unsupported file type: {ext}")
+    _, ext = os.path.splitext(path)
 
     args, options = parse_summarize(sys.argv[1:], switches)
+
+    if 'env' in options:
+        load_dotenv(options['env'])
+    else:
+        load_dotenv(find_dotenv())
+
+    global embeddings
+
+    if ext == ".pptx":
+        embeddings = OpenAIEmbeddings()
+        db, docs = create_db_from_powerpoint_file(path)
+    elif ext == ".pdf":
+        embeddings = OpenAIEmbeddings()
+        db, docs = create_db_from_pdf(path)
+    elif is_youtube_link(path):
+        embeddings = OpenAIEmbeddings()
+        try:
+            db, docs = create_db_from_youtube_video_url(path)
+        except Exception as e:
+            print(f"Error processing YouTube link: {e}")
+            sys.exit(1)
+    else:
+        print("Summarizer requires a YouTube video URL, PDF, or PowerPoint file.")
+        sys.exit(1)
+
     # Linear interpolation for verbose switch
     verbosity_min = 300
     verbosity_max = 700
@@ -272,27 +282,26 @@ def process_file(file_path: str, switches: dict) -> None:
 
     response, docs = get_response_from_query(db, query)
 
-    output_file_path = "../../out/output.md"
-    with open(output_file_path, "w", encoding="utf-8") as file:
+    with open(output, "w", encoding="utf-8") as file:
         file.write(response)
-    print(f"Cleaned response has been saved to: {output_file_path}")
+    print(f"Cleaned response has been saved to: {output}")
 
 
 if __name__ == "__main__":
     my_switches = [
-        Switch("verbose", short="v", type=float, value=3.0),
+        Switch("verbose", short="v", type=float, value=1.0),
         Switch("no_general_overview", short="g", type=bool, value=False),
         Switch("no_key_concepts", short="k", type=bool, value=False),
         Switch("no_section_by_section", short="s", type=bool, value=False),
         Switch("no_additional_information", short="a", type=bool, value=False),
         Switch("no_helpful_vocabulary", short="he", type=bool, value=False),
-        Switch("no_explain_to_5th_grader", short="e", type=bool, value=False),
-        Switch("no_conclusion", short="c", type=bool, value=False)
+        Switch("no_explain_to_5th_grader", short="f", type=bool, value=False),
+        Switch("no_conclusion", short="c", type=bool, value=False),
+        Switch("env", short="e", type=str, value=None)
     ]
 
-    if len(sys.argv) < 2:
-        print("Usage: python script.py [options] <file_path>")
+    if len(sys.argv) < 3:
+        print("Usage: python script.py [options] <input> <output>")
         sys.exit(1)
 
-    file_path = sys.argv[-1]
-    process_file(file_path, my_switches)
+    process_path(sys.argv[-2], sys.argv[-1], my_switches)
