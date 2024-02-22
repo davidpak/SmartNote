@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.InvalidPathException;
 import java.security.Permission;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.smartnote.server.util.JSONUtil.*;
 
@@ -133,6 +135,13 @@ public class Generate implements Route {
             throw new IllegalArgumentException("Missing field llm");
 
         double verbosity = getNumberOrDefault(llmOptions, "verbosity", 0.5);
+        boolean generalOverview = getBooleanOrFalse(llmOptions, "generalOptions");
+        boolean keyConcepts = getBooleanOrFalse(llmOptions, "keyConcepts");
+        boolean sectionBySection = getBooleanOrFalse(llmOptions, "sectionBySection");
+        boolean additionalInformation = getBooleanOrFalse(llmOptions, "additionalInformation");
+        boolean helpfulVocabulary = getBooleanOrFalse(llmOptions, "helpfulVocabulary");
+        boolean explainToFifthGrader = getBooleanOrFalse(llmOptions, "explainToFifthGrader");
+        boolean conclusion = getBooleanOrFalse(llmOptions, "conclusion");
 
         String first = files.get(0).getAsString();
         ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
@@ -140,16 +149,37 @@ public class Generate implements Route {
 
         GeneratorConfig generatorConfig = Server.getServer().getConfig().getGeneratorConfig();
 
-        String path = resource.getPath().toString();
+        final String inName = resource.getName();
+        final String outName = "session:output.md";
 
-        Resource outResource = resourceSystem.findResource("session:output.md", permission);
+        Resource outResource = resourceSystem.findResource(outName, permission);
 
-        ProcessBuilder pb = new ProcessBuilder("python3",
-                "--env",
-                generatorConfig.getEnv(),
-                summarizer,
-                path,
-                outResource.getPath().toString());
+        List<String> command = new ArrayList<>();
+        command.add("python3");
+        command.add("--env");
+        command.add(generatorConfig.getEnv());
+        command.add("verbose");
+        command.add(Double.toString(verbosity));
+        if (!generalOverview)
+            command.add("--no_general_overview");
+        if (!keyConcepts)
+            command.add("--no_key_concepts");
+        if (!sectionBySection)
+            command.add("--no_section_by_section");
+        if (!additionalInformation)
+            command.add("--no_additional_information");
+        if (!helpfulVocabulary)
+            command.add("--no_helpful_vocabulary");
+        if (!explainToFifthGrader)
+            command.add("--no_explain_to_5th_grader");
+        if (!conclusion)
+            command.add("--no_conclusion");
+
+        command.add(inName);
+        command.add(outName);
+
+        String[] commandArray = command.toArray(new String[command.size()]);
+        ProcessBuilder pb = new ProcessBuilder(commandArray);
 
         Process p = pb.start();
 

@@ -281,7 +281,7 @@ def process_path(path: str, output: str, switches: dict) -> None:
 
 if __name__ == "__main__":
     my_switches = [
-        Switch("verbose", short="v", type=float, value=3.0),
+        Switch("verbose", short="v", type=float, value=1.0),
         Switch("no_general_overview", short="g", type=bool, value=False),
         Switch("no_key_concepts", short="k", type=bool, value=False),
         Switch("no_section_by_section", short="s", type=bool, value=False),
