@@ -7,7 +7,6 @@ package com.smartnote.server.util;
  * @see com.smartnote.server.util.ServerRoute
  */
 public enum MethodType {
-    // Only using two methods, we don't need the others right now
 
     /**
      * GET method.
@@ -17,5 +16,10 @@ public enum MethodType {
     /**
      * POST method.
      */
-    POST
+    POST,
+
+    /**
+     * DELETE method.
+     */
+    DELETE,
 }

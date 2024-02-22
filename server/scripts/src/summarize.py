@@ -2,7 +2,7 @@ import sys
 import os
 from typing import Union, List
 from urllib.parse import urlparse
-from cmdline import Switch, parse
+from cmdline import Switch, parse_summarize
 
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
@@ -24,7 +24,16 @@ load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 
-def create_db_from_youtube_video_url(video_url):
+def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
+    """
+    Create an FAISS index and list of documents from a YouTube video URL.
+
+    Parameters:
+    - `video_url`: YouTube video URL.
+
+    Returns:
+    A tuple containing the FAISS index and a list of documents.
+    """
     loader = YoutubeLoader.from_youtube_url(video_url)
     transcript = loader.load()
 
@@ -35,7 +44,16 @@ def create_db_from_youtube_video_url(video_url):
     return db, docs
 
 
-def extract_youtube_link_from_file(file_path):
+def extract_youtube_link_from_file(file_path: str) -> str:
+    """
+    Extract a YouTube video URL from a file.
+
+    Parameters:
+    - `file_path`: Path to the file containing the YouTube video URL.
+
+    Returns:
+    The extracted YouTube video URL.
+    """
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             content = file.read().strip()
@@ -45,17 +63,34 @@ def extract_youtube_link_from_file(file_path):
         sys.exit(1)
 
 
-def is_youtube_link(input_str):
-    # Check if the input string is a valid YouTube link
+def is_youtube_link(input_str: str) -> bool:
+    """
+    Check if the input string is a valid YouTube video URL.
+
+    Parameters:
+    - `input_str`: Input string to check.
+
+    Returns:
+    True if the input string is a valid YouTube video URL, False otherwise.
+    """
     parsed_url = urlparse(input_str)
     return (
-        parsed_url.netloc == "www.youtube.com"
-        and "/watch" in parsed_url.path
-        and "v=" in parsed_url.query
+            parsed_url.netloc == "www.youtube.com"
+            and "/watch" in parsed_url.path
+            and "v=" in parsed_url.query
     )
 
 
-def create_db_from_powerpoint_file(pptx_file):
+def create_db_from_powerpoint_file(pptx_file: str) -> tuple[FAISS, List]:
+    """
+    Create an FAISS index and list of documents from a PowerPoint file.
+
+    Parameters:
+    - `pptx_file`: Path to the PowerPoint file.
+
+    Returns:
+    A tuple containing the FAISS index and a list of documents.
+    """
     loader = UnstructuredPowerPointLoader(pptx_file)
     data = loader.load()
 
@@ -65,7 +100,17 @@ def create_db_from_powerpoint_file(pptx_file):
     db = FAISS.from_documents(docs, embeddings)
     return db, docs
 
-def create_db_from_pdf(pdf_file):
+
+def create_db_from_pdf(pdf_file: str) -> tuple[FAISS, List]:
+    """
+    Create an FAISS index and list of documents from a PDF file.
+
+    Parameters:
+    - `pdf_file`: Path to the PDF file.
+
+    Returns:
+    A tuple containing the FAISS index and a list of documents.
+    """
     loader = PyPDFLoader(pdf_file)
     pages = loader.load_and_split()
 
@@ -76,7 +121,18 @@ def create_db_from_pdf(pdf_file):
     return db, docs
 
 
-def get_response_from_query(db, query, k=4):
+def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, List]:
+    """
+    Get a response and list of documents from a query using an FAISS index.
+
+    Parameters:
+    - `db`: FAISS index.
+    - `query`: Query string.
+    - `k`: Number of documents to retrieve.
+
+    Returns:
+    A tuple containing the response and a list of documents.
+    """
     docs = db.similarity_search(query, k=k)
     docs_page_content = " ".join([d.page_content for d in docs])
 
@@ -84,7 +140,7 @@ def get_response_from_query(db, query, k=4):
 
     # Template to use for the system message prompt
     template = """
-        You are a helpful assistant that that can answer questions about youtube videos, pdfs, and powerpoint files 
+        You are a helpful assistant that can answer questions about YouTube videos, PDFs, and PowerPoint files 
         based on: {docs}
 
         Only use the factual information from the transcript to answer the question.
@@ -109,7 +165,14 @@ def get_response_from_query(db, query, k=4):
     return response, docs
 
 
-def process_file(file_path, switches):
+def process_file(file_path: str, switches: dict) -> None:
+    """
+    Process a file based on user-defined options.
+
+    Parameters:
+    - `file_path`: Path to the input file.
+    - `switches`: User-defined options.
+    """
     _, ext = os.path.splitext(file_path)
 
     if ext == ".pptx":
@@ -129,67 +192,87 @@ def process_file(file_path, switches):
     else:
         raise Exception(f"Unsupported file type: {ext}")
 
-    args, options = parse(sys.argv[1:], switches)
-    query = "Take notes on this video in this format. Make sure that you properly newline throughout the page: """"
-    # [Title]
+    args, options = parse_summarize(sys.argv[1:], switches)
+    # Linear interpolation for verbose switch
+    verbosity_min = 300
+    verbosity_max = 700
+    verbosity = verbosity_min + (options["verbose"] * (verbosity_max - verbosity_min))
+    query = f"Take notes on this video/PDF/PowerPoint in this format. Limit the output to {int(verbosity)} words. Make sure that you properly newline throughout the page: """
 
-    ## General Overview 
-    [Provide a brief summary or introduction of the topic.]
+    query += """# [Title]"""
 
-    ## Key Concepts
+    if not options["no_general_overview"]:
+        query += """
+        ## General Overview 
+        [Provide a brief summary or introduction of the topic.]
+        """
+    if not options["no_key_concepts"]:
+        query += """
+        ## Key Concepts
 
-    - **Concept 1:**
-        - [Brief description or explanation of the first key concept.]
-    - **Concept 2:**
-        - [Brief description or explanation of the second key concept.]
-    - **Concept 3:**
-        - [Brief description or explanation of the third key concept.]
+        - **Concept 1:**
+            - [Brief description or explanation of the first key concept.]
+        - **Concept 2:**
+            - [Brief description or explanation of the second key concept.]
+        - **Concept 3:**
+            - [Brief description or explanation of the third key concept.]
+        """
+    if not options["no_section_by_section"]:
+        query += """
+        ## Section by Section Breakdown
 
-    ## Section by Section Breakdown
+        ### 1. Section One Title
 
-    ### 1. Section One Title
+        - [Detailed content or information related to the first section.]
 
-    - [Detailed content or information related to the first section.]
+        ### 2. Section Two Title
 
-    ### 2. Section Two Title
+        - [Detailed content or information related to the second section.]
 
-    - [Detailed content or information related to the second section.]
+        ### 3. Section Three Title
 
-    ### 3. Section Three Title
+        - [Detailed content or information related to the third section.]
 
-    - [Detailed content or information related to the third section.]
+        ### n. Section n Title
 
-    ### n. Section n Title
+        - [Detailed content or information related to the nth section]
+        """
+    if not options["no_additional_information"]:
+        query += """
+            ## Additional Information
 
-    - [Detailed content or information related to the nth section]
+            - [Include any additional points, tips, or related information.]
+        """
+    if not options["no_helpful_vocabulary"]:
+        query += """
+            ## Helpful Vocabulary
 
-    ## Additional Information
+            - **Term 1:**
+                - [Definition or explanation of the first term.]
+            - **Term 2:**
+                - [Definition or explanation of the second term.]
+            - **Term 3:**
+                - [Definition or explanation of the third term.]
+            - **Term n:**
+                - [Definition or explanation of the nth term.]
+        """
+    if not options["no_explain_to_5th_grader"]:
+        query += """
+            ## Explain it to a 5th grader:
 
-    - [Include any additional points, tips, or related information.]
+            [Provide an explanation about this topic suitable for a 5th grader]
+        """
+    if not options["no_conclusion"]:
+        query += """
+            ## Conclusion
 
-    ## Helpful Vocabulary
-
-    - **Term 1:**
-        - [Definition or explanation of the first term.]
-    - **Term 2:**
-        - [Definition or explanation of the second term.]
-    - **Term 3:**
-        - [Definition or explanation of the third term.]
-    - **Term n:**
-        - [Definition or explanation of the nth term.]
-
-    ## Explain it to a 5th grader:
-
-    [Provide an explanation about this topic suitable for a 5th grader]
-
-    ## Conclusion
-
-    [Summarize the key takeaways or concluding remarks.]
-    """
+            [Summarize the key takeaways or concluding remarks.]
+        """
+    print(f"Query {query}")
 
     response, docs = get_response_from_query(db, query)
 
-    output_file_path = "../out/output.md"
+    output_file_path = "../../out/output.md"
     with open(output_file_path, "w", encoding="utf-8") as file:
         file.write(response)
     print(f"Cleaned response has been saved to: {output_file_path}")
@@ -197,13 +280,19 @@ def process_file(file_path, switches):
 
 if __name__ == "__main__":
     my_switches = [
-        Switch("verbose", short="v", type=bool, value=False),
+        Switch("verbose", short="v", type=float, value=3.0),
+        Switch("no_general_overview", short="g", type=bool, value=False),
+        Switch("no_key_concepts", short="k", type=bool, value=False),
+        Switch("no_section_by_section", short="s", type=bool, value=False),
+        Switch("no_additional_information", short="a", type=bool, value=False),
+        Switch("no_helpful_vocabulary", short="he", type=bool, value=False),
+        Switch("no_explain_to_5th_grader", short="e", type=bool, value=False),
+        Switch("no_conclusion", short="c", type=bool, value=False)
     ]
 
-
     if len(sys.argv) < 2:
-        print("Usage: python script.py <file_path> [options]")
+        print("Usage: python script.py [options] <file_path>")
         sys.exit(1)
 
-    file_path = sys.argv[1]
+    file_path = sys.argv[-1]
     process_file(file_path, my_switches)

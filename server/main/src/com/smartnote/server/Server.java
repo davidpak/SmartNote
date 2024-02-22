@@ -210,7 +210,12 @@ public class Server {
         exception(Exception.class, (e, req, res) -> {
             e.printStackTrace();
             res.status(500);
-            res.body("Internal server error");
+            res.body("{\"message\":\"Internal server error\"}");
+        });
+
+        exception(UnsupportedOperationException.class, (e, req, res) -> {
+            res.status(501);
+            res.body("{\"message\":\"Unsupported operation\"}");
         });
 
         port(serverConfig.getPort());
@@ -218,7 +223,7 @@ public class Server {
         after((req, res) -> {
             // CORS
             res.header("Access-Control-Allow-Origin", serverConfig.getOrigin());
-            res.header("Access-Control-Allow-Methods", "GET, POST");
+            res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
             res.header("Access-Control-Allow-Credentials", "true");
             res.header("Access-Control-Allow-Headers", "Content-Type");
             res.header("Access-Control-Expose-Headers", "Content-Type");
@@ -274,6 +279,15 @@ public class Server {
                 options(path, (req, res) -> {
                     res.status(200);
                     res.header("Allow", "POST");
+                    res.type("application/json");
+                    return "{\"message\":\"OK\"}";
+                });
+                break;
+            case DELETE:
+                delete(path, r);
+                options(path, (req, res) -> {
+                    res.status(200);
+                    res.header("Allow", "DELETE");
                     res.type("application/json");
                     return "{\"message\":\"OK\"}";
                 });

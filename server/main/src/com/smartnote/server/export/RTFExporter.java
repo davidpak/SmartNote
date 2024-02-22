@@ -2,10 +2,7 @@ package com.smartnote.server.export;
 
 import java.security.Permission;
 
-import org.commonmark.renderer.Renderer;
-
-import com.google.gson.JsonObject;
-import com.smartnote.server.format.rtf.RTFRenderer;
+import com.smartnote.server.format.rtf.RTFConverter;
 
 /**
  * <p>Exports to RTF.</p>
@@ -16,8 +13,8 @@ import com.smartnote.server.format.rtf.RTFRenderer;
 @ExporterInfo(name = "rtf")
 public class RTFExporter implements ResourceExporter {
     @Override
-    public Renderer createRenderer(JsonObject options, Permission permission) {
-        return new RTFRenderer();
+    public RTFConverter createConverter(ExportOptions options, Permission permission) {
+        return new RTFConverter();
     }
 
     @Override

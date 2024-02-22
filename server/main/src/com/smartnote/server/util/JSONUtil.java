@@ -1,14 +1,9 @@
 package com.smartnote.server.util;
 
-import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 /**
  * <p>
@@ -21,109 +16,162 @@ import com.google.gson.JsonObject;
 public class JSONUtil {
 
     /**
-     * <p>
-     * Converts an array of JSONSerializable objects to a JSON array.
-     * </p>
+     * Retrieve a string from a JsonObject or <code>null</code> if the key
+     * does not exist or the value is not a string.
      * 
-     * @param array The array of JSONSerializable objects.
-     * @return The JSON array.
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The string or <code>null</code>.
      */
-    public static JsonArray toArray(JSONSerializable<? extends JSONSerializable<?>>[] array) {
-        return toArray(Stream.of(array), JSONSerializable::writeJSON);
+    public static String getStringOrNull(JsonObject json, String key) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return null;
+        if (!element.isJsonPrimitive())
+            return null;
+
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isString())
+            return null;
+
+        return primitive.getAsString();
     }
 
     /**
-     * <p>
-     * Converts an array of objects to a JSON array.
-     * </p>
+     * Retrieve a string from a JsonObject or throw an exception if the key
+     * does not exist or the value is not a string.
      * 
-     * @param <T> The type of the objects in the array.
-     * @param array The array of objects.
-     * @param mapper A function that maps the objects to JsonElements.
-     * @return The JSON array.
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The string.
+     * @throws IllegalArgumentException If the key does not exist or the value
+     *                                  is not a string.
      */
-    public static <T> JsonArray toArray(T[] array, Function<T, JsonElement> mapper) {
-        return toArray(Stream.of(array), mapper);
+    public static String getStringOrException(JsonObject json, String key) throws IllegalArgumentException {
+        String string = getStringOrNull(json, key);
+        if (string == null)
+            throw new IllegalArgumentException(key);
+        return string;
     }
 
     /**
-     * <p>
-     * Converts a collection of JSONSerializable objects to a JSON array.
-     * </p>
+     * Retrieve a JsonObject from a JsonObject or <code>null</code> if the key
+     * does not exist or the value is not a JsonObject.
      * 
-     * @param collection The collection of JSONSerializable objects.
-     * @return The JSON array.
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The JsonObject or <code>null</code>.
      */
-    public static JsonArray toArray(Collection<? extends JSONSerializable<?>> collection) {
-        return toArray(collection, JSONSerializable::writeJSON);
+    public static JsonObject getObjectOrNull(JsonObject json, String key) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return null;
+        if (!element.isJsonObject())
+            return null;
+        return element.getAsJsonObject();
     }
 
     /**
-     * <p>
-     * Converts a collection of objects to a JSON array.
-     * </p>
+     * Retrieve a JsonObject from a JsonObject or an empty JsonObject if the key
+     * does not exist or the value is not a JsonObject.
      * 
-     * @param <T> The type of the objects in the collection.
-     * @param collection The collection of objects.
-     * @param mapper A function that maps the objects to JsonElements.
-     * @return The JSON array.
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The JsonObject or an empty JsonObject.
      */
-    public static <T> JsonArray toArray(Collection<T> collection, Function<T, JsonElement> mapper) {
-        return toArray(collection.stream(), mapper);
+    public static JsonObject getObjectOrEmpty(JsonObject json, String key) {
+        JsonObject object = getObjectOrNull(json, key);
+        if (object == null)
+            return new JsonObject();
+        return object;
     }
 
     /**
-     * <p>
-     * Reduces a stream of JSONSerializable objects to a JSON array.
-     * </p>
+     * Retrieve a JsonArray from a JsonObject or <code>null</code> if the key
+     * does not exist or the value is not a JsonArray.
      * 
-     * @param <T> The type of objects in the stream.
-     * @param stream The stream of objects.
-     * @param mapper A function that maps the objects to JsonElements.
-     * @return The JSON array.
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The JsonArray or <code>null</code>.
      */
-    public static <T> JsonArray toArray(Stream<T> stream, Function<T, JsonElement> mapper) {
-        return stream.map(mapper)
-                .collect(JsonArray::new, JsonArray::add,
-                        JsonArray::addAll);
+    public static JsonArray getArrayOrNull(JsonObject json, String key) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return null;
+        if (!element.isJsonArray())
+            return null;
+        return element.getAsJsonArray();
     }
 
-    public static JsonObject toObject(Entry<String, ? extends JSONSerializable<?>>[] array) {
-        return toObject(Stream.of(array));
+    /**
+     * Retrieve a JsonArray from a JsonObject or an empty JsonArray if the key
+     * does not exist or the value is not a JsonArray.
+     * 
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The JsonArray or an empty JsonArray.
+     */
+    public static JsonArray getArrayOrEmpty(JsonObject json, String key) {
+        JsonArray array = getArrayOrNull(json, key);
+        if (array == null)
+            return new JsonArray();
+        return array;
     }
 
-    public static <T> JsonObject toObject(T[] array, Function<T, Entry<String, ? extends JSONSerializable<?>>> mapper) {
-        return toObject(Stream.of(array), mapper);
+    /**
+     * Retrieve a boolean primitive from a JsonObject or <code>false</code> if
+     * the key does not exist or the value is not a boolean.
+     * 
+     * @param json The JsonObject.
+     * @param key  The key.
+     * @return The boolean or <code>false</code>.
+     */
+    public static boolean getBooleanOrFalse(JsonObject json, String key) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return false;
+        if (!element.isJsonPrimitive())
+            return false;
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isBoolean())
+            return false;
+        return primitive.getAsBoolean();
     }
 
-    public static JsonObject toObject(Collection<Entry<String, ? extends JSONSerializable<?>>> collection) {
-        return toObject(collection.stream());
+    public static int getIntOrDefault(JsonObject json, String key, int def) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return def;
+        if (!element.isJsonPrimitive())
+            return def;
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isNumber())
+            return def;
+        return primitive.getAsInt();
     }
 
-    public static <T> JsonObject toObject(Collection<T> collection, Function<T, Entry<String, ? extends JSONSerializable<?>>> mapper) {
-        return toObject(collection.stream(), mapper);
+    public static int getIntOrException(JsonObject json, String key) throws IllegalArgumentException {
+        JsonElement element = json.get(key);
+        if (element == null)
+            throw new IllegalArgumentException(key);
+        if (!element.isJsonPrimitive())
+            throw new IllegalArgumentException(key);
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isNumber())
+            throw new IllegalArgumentException(key);
+        return primitive.getAsInt();
     }
 
-    public static <T> JsonObject toObject(Stream<T> stream, Function<T, Entry<String, ? extends JSONSerializable<?>>> mapper) {
-        return toObject(stream.map(mapper));   
-    }
-
-    public static <T> JsonObject toObject(Stream<Entry<String, ? extends JSONSerializable<?>>> stream) {
-        return stream.reduce(new JsonObject(), entryMapper(), objectMerger());
-    }
-
-    public static BiFunction<JsonObject, Entry<String, ? extends JSONSerializable<?>>, JsonObject> entryMapper() {
-        return (o, e) -> {
-            o.add(e.getKey(), e.getValue().writeJSON());
-            return o;
-        };
-    }
-
-    public static BinaryOperator<JsonObject> objectMerger() {
-        return (o1, o2) -> {
-            o2.entrySet().forEach(e -> o1.add(e.getKey(), e.getValue()));
-            return o1;
-        };
+    public static double getNumberOrDefault(JsonObject json, String key, double def) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return def;
+        if (!element.isJsonPrimitive())
+            return def;
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isNumber())
+            return def;
+        return primitive.getAsDouble();
     }
 
     // Prevent instantiation

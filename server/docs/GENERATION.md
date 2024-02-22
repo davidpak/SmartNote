@@ -25,4 +25,8 @@ The `generate` interface will fail if the `files` field is empty or if any of th
 
 ## LLM Options
 
-These options are used to control the behavior of the LLM summarizer.
+These options are used to control the behavior of the LLM summarizer. The following options are recognized:
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `verbosity` | `number` | The verbosity of the LLM summarizer. `[0.0, 1.0]` |

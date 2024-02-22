@@ -13,12 +13,12 @@ SmartNote is an automated note-taking organization application that aims to revo
 
 ## Use Cases
 
--  User wishes to create detailed notes from PDFs
--  User wishes to create detailed notes from Video/Audio Transcript Files
--  User wishes to export notes to their Notion workspace
--  User wishes to customize notes generation settings (operational)
--  User wishes to select specific topics to include in notes
--  User wishes to generate notes from multiple files
+- User wishes to create detailed notes from PDFs
+- User wishes to create detailed notes from Video/Audio Transcript Files
+- User wishes to export notes to their Notion workspace
+- User wishes to customize notes generation settings (operational)
+- User wishes to select specific topics to include in notes
+- User wishes to generate notes from multiple files
 
 ## Layout
 
@@ -96,15 +96,79 @@ If you have built a JAR file of the server, you may run either `server.bat [args
 
 When using an IDE, you may need to setup run configurations to target buildfile `server/build.xml`. Some IDEs may be able to build without Ant, but you may need to set up the classpath within your IDE's configuration. It must include all of the `jar` files in the `server/lib/` directory. Ensure your IDE has set the working directory to the `server/` directory.
 
+## Testing
+
+### Jest
+
+Jest is used in the frontend to test React components. Test files are located in `client/src/tests`.
+
+#### Adding a test
+
+Create a file with a `.test.tsx` extension in `client/src/tests`. Then use Jest functions to write the test cases for a component or function.
+
+#### Running the tests
+
+From within the `client` directory, run `npx jest [filename]` to run the test with the given filename. Alternatively, run `npm run test` to run all tests.
+
+### JUnit
+
+JUnit 4 is used for testing server functionality. Test files are located in `server/main/test`. Within this directory, there are two important packages:
+
+- `com.smartnote.server` - Contains the JUnit tests for testing the server.
+- `com.smartnote.testing` - Contains utilities for writing tests for the server.
+
+#### Adding a test
+
+Tests are written as Java classes and should go in `server/main/test/com/smartnote/server` (although anywhere within the `test` directory will work). For a class to be treated as a test, it must have the word `Test` somewhere inside its class name. The style for SmartNote is to write test names in the format `[Behavior to test]Test.java`, e.g. `ExportTest.java`.
+
+After the file is created, tests can be written as normal JUnit tests, using the `@Test` annotation to mark a method as being a test.
+
+Since many objects in the server are networked, the testing framework also uses Mockito 5 to emulate the behavior of some of the networked objects (such as `Request` and `Response` objects). This library is tedious to set up, but is used in almost every test, so there exist some base classes that automatically set up these objects for you, all located in the `com.smartnote.testing` package. These are:
+
+- `Base` - Base class for most tests, contains features like a pseudo filesystem (`VirtualFileSystem`) and an instance of a `Gson` object for reading and writing JSON.
+- `BaseMarkdown` - Extends `Base`, and is the base class for tests who are testing the Markdown transpilers.
+- `BaseRoute` - Extends `BaseServer`, and is the base class for testing endpoints (i.e. the server's RPCs).
+- `BaseServer` - Extends `Base`, and is the base class for testing functionality interacts with commonly used networking objects (such as `Session` objects).
+
+#### Running the tests
+
+From within the `server` directory, run `ant test`. This will run the `ant build-test` target then run all JUnit tests, whose results will be outputted into `server/test-results`.
+
+### pytest
+
+pytest is used for testing the Python scripts responsible for interfacing with the LLM.
+
+#### Adding a test
+1. Create a file with a `.py` extension in `/server/scripts/test.
+2. Write test cases using `pytest` functions to test the functionality of your Python scripts.
+
+#### Running the Tests
+
+From within the project directory, run the following command to execute tests:
+
+`pytest [filename.py]`
+
+Replace [filename.py] with the name of the file containing your tests.
+
+Alternatively, to run all tests, use:
+
+`pytest`
+
+This command will discover and run all tests in the project.
+
+**Note: **Ensure you have `pytest` installed in your Python environment before running tests:
+
+`pip install pytest`
+
 ## Third-Party Libraries
 
 - [Apache Tika](https://tika.apache.org/) - Used to detect MIME types.
 - [commonmark](https://commonmark.org/) - Used to parse Markdown.
 - [python-dotenv](https://github.com/theskumar/python-dotenv) - Used to load environment variables from `.env` files.
-- [Framer Motion](https://www.framer.com/motion/) - Used for animations.
 - [Gson](https://github.com/google/gson) - Used for JSON serialization and deserialization.
 - [Headless UI](https://headlessui.com/) - Used for UI components.
 - [java-jwt](https://github.com/auth0/java-jwt) - Used for JSON Web Token (JWT) creation and verification.
+- [Jest](https://jestjs.io/) - Used for testing React components.
 - [JUnit 4](https://junit.org/junit4/) - Used for testing server.
 - [LangChain](https://www.langchain.com/) - Used for LLM interaction to generate summaries.
 - [Mockito 5](https://site.mockito.org/) - Used with JUnit for mocking.
