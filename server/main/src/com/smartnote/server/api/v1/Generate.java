@@ -154,9 +154,19 @@ public class Generate implements Route {
         ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
         Resource resource = resourceSystem.findResource(first, permission);
 
+        GeneratorConfig generatorConfig = Server.getServer().getConfig().getGeneratorConfig();
+
         String path = resource.getPath().toString();
 
-        ProcessBuilder pb = new ProcessBuilder("python3", summarizer, path);
+        Resource outResource = resourceSystem.findResource("session:output.md", permission);
+
+        ProcessBuilder pb = new ProcessBuilder("python3",
+                "--env",
+                generatorConfig.getEnv(),
+                summarizer,
+                path,
+                outResource.getPath().toString());
+
         Process p = pb.start();
 
         int exitCode = p.waitFor();

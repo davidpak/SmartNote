@@ -20,7 +20,6 @@ from langchain.prompts.chat import (
 )
 import textwrap
 
-load_dotenv(find_dotenv())
 embeddings = OpenAIEmbeddings()
 
 
@@ -190,6 +189,12 @@ def process_path(path: str, output: str, switches: dict) -> None:
         sys.exit(1)
 
     args, options = parse_summarize(sys.argv[1:], switches)
+
+    if 'env' in args:
+        load_dotenv(args['env'])
+    else:
+        load_dotenv(find_dotenv())
+
     # Linear interpolation for verbose switch
     verbosity_min = 300
     verbosity_max = 700
@@ -283,7 +288,8 @@ if __name__ == "__main__":
         Switch("no_additional_information", short="a", type=bool, value=False),
         Switch("no_helpful_vocabulary", short="he", type=bool, value=False),
         Switch("no_explain_to_5th_grader", short="e", type=bool, value=False),
-        Switch("no_conclusion", short="c", type=bool, value=False)
+        Switch("no_conclusion", short="c", type=bool, value=False),
+        Switch("env", short="e", type=str, value=None)
     ]
 
     if len(sys.argv) < 3:
