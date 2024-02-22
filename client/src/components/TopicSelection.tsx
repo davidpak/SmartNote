@@ -66,15 +66,15 @@ const TopicSelection = ({
   className,
   ...rest
 }: TopicSelectionType) => {
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [fileIndex, setFileIndex] = useState<number>(0);
 
   const [markdown, setMarkdown] = useState('');
 
-	useEffect(() => {
-		fetch(mdFile)
+  useEffect(() => {
+    fetch(mdFile)
       .then(res => res.text())
       .then(text => setMarkdown(text));
-	}, []);
+  }, []);
 
   function isHeadingType(object: any): object is HeadingType {
     return 'level' in object;
@@ -130,6 +130,10 @@ const TopicSelection = ({
   }
   parseJson();
 
+  // keep track of which boxes/topics are selected, all selected on default
+  // selectedTopics type is string[] but use (string | number)[] to align with CheckTree type
+  const [selectedTopics, setSelectedTopics] = useState<(string | number)[]>(data.map(node => node.value));
+
   return (
     <div
       className={twMerge('flex flex-col items-center gap-10', className)}
@@ -147,13 +151,19 @@ const TopicSelection = ({
       <section className='flex bg-neutral-100 max-w-5xl'>
         <Sidebar
           files={files}
-          activeIndex={activeIndex}
-          selectFile={(index) => setActiveIndex(index)}
+          activeIndex={fileIndex}
+          selectFile={(index) => setFileIndex(index)}
           className='border-neutral-400 border-r-2 pr-1 pt-5'
         />
         <section className='border-neutral-400 border-r-2 pt-5 px-2'>
           <H3 className='text-base mb-2 pl-5'>Breakdown</H3>
-          <CheckTree data={data} defaultExpandAll showIndentLine />
+          <CheckTree
+            data={data}
+            value={selectedTopics}
+            onChange={setSelectedTopics}
+            defaultExpandAll
+            showIndentLine
+          />
         </section>
         <section className='p-6'>
           <H3 className='text-base mb-2'>Output Preview</H3>
