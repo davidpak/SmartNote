@@ -25,6 +25,7 @@ If the request was successful, the server will respond with `200 OK`. The respon
 | `name` | `string` | The name of the generated resource. |
 | `time` | `number` | The time taken to generate the summaries, in seconds. |
 | `result` | `object` | A JSON object containing the result of the generation. |
+| `markdown` | `string` | The markdown representation of the result. |
 
 When the server successfully generates the summaries, it will respond with `200 OK`. The `name` field will contain the name of the summary resource. The `time` field will contain the time taken to generate the summaries and is tracked across timeouts. `name` may be used in the [`export`](EXPORT.md) RPC to export the generated summary. The `result` object will contain the same content as the content of the generated resource referenced by `name`.
 

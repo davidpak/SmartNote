@@ -6,15 +6,19 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 /**
- * <p>Wraps a resource and makes it read-only.</p>
+ * <p>
+ * Wraps a resource and makes it read-only.
+ * </p>
  * 
- * <p>For example, if a resource is a file, then the file cannot be written to
- * or deleted.</p>
+ * <p>
+ * For example, if a resource is a file, then the file cannot be written to
+ * or deleted.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.resource.Resource
  */
-public class ReadOnlyResource implements Resource {   
+public class ReadOnlyResource implements Resource {
     private Resource resource;
 
     /**
@@ -49,5 +53,10 @@ public class ReadOnlyResource implements Resource {
     @Override
     public boolean exists() throws SecurityException, IOException {
         return resource.exists();
+    }
+
+    @Override
+    public String getName() {
+        return resource.getName();
     }
 }
