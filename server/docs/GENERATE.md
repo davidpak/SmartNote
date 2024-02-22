@@ -29,7 +29,9 @@ If the request was successful, the server will respond with `200 OK`. The respon
 
 When the server successfully generates the summaries, it will respond with `200 OK`. The `name` field will contain the name of the summary resource. The `time` field will contain the time taken to generate the summaries and is tracked across timeouts. `name` may be used in the [`export`](EXPORT.md) RPC to export the generated summary. The `result` object will contain the same content as the content of the generated resource referenced by `name`.
 
-The `result` field is a JSON object containing the contents of the generated summaries. It's format is closely tied to markdown and its format is as follows:
+The `markdown` field contains the raw markdown representation of the result. It is only present if `general.includeMarkdown` was `true` in the request.
+
+The `result` field is a JSON object containing the contents of the generated summaries. It is only present if `general.includeJson` was `true` in the request. It's format is closely tied to markdown and its format is as follows:
 
 | Name | Type | Contents |
 | ---- | ---- | -------- |

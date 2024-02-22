@@ -16,6 +16,8 @@ These options are used to control the general behavior of the summary generation
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | `files` | `array` | List of files to summarize. |
+| `includeJson` | `boolean` | Whether to include the generated JSON in the response. Default is `false`. |
+| `includeMarkdown` | `boolean` | Whether to include the generated markdown in the response. Default is `false`. |
 
 ### `files`
 

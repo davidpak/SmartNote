@@ -17,6 +17,8 @@ public class GeneratorConfig extends AbstractConfig {
      */
     public static final String DEFAULT_ENV = "private/.env";
 
+    public static final String DEFAULT_PYTHON = "python3";
+
     public static final String DEFAULT_OUTPUT_RESOURCE = "public:output.md";
 
     /**
@@ -26,12 +28,14 @@ public class GeneratorConfig extends AbstractConfig {
 
     private String summarizer;
     private String env;
+    private String python;
     private String outputResource;
     private boolean debug;
     private String debugResource;
 
     public GeneratorConfig() {
         this.summarizer = DEFAULT_SUMMARIZER;
+        this.python = DEFAULT_PYTHON;
         this.env = DEFAULT_ENV;
         this.debug = false;
         this.debugResource = DEFAULT_DEBUG_RESOURCE;
@@ -39,6 +43,10 @@ public class GeneratorConfig extends AbstractConfig {
 
     public String getSummarizer() {
         return summarizer;
+    }
+
+    public String getPython() {
+        return python;
     }
 
     public String getEnv() {
@@ -57,6 +65,7 @@ public class GeneratorConfig extends AbstractConfig {
     public void validate() throws IllegalArgumentException {
         System.out.println("generator.summarizer=`" + summarizer + "`");
         System.out.println("generator.env=`" + env + "`");
+        System.out.println("generator.python=`" + python + "`");
         System.out.println("generator.debug=" + debug);
 
         if (debug && debugResource == null)
@@ -70,6 +79,7 @@ public class GeneratorConfig extends AbstractConfig {
     public JsonObject writeJSON(JsonObject json) {
         json.addProperty("summarizer", summarizer);
         json.addProperty("env", env);
+        json.addProperty("python", python);
         json.addProperty("debug", debug);
         json.addProperty("debugResource", debugResource);
         return json;
@@ -84,6 +94,10 @@ public class GeneratorConfig extends AbstractConfig {
         env = getStringOrNull(json, "env");
         if (env == null)
             env = DEFAULT_ENV;
+
+        python = getStringOrNull(json, "python");
+        if (python == null)
+            python = DEFAULT_PYTHON;
 
         debug = getBooleanOrFalse(json, "debug");
 
