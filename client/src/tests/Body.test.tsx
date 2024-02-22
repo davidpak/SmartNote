@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import Body from '../components/Body';
 import componentSmokeTest from './componentSmokeTest';
+
+afterEach(cleanup);
 
 componentSmokeTest({ Component: Body, children: 'test' });
 
