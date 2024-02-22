@@ -1,19 +1,62 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckTree } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
+import Markdown from 'react-markdown';
 
 import H2 from './H2';
 import H3 from './H3';
 import Button from './Button';
 import Sidebar from './Sidebar';
 import { File } from './Sidebar';
+import jsonFile from './example.json';
+import mdFile from './output.md';
 
 interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
   files: File[];
   prev: () => void;
   next: () => void;
+}
+
+interface NodeType {
+  value: string;
+  label: string;
+  children?: NodeType[];
+}
+
+interface TextType {
+  type: string;
+  literal: string;
+}
+
+interface EmphasisType {
+  type: string;
+  openingDelimeter: string;
+  closingDelimeter: string;
+  children: TextType[];
+}
+
+interface ParagraphType {
+  type: string;
+  children: (EmphasisType | TextType)[];
+}
+
+interface ListItemType {
+  type: string;
+  children: (ParagraphType | BulletListType)[];
+}
+
+interface BulletListType {
+  type: string;
+  bulletMarker: string;
+  children: ListItemType[];
+}
+
+interface HeadingType {
+  type: string;
+  level: number;
+  children: TextType[];
 }
 
 const TopicSelection = ({
@@ -25,33 +68,67 @@ const TopicSelection = ({
 }: TopicSelectionType) => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
 
-  const jsonData = {
-    value: 'title',
-    label: 'Exploring Quaternions for 3D Orientation',
-    children: [
-        { value: 'overview', label: 'General Overview' },
-        {
-          value: 'concept',
-          label: 'Key Concepts',
-          children: [
-              { value: 'c1', label: 'Concept 1: Quaternions' },
-              { value: 'c2', label: 'Concept 2: 3D Orientation' },
-              { value: 'c3', label: 'Concept 3: Applications' }
-          ],
-        },
-        {
-          value: 'section',
-          label: 'Section by Section Breakdown',
-          children: [
-              { value: 's1', label: '1. Introduction and Context' },
-              { value: 's2', label: '2. Importance of Quaternions' },
-              { value: 's3', label: '3. Quaternion Multiplication' }
-          ],
-        }
-    ],
-  };
+  const [markdown, setMarkdown] = useState('');
 
-  const data = [jsonData];
+	useEffect(() => {
+		fetch(mdFile)
+      .then(res => res.text())
+      .then(text => setMarkdown(text));
+	}, []);
+
+  function isHeadingType(object: any): object is HeadingType {
+    return 'level' in object;
+  }
+
+  function isEmphasisType(object: any): object is EmphasisType {
+    return 'openingDelimeter' in object;
+  }
+
+  const data: NodeType[] = [];
+  function parseJson() {
+    const entries = jsonFile.children;
+
+    // keep track of which node we need to add children to next
+    let parentNode: NodeType = {value: '', label: ''};
+
+    for (let entry of entries) {
+      if (isHeadingType(entry)) {
+        const node = {
+          value: entry.children[0].literal,
+          label: entry.children[0].literal,
+        };
+
+        if (entry.level == 1 || entry.level == 2) { // parent topics
+          data.push(node);
+          parentNode = node;
+        } else if (entry.level == 3) { // children topics (in "Section by Section Breakdown")
+          if (parentNode.children) {
+            parentNode.children.push(node);
+          } else {
+            parentNode.children = [node];
+          }
+        }
+      } else if (entry.type === 'bulletList' && entry.bulletMarker === '-') { // children topics
+        const listItems: ListItemType[] = entry.children;
+        const children: NodeType[] = [];
+        for (let item of listItems) {
+          const itemChildren = item.children;
+          if (!isEmphasisType(itemChildren[0].children[0])) {
+            break;
+          }
+          const node = {
+            value: itemChildren[0].children[0].children[0].literal,
+            label: itemChildren[0].children[0].children[0].literal,
+          };
+          children.push(node);
+        }
+        if (children.length != 0) {
+          parentNode.children = children;
+        }
+      }
+    }
+  }
+  parseJson();
 
   return (
     <div
@@ -80,56 +157,26 @@ const TopicSelection = ({
         </section>
         <section className='p-6'>
           <H3 className='text-base mb-2'>Output Preview</H3>
-          <article className='flex flex-col bg-white p-6 gap-5'>
-            <H3>Exploring Quaternions for 3D Orientation</H3>
-            <section>
-              <H3 className='text-base mb-2'>General Overview</H3>
-              <p>This video explores the concept of quaternions and their application in describing 3D orientation. Quaternions are a 4-dimensional number system that provide a robust and bug-free method for representing 3D rotations. The video highlights the importance of quaternions in computer graphics, robotics, virtual reality, and other fields involving 3D orientation.</p>
-            </section>
-            <section>
-              <H3 className='text-base mb-2'>Key Concepts</H3>
-              <ul className='list-disc pl-6 flex flex-col gap-3'>
-                <li>
-                  <p className='font-bold'>Concept 1: Quaternions</p>
-                  <p>Quaternions are a 4-dimensional number system used to represent 3D rotations.</p>
-                </li>
-                <li>
-                  <p className='font-bold'>Concept 2: 3D Orientation</p>
-                  <p>Quaternions provide a reliable way to describe and manipulate 3D orientation without encountering bugs or edge cases.</p>
-                </li>
-                <li>
-                  <p className='font-bold'>Concept 3: Applications</p>
-                  <p>Quaternions are widely used in computer graphics, robotics, virtual reality, and other fields involving 3D orientation.</p>
-                </li>
-              </ul>
-            </section>
-            <section>
-              <H3 className='text-base mb-2'>Section by Section Breakdown</H3>
-              <ol className='list-decimal pl-6'>
-                <li>
-                  <p className='font-bold'>Introduction and Context</p>
-                  <ul className='list-disc pl-6'>
-                    <li>The video introduces the collaboration with Ben Eater and the explorable videos created.</li>
-                    <li>Quaternions are briefly mentioned as a 4-dimensional number system for describing 3D orientation.</li>
-                  </ul>
-                </li>
-                <li>
-                  <p className='font-bold'>Importance of Quaternions</p>
-                  <ul className='list-disc pl-6'>
-                    <li>Quaternions are highlighted as a preferred method for describing 3D orientation due to their bug-free nature.</li>
-                    <li>The example of using quaternions to track a phone's orientation in software is mentioned.</li>
-                  </ul>
-                </li>
-                <li>
-                  <p className='font-bold'>Quaternion Multiplication</p>
-                  <ul className='list-disc pl-6'>
-                    <li>The method for quaternion multiplication is reviewed, including the use of half the angle and multiplying from the right by the inverse.</li>
-                    <li>The goal is to break down and visualize the computation of quaternion multiplication.</li>
-                  </ul>
-                </li>
-              </ol>
-            </section>
-          </article>
+          <Markdown
+            className='flex flex-col bg-white p-6 gap-3'
+            components={{
+              h1: H3,
+              h2(props) {
+                const {node, ...rest} = props
+                return <H3 className='text-base mb-2' {...rest} />
+              },
+              h3(props) {
+                const {node, ...rest} = props
+                return <p className='font-bold' {...rest} />
+              },
+              ul(props) {
+                const {node, ...rest} = props
+                return <ul className='list-disc pl-6 flex flex-col gap-3' {...rest} />
+              },
+            }}
+          >
+            {markdown}
+          </Markdown>
         </section>
       </section>
       <Button onClick={() => next()}>Continue</Button>
