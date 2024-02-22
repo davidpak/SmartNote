@@ -14,7 +14,14 @@ componentSmokeTest({
   },
 });
 
-const slider = <Slider label='Verbosity' levels={['Low', 'Medium', 'High']} data-testid='slider-test'/>;
+const slider = (
+  <Slider
+    label='Verbosity'
+    levels={['Low', 'Medium', 'High']}
+    data-testid='slider-test'
+    updateLevel={() => {}}
+  />
+);
 
 it('should have correct label', () => {
   render(slider);
