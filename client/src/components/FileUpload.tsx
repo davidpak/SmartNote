@@ -89,7 +89,7 @@ const FileUpload = ({
           files={files}
           setFiles={(files) => {
             setFiles(files);
-            updateFiles(files.map((file) => file.name));
+            updateFiles(files.map((file) => `session:uploads/${file.name}`));
           }}
           errors={errors}
           setErrors={(errors) => setErrors(errors)}

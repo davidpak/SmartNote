@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.smartnote.server.GeneratorConfig;
+import com.smartnote.server.GeneratorConfig;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -62,11 +63,22 @@ public class Generate implements Route {
             else
                 outResource = generate(summarizer, request.body(), session, permission);
         } catch (IllegalArgumentException e) {
+        Resource outResource;
+        try {
+            if (generatorConfig.isDebug())
+                outResource = resourceSystem.findResource(generatorConfig.getDebugResource(), permission);
+            else
+                outResource = generate(summarizer, request.body(), session, permission);
+        } catch (IllegalArgumentException e) {
             response.status(400);
+            return "{\"message\":" + e.getMessage() + "\"}";
             return "{\"message\":" + e.getMessage() + "\"}";
         } catch (NoSuchResourceException e) {
             response.status(404);
             return "{\"message\":\"Resource not found\"}";
+        } catch (SecurityException e) {
+            response.status(403);
+            return "{\"message\":\"Permission denied\"}";
         } catch (SecurityException e) {
             response.status(403);
             return "{\"message\":\"Permission denied\"}";
@@ -76,12 +88,20 @@ public class Generate implements Route {
         } catch (InterruptedException e) {
             response.status(500);
             return "{\"message\":\"Data generation interrupted\"}";
+            return "{\"message\":\"Generation failed\"}";
+        } catch (InterruptedException e) {
+            response.status(500);
+            return "{\"message\":\"Data generation interrupted\"}";
         }
 
+        String markdownString;
         String markdownString;
         ParsedMarkdown md;
         InputStream in = null;
         try {
+            in = outResource.openInputStream();
+            markdownString = new String(in.readAllBytes());
+            md = ParsedMarkdown.parse(markdownString);
             in = outResource.openInputStream();
             markdownString = new String(in.readAllBytes());
             md = ParsedMarkdown.parse(markdownString);
@@ -105,6 +125,7 @@ public class Generate implements Route {
         long endTime = System.currentTimeMillis();
 
         JsonObject resObject = new JsonObject();
+        resObject.addProperty("name", outResource.getName());
         resObject.addProperty("name", outResource.getName());
         resObject.addProperty("time", (endTime - startTime) / 1000.0);
         resObject.add("result", md.writeJSON());
