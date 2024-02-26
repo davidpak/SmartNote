@@ -20,9 +20,7 @@ from langchain.prompts.chat import (
 )
 import textwrap
 
-load_dotenv(find_dotenv())
-embeddings = OpenAIEmbeddings()
-
+embeddings = None
 
 def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     """
@@ -91,6 +89,8 @@ def create_db_from_powerpoint_file(pptx_file: str) -> tuple[FAISS, List]:
     Returns:
     A tuple containing the FAISS index and a list of documents.
     """
+    global embeddings
+
     loader = UnstructuredPowerPointLoader(pptx_file)
     data = loader.load()
 
@@ -111,6 +111,8 @@ def create_db_from_pdf(pdf_file: str) -> tuple[FAISS, List]:
     Returns:
     A tuple containing the FAISS index and a list of documents.
     """
+    global embeddings
+
     loader = PyPDFLoader(pdf_file)
     pages = loader.load_and_split()
 
@@ -175,11 +177,23 @@ def process_path(path: str, output: str, switches: dict) -> None:
     """
     _, ext = os.path.splitext(path)
 
+    args, options = parse_summarize(sys.argv[1:], switches)
+
+    if 'env' in options:
+        load_dotenv(options['env'])
+    else:
+        load_dotenv(find_dotenv())
+
+    global embeddings
+
     if ext == ".pptx":
+        embeddings = OpenAIEmbeddings()
         db, docs = create_db_from_powerpoint_file(path)
     elif ext == ".pdf":
+        embeddings = OpenAIEmbeddings()
         db, docs = create_db_from_pdf(path)
     elif is_youtube_link(path):
+        embeddings = OpenAIEmbeddings()
         try:
             db, docs = create_db_from_youtube_video_url(path)
         except Exception as e:
@@ -189,7 +203,6 @@ def process_path(path: str, output: str, switches: dict) -> None:
         print("Summarizer requires a YouTube video URL, PDF, or PowerPoint file.")
         sys.exit(1)
 
-    args, options = parse_summarize(sys.argv[1:], switches)
     # Linear interpolation for verbose switch
     verbosity_min = 300
     verbosity_max = 700
@@ -276,14 +289,15 @@ def process_path(path: str, output: str, switches: dict) -> None:
 
 if __name__ == "__main__":
     my_switches = [
-        Switch("verbose", short="v", type=float, value=3.0),
+        Switch("verbose", short="v", type=float, value=1.0),
         Switch("no_general_overview", short="g", type=bool, value=False),
         Switch("no_key_concepts", short="k", type=bool, value=False),
         Switch("no_section_by_section", short="s", type=bool, value=False),
         Switch("no_additional_information", short="a", type=bool, value=False),
         Switch("no_helpful_vocabulary", short="he", type=bool, value=False),
-        Switch("no_explain_to_5th_grader", short="e", type=bool, value=False),
-        Switch("no_conclusion", short="c", type=bool, value=False)
+        Switch("no_explain_to_5th_grader", short="f", type=bool, value=False),
+        Switch("no_conclusion", short="c", type=bool, value=False),
+        Switch("env", short="e", type=str, value=None)
     ]
 
     if len(sys.argv) < 3:

@@ -7,6 +7,8 @@ import ConnectToNotion from '../components/ConnectToNotion';
 import ExportSuccess from '../components/ExportSuccess';
 
 const Home = () => {
+  const [fileList, setFileList] = useState<string[]>([]);
+
   const [index, setIndex] = useState<number>(() => {
     const i = localStorage.getItem('index');
     return i ? parseInt(i, 10) : 0;
@@ -36,9 +38,14 @@ const Home = () => {
   const renderPage = () => {
     switch (index) {
       case 0:
-        return <FileUpload next={next} />;
+        return (
+          <FileUpload
+            next={next}
+            updateFiles={(files: string[]) => setFileList(files)}
+          />
+        );
       case 1:
-        return <Customization files={[]} prev={prev} next={next} />;
+        return <Customization files={fileList} prev={prev} next={next} />;
       case 2:
         return <TopicSelection files={[]} prev={prev} next={next} />;
       case 3:

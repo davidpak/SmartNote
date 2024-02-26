@@ -71,6 +71,13 @@ public interface Resource {
     boolean exists() throws SecurityException, IOException;
 
     /**
+     * Gets the name of the resource.
+     * 
+     * @return The name.
+     */
+    String getName();
+
+    /**
      * Reads all bytes from the resource.
      * 
      * @return The bytes.

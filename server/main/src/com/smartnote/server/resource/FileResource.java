@@ -21,16 +21,19 @@ import com.smartnote.server.util.FileUtils;
  * @see com.smartnote.server.resource.Resource
  */
 class FileResource implements Resource {
+    private final String name;
     private final File file;
     private final AccessMode mode;
 
     /**
      * Creates a new file resource.
      * 
+     * @param name The name of the resource.
      * @param file The file.
      * @param mode The access mode.
      */
-    FileResource(File file, AccessMode mode) {
+    FileResource(String name, File file, AccessMode mode) {
+        this.name = name;
         this.file = Objects.requireNonNull(file, "file must not be null");
         this.mode = Objects.requireNonNull(mode, "mode must not be null");
     }
@@ -74,6 +77,11 @@ class FileResource implements Resource {
     public boolean exists() throws SecurityException {
         mode.checkRead();
         return file.exists();
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override
