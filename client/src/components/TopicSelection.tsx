@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CheckTree } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
@@ -66,14 +66,18 @@ const TopicSelection = ({
   className,
   ...rest
 }: TopicSelectionType) => {
-  const [fileIndex, setFileIndex] = useState<number>(0);
+  const [fileIndex, setFileIndex] = useState<number>(0); // keep track of which file is selected
 
-  const [markdown, setMarkdown] = useState('');
+  const originalMd = useRef(''); // store the original markdown
+  const [markdown, setMarkdown] = useState(''); // keep track of the updated markdown
 
   useEffect(() => {
     fetch(mdFile)
       .then(res => res.text())
-      .then(text => setMarkdown(text));
+      .then(text => {
+        originalMd.current = text;
+        setMarkdown(text);
+      });
   }, []);
 
   function isHeadingType(object: any): object is HeadingType {
@@ -132,7 +136,57 @@ const TopicSelection = ({
 
   // keep track of which boxes/topics are selected, all selected on default
   // selectedTopics type is string[] but use (string | number)[] to align with CheckTree type
-  const [selectedTopics, setSelectedTopics] = useState<(string | number)[]>(data.map(node => node.value));
+  const [selectedTopics, setSelectedTopics] = useState<(string | number)[]>(data.map((node) => node.value));
+
+  function getNotSelectedTopics(selectedTopics: (string | number)[]) {
+    const topicsNotSelected: string[] = [];
+
+    for (let node of data) {
+      if (!selectedTopics.includes(node.value)) {
+        if (node.children) {
+          let numChildNotSelected = 0;
+          for (let child of node.children) {
+            if (!selectedTopics.includes(child.value)) {
+              topicsNotSelected.push(child.value);
+              numChildNotSelected += 1;
+            }
+          }
+
+          // include the section title if all its subsections are included
+          if (numChildNotSelected == node.children.length) {
+            topicsNotSelected.push(node.value);
+          }
+        } else {
+          topicsNotSelected.push(node.value);
+        }
+      }
+    }
+
+    return topicsNotSelected;
+  }
+
+  function removeText(originalText: string, textToRemove: string): string {
+    // find where textToRemove start & go back a few chars to also remove its markdown syntax
+    // it's ok if it's negative since substring() will clamp it to 0 if it is
+    let startIndex = originalText.indexOf(textToRemove) - 4;
+
+    // find where textToRemove end (i.e. where next topic start)
+    const nextHeadingIndex = originalText.substring(startIndex + 4).indexOf('#');
+    const nextBulletIndex = originalText.substring(startIndex + 4).indexOf('- *');
+    let endIndex = startIndex + 4;
+    if (nextHeadingIndex === -1 && nextBulletIndex === -1) { // no next topic
+      endIndex = originalText.length;
+    } else if (nextHeadingIndex === -1) { // only sub topic left
+      endIndex += nextBulletIndex;
+    } else if (nextBulletIndex === -1) { // only big topic left
+      endIndex += nextHeadingIndex;
+    } else { // get the closest next topic
+      endIndex += Math.min(nextHeadingIndex, nextBulletIndex);
+    }
+
+    const substringToRemove = originalText.substring(startIndex, endIndex);
+    return originalText.replace(substringToRemove, '');
+  }
 
   return (
     <div
@@ -155,17 +209,25 @@ const TopicSelection = ({
           selectFile={(index) => setFileIndex(index)}
           className='border-neutral-400 border-r-2 pr-1 pt-5'
         />
-        <section className='border-neutral-400 border-r-2 pt-5 px-2'>
-          <H3 className='text-base mb-2 pl-5'>Breakdown</H3>
+        <section className='border-neutral-400 border-r-2 px-2 py-3'>
+          <H3 className='text-base self-center pl-3 mb-2 pt-2'>Breakdown</H3>
           <CheckTree
             data={data}
             value={selectedTopics}
-            onChange={setSelectedTopics}
+            onChange={(values) => {
+              setSelectedTopics(values);
+              const topicsNotSelected = getNotSelectedTopics(values);
+              let newMd = originalMd.current;
+              for (let topic of topicsNotSelected) {
+                newMd = removeText(newMd, topic);
+              }
+              setMarkdown(newMd);
+            }}
             defaultExpandAll
             showIndentLine
           />
         </section>
-        <section className='p-6'>
+        <section className='h-96 p-5 overflow-auto'>
           <H3 className='text-base mb-2'>Output Preview</H3>
           <Markdown
             className='flex flex-col bg-white p-6 gap-3'
