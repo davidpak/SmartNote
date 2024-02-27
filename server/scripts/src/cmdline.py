@@ -158,6 +158,8 @@ def parse(argv: list[str],
             i, rc = switch.handle(argv, i + 1)
             if rc is not None:
                 return rc
+            
+            result_switches[switch.name] = switch.value
 
     return (argv[i:], result_switches)
 

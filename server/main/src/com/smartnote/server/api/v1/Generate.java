@@ -3,6 +3,7 @@ package com.smartnote.server.api.v1;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.security.Permission;
 import java.util.ArrayList;
@@ -12,7 +13,9 @@ import static com.smartnote.server.util.JSONUtil.*;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.smartnote.server.GeneratorConfig;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
@@ -39,6 +42,8 @@ import spark.Route;
  */
 @ServerRoute(method = MethodType.POST, path = "/api/v1/generate")
 public class Generate implements Route {
+
+    public static final String OUTPUT_RESOURCE = "session:output.md";
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
@@ -179,19 +184,37 @@ public class Generate implements Route {
         boolean explainToFifthGrader = getBooleanOrTrue(llmOptions, "explainToFifthGrader");
         boolean conclusion = getBooleanOrTrue(llmOptions, "conclusion");
 
-        String first = files.get(0).getAsString();
-        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
-        Resource resource = resourceSystem.findResource(first, permission);
+        if (!generalOverview && !keyConcepts && !sectionBySection && !additionalInformation
+                && !helpfulVocabulary && !explainToFifthGrader && !conclusion)
+            throw new IllegalArgumentException("Need at least one summarization option to include");
 
+        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
         GeneratorConfig generatorConfig = Server.getServer().getConfig().getGeneratorConfig();
 
-        final String inPath = resource.getPath().toString();
-        final String outName = "session:output.md"; // always output to this file
+        // find all the input files
+        List<String> inputFiles = new ArrayList<>();
+        for (JsonElement e : files) {
+            String name = e.getAsString();
+            
+            if (name.startsWith("http://") || name.startsWith("https://")) {
+                URL url = new URL(name);
+                if (!url.getHost().equals("www.youtube.com"))
+                    throw new IllegalArgumentException("URL must be a YouTube video");
 
-        Resource outResource = resourceSystem.findResource(outName, permission);
-        String outPath = outResource.getPath().toString();
+                inputFiles.add(name);
+                continue;
+            }
+
+            Resource resource = resourceSystem.findResource(name, permission);
+            if (resource == null)
+                throw new NoSuchResourceException("Input resource not found: " + name);
+            inputFiles.add(FileUtils.getCanonicalPath(resource.getPath().toString()));
+        }
 
         String envPath = FileUtils.getCanonicalPath(generatorConfig.getEnv());
+
+        Resource outResource = resourceSystem.findResource(OUTPUT_RESOURCE, permission);
+        String outPath = FileUtils.getCanonicalPath(outResource.getPath().toString());
 
         // get directory of summarizer
         Path summarizerPath = new File(summarizer).toPath();
@@ -203,7 +226,7 @@ public class Generate implements Route {
         command.add(summarizer);
         command.add("--env");
         command.add(envPath);
-        command.add("verbose");
+        command.add("--verbose");
         command.add(Double.toString(verbosity));
         if (!generalOverview)
             command.add("--no_general_overview");
@@ -220,8 +243,10 @@ public class Generate implements Route {
         if (!conclusion)
             command.add("--no_conclusion");
 
-        command.add(inPath);
+        command.add("--out");
         command.add(outPath);
+
+        command.addAll(inputFiles);
 
         String[] commandArray = command.toArray(new String[command.size()]);
 

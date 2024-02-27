@@ -17,9 +17,12 @@ The body must be a JSON object with the following fields:
 | Name | Type | Contents |
 | ---- | ---- | ----------- |
 | `source` | `string` | The name of the summary resource to export. |
+| `data` | `string` | Explicitly specify the data to export. |
 | `exporter` | `string` | The exporter to use. |
 | `output` | `string` | A resource name to use when exporting to a local file. Optional. |
 | `remote` | `object` | Remote export location information. |
+
+Either `source` or `data` must be specified, but not both. If `source` is specified, the server will use the data associated with the resource. If `data` is specified, the server will use the markdown data provided. If neither is specified, the request fails.
 
 `exporter` is a case-insensitive `string` describing the type of export to perform. The following types are recognized:
 
