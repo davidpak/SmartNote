@@ -1,9 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 
+import { usePageContext } from '../contexts/PageContext';
+
 interface NavbarType extends React.HTMLAttributes<HTMLElement> {}
 
 const Navbar = ({ className, ...rest }: NavbarType) => {
+  const { home } = usePageContext();
+
   return (
     <nav
       className={twMerge(
@@ -13,7 +17,12 @@ const Navbar = ({ className, ...rest }: NavbarType) => {
       {...rest}
     >
       <div className='flex w-full items-center justify-between'>
-        <NavLink to='/' className='w-40 shrink-0' aria-label='Home'>
+        <NavLink
+          to='/'
+          className='w-40 shrink-0'
+          aria-label='Home'
+          onClick={home}
+        >
           <img src='/smartnote-logo.svg' alt='' />
         </NavLink>
 
@@ -26,6 +35,7 @@ const Navbar = ({ className, ...rest }: NavbarType) => {
                   isActive ? 'font-bold' : ''
                 }`
               }
+              onClick={home}
             >
               Home
             </NavLink>

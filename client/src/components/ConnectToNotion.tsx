@@ -34,6 +34,7 @@ const ConnectToNotion = ({
     const code = urlParams.get('code');
 
     if (code) {
+      next();
       exportNotes(code);
     }
   };
