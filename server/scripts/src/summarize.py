@@ -2,7 +2,7 @@ import sys
 import os
 from typing import Union, List
 from urllib.parse import urlparse
-from cmdline import Switch, parse_summarize
+import cmdline as cl
 
 from langchain_community.document_loaders import YoutubeLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
@@ -22,6 +22,22 @@ import textwrap
 
 embeddings = None
 
+def create_embeddings(options):
+    """
+    Create OpenAI embeddings.
+
+    Parameters:
+    - `options`: User-defined options.
+    """
+
+    global embeddings
+
+    if 'env' in options:
+        load_dotenv(options['env'])
+    else:
+        load_dotenv(find_dotenv())
+    embeddings = OpenAIEmbeddings()
+
 def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     """
     Create an FAISS index and list of documents from a YouTube video URL.
@@ -32,6 +48,8 @@ def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     Returns:
     A tuple containing the FAISS index and a list of documents.
     """
+    print("Create db from youtube video url")
+
     loader = YoutubeLoader.from_youtube_url(video_url)
     transcript = loader.load()
 
@@ -39,6 +57,9 @@ def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     docs = text_splitter.split_documents(transcript)
 
     db = FAISS.from_documents(docs, embeddings)
+    if db is None:
+        raise Exception("Failed to create FAISS index")
+
     return db, docs
 
 
@@ -91,6 +112,8 @@ def create_db_from_powerpoint_file(pptx_file: str) -> tuple[FAISS, List]:
     """
     global embeddings
 
+    print("Create db from powerpoint file")
+
     loader = UnstructuredPowerPointLoader(pptx_file)
     data = loader.load()
 
@@ -98,6 +121,9 @@ def create_db_from_powerpoint_file(pptx_file: str) -> tuple[FAISS, List]:
     docs = text_splitter.split_documents(data)
 
     db = FAISS.from_documents(docs, embeddings)
+    if db is None:
+        raise Exception("Failed to create FAISS index")
+
     return db, docs
 
 
@@ -113,6 +139,8 @@ def create_db_from_pdf(pdf_file: str) -> tuple[FAISS, List]:
     """
     global embeddings
 
+    print("Create db from pdf")
+
     loader = PyPDFLoader(pdf_file)
     pages = loader.load_and_split()
 
@@ -120,6 +148,9 @@ def create_db_from_pdf(pdf_file: str) -> tuple[FAISS, List]:
     docs = text_splitter.split_documents(pages)
 
     db = FAISS.from_documents(docs, embeddings)
+    if db is None:
+        raise Exception("Failed to create FAISS index")
+
     return db, docs
 
 
@@ -135,9 +166,12 @@ def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, Lis
     Returns:
     A tuple containing the response and a list of documents.
     """
+
+    print("Similarity search...")
     docs = db.similarity_search(query, k=k)
     docs_page_content = " ".join([d.page_content for d in docs])
 
+    print("Initializing chat model...")
     chat = ChatOpenAI(model_name="gpt-4", temperature=0.2)
 
     # Template to use for the system message prompt
@@ -163,45 +197,35 @@ def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, Lis
 
     chain = LLMChain(llm=chat, prompt=chat_prompt)
 
+    print("Running chat model...")
     response = chain.run(question=query, docs=docs_page_content)
     return response, docs
 
 
-def process_path(path: str, output: str, switches: dict) -> None:
+def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchValue]) -> None:
     """
     Process a path based on user-defined options.
 
     Parameters:
-    - `path`: Path to the input.
-    - `switches`: User-defined options.
+    - `inputs`: List of input paths.
+    - `output`: Output path.
     """
+
+    path = inputs[0] # for now, only one input
+
     _, ext = os.path.splitext(path)
 
-    args, options = parse_summarize(sys.argv[1:], switches)
-
-    if 'env' in options:
-        load_dotenv(options['env'])
-    else:
-        load_dotenv(find_dotenv())
-
-    global embeddings
-
     if ext == ".pptx":
-        embeddings = OpenAIEmbeddings()
-        db, docs = create_db_from_powerpoint_file(path)
+        create_embeddings(options)
+        db, _ = create_db_from_powerpoint_file(path)
     elif ext == ".pdf":
-        embeddings = OpenAIEmbeddings()
-        db, docs = create_db_from_pdf(path)
+        create_embeddings(options)
+        db, _ = create_db_from_pdf(path)
     elif is_youtube_link(path):
-        embeddings = OpenAIEmbeddings()
-        try:
-            db, docs = create_db_from_youtube_video_url(path)
-        except Exception as e:
-            print(f"Error processing YouTube link: {e}")
-            sys.exit(1)
+        create_embeddings(options)
+        db, _ = create_db_from_youtube_video_url(path)
     else:
-        print("Summarizer requires a YouTube video URL, PDF, or PowerPoint file.")
-        sys.exit(1)
+        raise Exception("Summarizer requires a YouTube video URL, PDF, or PowerPoint file.")
 
     # Linear interpolation for verbose switch
     verbosity_min = 300
@@ -278,30 +302,59 @@ def process_path(path: str, output: str, switches: dict) -> None:
 
             [Summarize the key takeaways or concluding remarks.]
         """
-    print(f"Query {query}")
+    # print(f"Query {query}")
 
-    response, docs = get_response_from_query(db, query)
+    response, _ = get_response_from_query(db, query)
 
+    print("Writing response to file...")
     with open(output, "w", encoding="utf-8") as file:
         file.write(response)
     print(f"Cleaned response has been saved to: {output}")
 
+def usage():
+    print("Usage: python summarize.py [options...] <output> [inputs...]")
+    print("Options:")
+    print("  --verbose <float>            Set verbosity level (default: 1.0)")
+    print("  --no_general_overview        Do not include general overview")
+    print("  --no_key_concepts            Do not include key concepts")
+    print("  --no_section_by_section      Do not include section by section breakdown")
+    print("  --no_additional_information  Do not include additional information")
+    print("  --no_helpful_vocabulary      Do not include helpful vocabulary")
+    print("  --no_explain_to_5th_grader   Do not include explain to 5th grader")
+    print("  --no_conclusion              Do not include conclusion")
+    print("  --env <path>                 Path to .env file")
+    print("  --out <path>                 Output file")
+    print("  --help                       Show this help message and exit")
+    return 0
 
 if __name__ == "__main__":
-    my_switches = [
-        Switch("verbose", short="v", type=float, value=1.0),
-        Switch("no_general_overview", short="g", type=bool, value=False),
-        Switch("no_key_concepts", short="k", type=bool, value=False),
-        Switch("no_section_by_section", short="s", type=bool, value=False),
-        Switch("no_additional_information", short="a", type=bool, value=False),
-        Switch("no_helpful_vocabulary", short="he", type=bool, value=False),
-        Switch("no_explain_to_5th_grader", short="f", type=bool, value=False),
-        Switch("no_conclusion", short="c", type=bool, value=False),
-        Switch("env", short="e", type=str, value=None)
+    switches = [
+        cl.Switch("verbose", type=float, value=1.0),
+        cl.Switch("no_general_overview", type=bool, value=False),
+        cl.Switch("no_key_concepts", type=bool, value=False),
+        cl.Switch("no_section_by_section", type=bool, value=False),
+        cl.Switch("no_additional_information", type=bool, value=False),
+        cl.Switch("no_helpful_vocabulary", type=bool, value=False),
+        cl.Switch("no_explain_to_5th_grader", type=bool, value=False),
+        cl.Switch("no_conclusion", type=bool, value=False),
+        cl.Switch("env", type=str),
+        cl.Switch("out", type=str),
+        cl.Switch("help", value=usage),
     ]
 
-    if len(sys.argv) < 3:
-        print("Usage: python script.py [options] <input> <output>")
-        sys.exit(1)
+    r = cl.parse(sys.argv, switches=switches)
+    if isinstance(r, int):
+        sys.exit(r)
 
-    process_path(sys.argv[-2], sys.argv[-1], my_switches)
+    args, options = r
+    if len(args) == 0:
+        raise Exception("No input files")
+    
+    if options["out"] is None:
+        raise Exception("No output file")
+
+    output = options["out"]
+    inputs = args
+
+    process_path(inputs, output, options)
+    sys.exit(0)
