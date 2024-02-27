@@ -14,6 +14,11 @@ import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
 
+/**
+ * <p>Specifies options for exporting data.</p>
+ * 
+ * @author Ethan Vrhel
+ */
 public class ExportOptions {
     private String source;
     private Exporter exporter;
@@ -42,7 +47,21 @@ public class ExportOptions {
         return data;
     }
 
+    /**
+     * Read input data from the source. If the data is already read, it will not be read again.
+     * If the data was explicitly set, it will be returned.
+     * 
+     * @param permission The permission to use.
+     * @return The input data.
+     * @throws InvalidPathException If the path is invalid.
+     * @throws NoSuchResourceException If the resource does not exist.
+     * @throws SecurityException If the resource is not accessible.
+     * @throws IOException If an I/O error occurs.
+     */
     public String readInputData(Permission permission) throws InvalidPathException, NoSuchResourceException, SecurityException, IOException {
+        if (data != null)
+            return this.data;
+
         ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
         Resource resource = resourceSystem.findResource(source, permission);
 
@@ -58,10 +77,18 @@ public class ExportOptions {
         return this.data;
     }
     
+    /**
+     * Parses the given options.
+     * 
+     * @param options The options to parse.
+     * @throws IllegalArgumentException If the options are invalid.
+     * @throws NoSuchElementException If the options are missing required elements.
+     */
     public void parse(JsonObject options) throws IllegalArgumentException, NoSuchElementException {
         source = getStringOrNull(options, "source");
-        if (source == null)
-            throw new IllegalArgumentException("source");
+        data = getStringOrNull(options, "data");
+        if (source == null && data == null)
+            throw new IllegalArgumentException("need source or data");
 
         String exporter = getStringOrNull(options, "exporter");
         if (exporter == null)
