@@ -13,6 +13,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from dotenv import find_dotenv, load_dotenv
+from PyPDF2 import PdfReader, PdfWriter
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
@@ -21,6 +22,7 @@ from langchain.prompts.chat import (
 import textwrap
 
 embeddings = None
+
 
 def create_embeddings(options):
     """
@@ -37,6 +39,7 @@ def create_embeddings(options):
     else:
         load_dotenv(find_dotenv())
     embeddings = OpenAIEmbeddings()
+
 
 def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     """
@@ -181,7 +184,7 @@ def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, Lis
 
         Only use the factual information from the transcript to answer the question.
 
-        If you feel like you don't have enough information to answer the question, say "I don't know".
+        
 
         """
 
@@ -202,6 +205,38 @@ def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, Lis
     return response, docs
 
 
+def merge_pdfs(input_pdfs: List[str], output_pdf: str):
+    """
+    Merge multiple PDFs into a single PDF.
+
+    Parameters:
+    - `input_pdfs`: List of paths to input PDFs.
+    - `output_pdf`: Path to the merged output PDF.
+    """
+    print("Detected multiple PDFs")
+    pdf_writer = PdfWriter()
+
+    for pdf_path in input_pdfs:
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_reader = PdfReader(pdf_file)
+            for page_num in range(len(pdf_reader.pages)):
+                pdf_writer.add_page(pdf_reader.pages[page_num])
+
+    with open(output_pdf, 'wb') as output_file:
+        pdf_writer.write(output_file)
+
+
+def extract_text_from_pdf(pdf_path):
+    with open(pdf_path, 'rb') as pdf_file:
+        pdf_reader = PdfReader(pdf_file)
+        num_pages = len(pdf_reader.pages)
+
+        for page_num in range(num_pages):
+            page = pdf_reader.pages[page_num]
+            text = page.extract_text()
+            print(f'Page {page_num + 1}:\n{text}\n{"-" * 50}\n')
+
+
 def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchValue]) -> None:
     """
     Process a path based on user-defined options.
@@ -210,8 +245,19 @@ def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchVal
     - `inputs`: List of input paths.
     - `output`: Output path.
     """
+    multiple_pdfs = False
 
-    path = inputs[0] # for now, only one input
+    # Merge PDFs if multiple input PDFs are provided
+    if len(inputs) > 1:
+        merged_pdf_path = "../test/combined.pdf"
+        merge_pdfs(inputs, merged_pdf_path)
+        inputs = [merged_pdf_path]
+        multiple_pdfs = True
+
+    """ DEBUGGING """
+    # extract_text_from_pdf(merged_pdf_path)
+
+    path = inputs[0]  # for now, only one input
 
     _, ext = os.path.splitext(path)
 
@@ -229,15 +275,18 @@ def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchVal
 
     # Linear interpolation for verbose switch
     verbosity_min = 300
-    verbosity_max = 700
+    verbosity_max = 1000
     verbosity = verbosity_min + (options["verbose"] * (verbosity_max - verbosity_min))
     query = f"Take notes on this video/PDF/PowerPoint in this format. Limit the output to {int(verbosity)} words. Make sure that you properly newline throughout the page: """
+
+    if multiple_pdfs:
+        query += "This PDF contains information from multiple PDFs. Make sure to understand information about all of them and to generate notes based on the content of all the PDFs"
 
     query += """# [Title]"""
 
     if not options["no_general_overview"]:
         query += """
-        ## General Overview 
+        ## General Overview
         [Provide a brief summary or introduction of the topic.]
         """
     if not options["no_key_concepts"]:
@@ -311,6 +360,7 @@ def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchVal
         file.write(response)
     print(f"Cleaned response has been saved to: {output}")
 
+
 def usage():
     print("Usage: python summarize.py [options...] <output> [inputs...]")
     print("Options:")
@@ -326,6 +376,7 @@ def usage():
     print("  --out <path>                 Output file")
     print("  --help                       Show this help message and exit")
     return 0
+
 
 if __name__ == "__main__":
     switches = [
@@ -349,7 +400,7 @@ if __name__ == "__main__":
     args, options = r
     if len(args) == 0:
         raise Exception("No input files")
-    
+
     if options["out"] is None:
         raise Exception("No output file")
 
