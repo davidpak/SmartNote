@@ -59,6 +59,7 @@ const Dropzone = ({
             'dropzone px-8 py-12 border border-dashed border-neutral-300 rounded-3xl text-center',
         })}
         tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className='flex flex-col items-center gap-4'>
           <Upload size={40} className='text-neutral-500' aria-hidden />
