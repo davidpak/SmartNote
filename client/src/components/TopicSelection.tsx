@@ -8,13 +8,10 @@ import Markdown from 'react-markdown';
 import H2 from './H2';
 import H3 from './H3';
 import Button from './Button';
-import Sidebar from './Sidebar';
-import { File } from './Sidebar';
 import jsonFile from './example.json';
 import mdFile from './output.md';
 
 interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
-  files: File[];
   prev: () => void;
   next: () => void;
 }
@@ -60,14 +57,11 @@ interface HeadingType {
 }
 
 const TopicSelection = ({
-  files,
   prev,
   next,
   className,
   ...rest
 }: TopicSelectionType) => {
-  const [fileIndex, setFileIndex] = useState<number>(0); // keep track of which file is selected
-
   const originalMd = useRef(''); // store the original markdown
   const [markdown, setMarkdown] = useState(''); // keep track of the updated markdown
 
@@ -230,12 +224,6 @@ const TopicSelection = ({
       </Button>
       <H2 className='text-center'>Select Topics to Include</H2>
       <section className='flex bg-neutral-100 max-w-5xl'>
-        <Sidebar
-          files={files}
-          activeIndex={fileIndex}
-          selectFile={(index) => setFileIndex(index)}
-          className='border-neutral-400 border-r-2 pr-1 pt-5'
-        />
         <section className='border-neutral-400 border-r-2 px-2 py-3'>
           <H3 className='text-base self-center pl-3 mb-2 pt-2'>Breakdown</H3>
           <CheckTree
