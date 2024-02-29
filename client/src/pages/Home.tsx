@@ -1,42 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import FileUpload from '../components/FileUpload';
 import Customization from '../components/Customization';
 import TopicSelection from '../components/TopicSelection';
 import ConnectToNotion from '../components/ConnectToNotion';
 import ExportSuccess from '../components/ExportSuccess';
+import { usePageContext } from '../contexts/PageContext';
 
 const Home = () => {
   const [fileList, setFileList] = useState<string[]>([]);
+  const { pageIndex, next, prev, home } = usePageContext();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [index, setIndex] = useState<number>(() => {
-    const i = localStorage.getItem('index');
-    return i ? parseInt(i, 10) : 0;
-  });
+  useEffect(() => {
+    if (searchParams.has('code')) {
+      searchParams.delete('code');
+    }
 
-  const next = () => {
-    setIndex((prevIndex) => {
-      const newIndex = prevIndex + 1;
-      localStorage.setItem('index', newIndex.toString());
-      return newIndex;
-    });
-  };
-
-  const prev = () => {
-    setIndex((prevIndex) => {
-      const newIndex = prevIndex - 1;
-      localStorage.setItem('index', newIndex.toString());
-      return newIndex;
-    });
-  };
-
-  const goHome = () => {
-    setIndex(0);
-    localStorage.setItem('index', '0');
-  };
+    if (searchParams.has('state')) {
+      searchParams.delete('state');
+      setSearchParams(searchParams);
+    }
+  }, []);
 
   const renderPage = () => {
-    switch (index) {
+    switch (pageIndex) {
       case 0:
         return (
           <FileUpload
@@ -51,9 +40,9 @@ const Home = () => {
       case 3:
         return <ConnectToNotion prev={prev} next={next} />;
       case 4:
-        return <ExportSuccess prev={prev} goHome={goHome} />;
+        return <ExportSuccess prev={prev} goHome={home} />;
       default:
-        goHome();
+        home();
         return null;
     }
   };

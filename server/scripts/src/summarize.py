@@ -23,7 +23,6 @@ import textwrap
 
 embeddings = None
 
-
 def create_embeddings(options):
     """
     Create OpenAI embeddings.
@@ -39,7 +38,6 @@ def create_embeddings(options):
     else:
         load_dotenv(find_dotenv())
     embeddings = OpenAIEmbeddings()
-
 
 def create_db_from_youtube_video_url(video_url: str) -> tuple[FAISS, List]:
     """
@@ -204,7 +202,6 @@ def get_response_from_query(db: FAISS, query: str, k: int = 4) -> tuple[str, Lis
     response = chain.run(question=query, docs=docs_page_content)
     return response, docs
 
-
 def merge_pdfs(input_pdfs: List[str], output_pdf: str):
     """
     Merge multiple PDFs into a single PDF.
@@ -236,7 +233,6 @@ def extract_text_from_pdf(pdf_path):
             text = page.extract_text()
             print(f'Page {page_num + 1}:\n{text}\n{"-" * 50}\n')
 
-
 def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchValue]) -> None:
     """
     Process a path based on user-defined options.
@@ -245,6 +241,7 @@ def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchVal
     - `inputs`: List of input paths.
     - `output`: Output path.
     """
+
     multiple_pdfs = False
 
     # Merge PDFs if multiple input PDFs are provided
@@ -360,6 +357,21 @@ def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchVal
         file.write(response)
     print(f"Cleaned response has been saved to: {output}")
 
+def usage():
+    print("Usage: python summarize.py [options...] <output> [inputs...]")
+    print("Options:")
+    print("  --verbose <float>            Set verbosity level (default: 1.0)")
+    print("  --no_general_overview        Do not include general overview")
+    print("  --no_key_concepts            Do not include key concepts")
+    print("  --no_section_by_section      Do not include section by section breakdown")
+    print("  --no_additional_information  Do not include additional information")
+    print("  --no_helpful_vocabulary      Do not include helpful vocabulary")
+    print("  --no_explain_to_5th_grader   Do not include explain to 5th grader")
+    print("  --no_conclusion              Do not include conclusion")
+    print("  --env <path>                 Path to .env file")
+    print("  --out <path>                 Output file")
+    print("  --help                       Show this help message and exit")
+    return 0
 
 def usage():
     print("Usage: python summarize.py [options...] <output> [inputs...]")

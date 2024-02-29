@@ -23,14 +23,18 @@ const FileUpload = ({
 
   useEffect(() => {
     const login = async () => {
-      const res = await fetch('http://localhost:4567/api/v1/login', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error('HTTP error ' + res.status);
+      try {
+        const res = await fetch('http://localhost:4567/api/v1/login', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          throw new Error('HTTP error ' + res.status);
+        }
+        setIsLoggedIn(true);
+      } catch (e) {
+        console.error(e);
       }
-      setIsLoggedIn(true);
     };
     if (!isLoggedIn) {
       login();
