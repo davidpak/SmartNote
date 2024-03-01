@@ -24,12 +24,30 @@ const Customization = ({
   ...rest
 }: CustomizationType) => {
   const [verbosity, setVerbosity] = useState(0.0);
+  const [hasOverview, setHasOverview] = useState(false);
+  const [hasKeyConcepts, setHasKeyConcepts] = useState(false);
+  const [hasSections, setHasSections] = useState(false);
+  const [hasAdditionalInfo, setHasAdditionalInfo] = useState(false);
+  const [hasVocab, setHasVocab] = useState(false);
+  const [hasSimpleExplanation, setHasSimpleExplanation] = useState(false);
+  const [hasConclusion, setHasConclusion] = useState(false);
 
   async function generateNotes() {
     const options = {
-      general: { files: files },
+      general: {
+        files: files,
+        includeJson: true,
+        includeMarkdown: true,
+      },
       llm: {
         verbosity: verbosity,
+        generalOverview: hasOverview,
+        keyConcepts: hasKeyConcepts,
+        sectionBySection: hasSections,
+        additionalInformation: hasAdditionalInfo,
+        helpfulVocabulary: hasVocab,
+        explainToFifthGrader: hasSimpleExplanation,
+        conclusion: hasConclusion,
       },
     };
 
@@ -80,12 +98,13 @@ const Customization = ({
         <div className='flex gap-52'>
           <div className='flex flex-col gap-3'>
             <H3>Content to Include:</H3>
-            <Toggle label='General Overview' />
-            <Toggle label='Key Concepts' />
-            <Toggle label='Sections Breakdown' />
-            <Toggle label='Vocab Words' />
-            <Toggle label='5th Grader Explanation' />
-            <Toggle label='Conclusion' />
+            <Toggle label='General Overview' updateToggle={setHasOverview} />
+            <Toggle label='Key Concepts' updateToggle={setHasKeyConcepts} />
+            <Toggle label='Sections Breakdown' updateToggle={setHasSections} />
+            <Toggle label='Additional Information' updateToggle={setHasAdditionalInfo} />
+            <Toggle label='Vocab Words' updateToggle={setHasVocab} />
+            <Toggle label='5th Grader Explanation' updateToggle={setHasSimpleExplanation} />
+            <Toggle label='Conclusion' updateToggle={setHasConclusion} />
           </div>
           <div className='flex flex-col gap-3'>
             <H3>Additional Customization:</H3>
@@ -112,6 +131,7 @@ const Customization = ({
             '/general-overview-ex.png',
             '/key-concepts-ex.png',
             '/section-breakdown-ex.png',
+            '/additional-info-ex.png',
             '/vocab-ex.png',
             '/5th-grader-ex.png',
             '/conclusion-ex.png',
@@ -120,6 +140,7 @@ const Customization = ({
             'General Overview:',
             'Key Concepts:',
             'Sections Breakdown:',
+            'Additional Information:',
             'Vocab words:',
             '5th Grader Explanation:',
             'Conclusion:',
@@ -128,6 +149,7 @@ const Customization = ({
             'A top-level breakdown that captures a succinct summary of the uploaded file contents.',
             'Highlight the top concepts present with a brief summary.',
             'The core content breakdown, the bread and butter of your notes.',
+            'Extra information that might be of interest to you.',
             'Capture vocabulary words and definitions in a convenient and concise manner.',
             'An intuitive and easy-to-comprehend summary.',
             'Finish off your notes with a comprehensive, succinct conclusion.',

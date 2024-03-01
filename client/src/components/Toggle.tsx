@@ -4,9 +4,10 @@ import { twMerge } from 'tailwind-merge';
 
 interface ToggleType extends React.HTMLAttributes<HTMLLabelElement> {
   label: string;
+  updateToggle: (checked: boolean) => void;
 }
 
-const Toggle = ({ label, className, ...rest }: ToggleType) => {
+const Toggle = ({ label, updateToggle, className, ...rest }: ToggleType) => {
   const [enabled, setEnabled] = useState(false);
 
   return (
@@ -20,7 +21,10 @@ const Toggle = ({ label, className, ...rest }: ToggleType) => {
       {label}
       <Switch
         checked={enabled}
-        onChange={setEnabled}
+        onChange={(value) => {
+          setEnabled(value);
+          updateToggle(value);
+        }}
         className={`${
           enabled ? 'bg-accent' : 'bg-neutral-300'
         } relative inline-flex h-6 w-12 items-center rounded-full shrink-0`}

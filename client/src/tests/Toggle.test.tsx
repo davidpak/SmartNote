@@ -13,7 +13,13 @@ componentSmokeTest({
   },
 });
 
-const toggle = <Toggle label='Key Concepts' data-testid='toggle-test'/>;
+const toggle = (
+  <Toggle
+    label='Key Concepts'
+    updateToggle={() => {}}
+    data-testid='toggle-test'
+  />
+);
 
 it('should render with correct label', () => {
   render(toggle);
