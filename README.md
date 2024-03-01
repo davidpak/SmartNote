@@ -176,6 +176,7 @@ This command will discover and run all tests in the project.
 - [React](https://react.dev/) - Used for creating user interface components.
 - [React Dropzone](https://react-dropzone.js.org/) - Used to create Dropzone component.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
+- [react-markdown](https://www.npmjs.com/package/react-markdown) - Used to convert Markdown text to HTML elements.
 - [React Router](https://reactrouter.com/en/main) - Used for client-side routing.
 - [React Suite](https://rsuitejs.com/) - Used for UI component, specifically a Checkbox Tree.
 - [React Truncate Inside](https://www.npmjs.com/package/react-truncate-inside) - Used to truncate filenames.
