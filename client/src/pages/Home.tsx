@@ -3,15 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 
 import FileUpload from '../components/FileUpload';
 import Customization from '../components/Customization';
-import TopicSelection from '../components/TopicSelection';
+import TopicSelection, { JsonType } from '../components/TopicSelection';
 import ConnectToNotion from '../components/ConnectToNotion';
 import ExportSuccess from '../components/ExportSuccess';
+import Loading from '../components/Loading';
 import { usePageContext } from '../contexts/PageContext';
 
 const Home = () => {
-  const [fileList, setFileList] = useState<string[]>([]);
   const { pageIndex, next, prev, home } = usePageContext();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [fileList, setFileList] = useState<string[]>([]);
+  const [md, setMd] = useState<string>('');
+  const [json, setJson] = useState<JsonType>();
 
   useEffect(() => {
     if (searchParams.has('code')) {
@@ -34,9 +37,21 @@ const Home = () => {
           />
         );
       case 1:
-        return <Customization files={fileList} prev={prev} next={next} />;
+        return (
+          <Customization
+            files={fileList}
+            prev={prev}
+            next={next}
+            setMd={(md: string) => setMd(md)}
+            setJson={(json: JsonType) => setJson(json)}
+          />
+        );
       case 2:
-        return <TopicSelection files={[]} prev={prev} next={next} />;
+        return md && json ? (
+          <TopicSelection prev={prev} next={next} md={md} json={json} />
+        ) : (
+          <Loading prev={prev} />
+        );
       case 3:
         return <ConnectToNotion prev={prev} next={next} />;
       case 4:

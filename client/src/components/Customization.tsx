@@ -1,5 +1,6 @@
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
+import { useState } from 'react';
 
 import H2 from './H2';
 import H3 from './H3';
@@ -8,18 +9,22 @@ import Button from './Button';
 import Toggle from './Toggle';
 import Slider from './Slider';
 import Carousel from './Carousel';
-import { useState } from 'react';
+import { JsonType } from './TopicSelection';
 
 interface CustomizationType extends React.HTMLAttributes<HTMLDivElement> {
   files: string[];
   prev: () => void;
   next: () => void;
+  setMd: (md: string) => void;
+  setJson: (json: JsonType) => void;
 }
 
 const Customization = ({
   files,
   prev,
   next,
+  setMd,
+  setJson,
   className,
   ...rest
 }: CustomizationType) => {
@@ -67,7 +72,8 @@ const Customization = ({
       }
 
       const data = await res.json();
-      console.log(data);
+      setMd(data.markdown);
+      setJson(data.result.children);
     } catch (error) {
       console.error(error);
     }
@@ -101,9 +107,15 @@ const Customization = ({
             <Toggle label='General Overview' updateToggle={setHasOverview} />
             <Toggle label='Key Concepts' updateToggle={setHasKeyConcepts} />
             <Toggle label='Sections Breakdown' updateToggle={setHasSections} />
-            <Toggle label='Additional Information' updateToggle={setHasAdditionalInfo} />
+            <Toggle
+              label='Additional Information'
+              updateToggle={setHasAdditionalInfo}
+            />
             <Toggle label='Vocab Words' updateToggle={setHasVocab} />
-            <Toggle label='5th Grader Explanation' updateToggle={setHasSimpleExplanation} />
+            <Toggle
+              label='5th Grader Explanation'
+              updateToggle={setHasSimpleExplanation}
+            />
             <Toggle label='Conclusion' updateToggle={setHasConclusion} />
           </div>
           <div className='flex flex-col gap-3'>

@@ -1,0 +1,25 @@
+import { ScanSpinner } from 'react-craftify-spinners';
+import { IoMdArrowBack as Arrow } from 'react-icons/io';
+
+import Button from './Button';
+
+const Loading = ({ prev }: { prev: () => void }) => {
+  return (
+    <div className='max-w-48 m-auto'>
+      <Button
+        icon={Arrow}
+        variant='tertiary'
+        className='absolute left-16'
+        onClick={() => prev()}
+      >
+        Back
+      </Button>
+      <div className='flex flex-col items-center gap-3 text-center py-20'>
+        <ScanSpinner />
+        <p>Generating your notes...</p>
+      </div>
+    </div>
+  );
+};
+
+export default Loading;
