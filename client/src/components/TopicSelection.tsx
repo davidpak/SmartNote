@@ -187,13 +187,15 @@ const TopicSelection = ({
   }
 
   function removeText(originalText: string, textToRemove: string): string {
-    // find where textToRemove start & go back a few chars to also remove its markdown syntax
-    // it's ok if it's negative since substring() will clamp it to 0 if it is
-    let startIndex = originalText.indexOf(textToRemove) - 4;
+    // find where textToRemove starts including its markdown syntax
+    // start to remove text after the last line break of the text before the text to remove
+    let textBefore = originalText.substring(0, originalText.indexOf(textToRemove));
+    let newLineIndex = textBefore.lastIndexOf('\n');
+    let startIndex = newLineIndex + 1;
 
-    // find where textToRemove end (i.e. where next topic start)
-    const nextHeadingIndex = originalText.substring(startIndex + 4).indexOf('#');
-    const nextBulletIndex = originalText.substring(startIndex + 4).indexOf('- *');
+    // find where textToRemove ends (i.e. where next topic starts)
+    const nextHeadingIndex = originalText.substring(startIndex + 4).indexOf('##');
+    const nextBulletIndex = originalText.substring(startIndex + 4).indexOf('- **');
     let endIndex = startIndex + 4;
     if (nextHeadingIndex === -1 && nextBulletIndex === -1) { // no next topic
       endIndex = originalText.length;
