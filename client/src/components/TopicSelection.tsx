@@ -13,7 +13,7 @@ interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
   prev: () => void;
   next: () => void;
   md: string;
-  json: any;
+  json: JsonType;
 }
 
 export type JsonType = (
