@@ -11,6 +11,9 @@ import java.util.jar.Manifest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.smartnote.server.api.v1.Export;
 import com.smartnote.server.api.v1.Fetch;
 import com.smartnote.server.api.v1.Generate;
@@ -202,6 +205,17 @@ public class Server {
         sessionManager.forceGc();
     }
 
+    private void addDebugInfo(Exception e, JsonObject r) {
+        r.addProperty("type", e.getClass().getName());
+        r.addProperty("info", e.getMessage());
+        
+        JsonArray stackArray = new JsonArray();
+        for (StackTraceElement element : e.getStackTrace())
+            stackArray.add(element.toString());
+
+        r.add("stacktrace", stackArray);
+    }
+
     // Initializes the networking stuff (Spark)
     private void initNetworking() {
         ServerConfig serverConfig = config.getServerConfig();
@@ -210,12 +224,26 @@ public class Server {
         exception(Exception.class, (e, req, res) -> {
             e.printStackTrace();
             res.status(500);
-            res.body("{\"message\":\"Internal server error\"}");
+
+            JsonObject result = new JsonObject();
+            result.addProperty("message", "Internal server error");
+
+            boolean debug = config.getServerConfig().getDebug();
+            if (debug) addDebugInfo(e, result);
+
+            res.body(new Gson().toJson(result));
         });
 
         exception(UnsupportedOperationException.class, (e, req, res) -> {
             res.status(501);
-            res.body("{\"message\":\"Unsupported operation\"}");
+            
+            JsonObject result = new JsonObject();
+            result.addProperty("message", "Unsupported operation");
+            
+            boolean debug = config.getServerConfig().getDebug();
+            if (debug) addDebugInfo(e, result);
+
+            res.body(new Gson().toJson(result));
         });
 
         port(serverConfig.getPort());

@@ -32,6 +32,7 @@ Either `source` or `data` must be specified, but not both. If `source` is specif
 | `rtf` | Exports to a Rich Text Format (RTF) file. |
 | `json` | Exports to a JSON file. |
 | `md` | Exports to a Markdown file. |
+| `txt` | Exports to a plain text file. |
 
 `output` is a `string` containing the name of the export resource to write to. The resource will be overwritten if it already exists. The resource will be associated with the client's session and can be fetched using the [`fetch`](FETCH.md) RPC. If `output` is not specified, the server will generate a unique name for the resource which will be returned in the response body. This has special behavior if the export type is remote.
 

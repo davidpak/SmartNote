@@ -21,6 +21,7 @@ import com.smartnote.server.util.JSONObjectSerializable;
  */
 public abstract class MarkdownNode implements JSONObjectSerializable {
     private MarkdownNode[] children;
+    private MarkdownNode parent;
 
     /**
      * Constructs a new MarkdownNode.
@@ -30,8 +31,10 @@ public abstract class MarkdownNode implements JSONObjectSerializable {
     public MarkdownNode(List<MarkdownNode> children) {
         if (children != null) {
             this.children = new MarkdownNode[children.size()];
-            for (int i = 0; i < children.size(); i++)
+            for (int i = 0; i < children.size(); i++) {
                 this.children[i] = children.get(i);
+                this.children[i].parent = this;
+            }
         } else {
             this.children = new MarkdownNode[0];
         }
@@ -42,6 +45,15 @@ public abstract class MarkdownNode implements JSONObjectSerializable {
      */
     public MarkdownNode() {
         this(null);
+    }
+
+    /**
+     * Returns the parent of the node.
+     * 
+     * @return The parent of the node.
+     */
+    public MarkdownNode getParent() {
+        return parent;
     }
 
     /**
