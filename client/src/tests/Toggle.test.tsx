@@ -26,14 +26,14 @@ it('should render with correct label', () => {
   expect(screen.getByLabelText('Key Concepts')).toHaveTextContent('Key Concepts');
 });
 
-it('should render toggle - default off', () => {
+it('should render toggle - default on', () => {
   render(toggle);
-  expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
+  expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
 });
 
 it('should update value when toggling', () => {
   render(toggle);
   const elt = screen.getByRole('switch');
   fireEvent.click(elt);
-  expect(elt).toHaveAttribute('aria-checked', 'true');
+  expect(elt).toHaveAttribute('aria-checked', 'false');
 });

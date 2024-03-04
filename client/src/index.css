@@ -102,3 +102,8 @@ h6 {
 ::-webkit-slider-thumb {
   border-radius: 50px;
 }
+
+.rs-check-item,
+.rs-check-tree-node-label-content {
+  width: 100% !important;
+}
