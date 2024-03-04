@@ -152,7 +152,11 @@ const TopicSelection = ({
           const itemChild = item.children[0].children[0];
 
           // only want the bolded heading of each subtopic
-          if (isTextType(itemChild) && itemChild.style && itemChild.style.bold === true) {
+          if (
+            isTextType(itemChild) &&
+            itemChild.style &&
+            itemChild.style.bold === true
+          ) {
             const node = {
               value: removeColon(itemChild.literal),
               label: removeColon(itemChild.literal),
