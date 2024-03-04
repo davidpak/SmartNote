@@ -18,7 +18,6 @@ interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
 
 export type JsonType = (
   | TextType
-  | EmphasisType
   | ParagraphType
   | ListItemType
   | BulletListType
@@ -31,21 +30,22 @@ interface NodeType {
   children?: NodeType[];
 }
 
+interface Style {
+  bold?: boolean;
+  italic?: boolean;
+  code?: boolean;
+  href?: boolean;
+}
+
 interface TextType {
   type: string;
   literal: string;
-}
-
-interface EmphasisType {
-  type: string;
-  openingDelimeter: string;
-  closingDelimeter: string;
-  children: TextType[];
+  style?: Style;
 }
 
 interface ParagraphType {
   type: string;
-  children: (EmphasisType | TextType)[];
+  children: TextType[];
 }
 
 interface ListItemType {
@@ -106,8 +106,16 @@ const TopicSelection = ({
     return 'level' in object;
   }
 
-  function isEmphasisType(object: any): object is EmphasisType {
-    return 'openingDelimeter' in object;
+  function isTextType(object: any): object is TextType {
+    return 'literal' in object;
+  }
+
+  function removeColon(text: string) {
+    // remove : if any bc it doesn't look nice
+    if (text.charAt(text.length - 1) === ':') {
+      return text.substring(0, text.length - 1);
+    }
+    return text;
   }
 
   const data: NodeType[] = [];
@@ -120,8 +128,8 @@ const TopicSelection = ({
     for (let entry of entries) {
       if (isHeadingType(entry)) {
         const node = {
-          value: entry.children[0].literal,
-          label: entry.children[0].literal,
+          value: removeColon(entry.children[0].literal),
+          label: removeColon(entry.children[0].literal),
         };
 
         if (entry.level == 1 || entry.level == 2) {
@@ -141,15 +149,16 @@ const TopicSelection = ({
         const listItems: ListItemType[] = (entry as BulletListType).children;
         const children: NodeType[] = [];
         for (let item of listItems) {
-          const itemChildren = item.children;
-          if (!isEmphasisType(itemChildren[0].children[0])) {
-            break;
+          const itemChild = item.children[0].children[0];
+
+          // only want the bolded heading of each subtopic
+          if (isTextType(itemChild) && itemChild.style && itemChild.style.bold === true) {
+            const node = {
+              value: removeColon(itemChild.literal),
+              label: removeColon(itemChild.literal),
+            };
+            children.push(node);
           }
-          const node = {
-            value: itemChildren[0].children[0].children[0].literal,
-            label: itemChildren[0].children[0].children[0].literal,
-          };
-          children.push(node);
         }
         if (children.length != 0) {
           parentNode.children = children;
@@ -202,7 +211,6 @@ const TopicSelection = ({
     let newLineIndex = textBefore.lastIndexOf('\n');
     let startIndex = newLineIndex + 1;
 
-    // find where textToRemove end (i.e. where next topic start)
     // find where textToRemove ends (i.e. where next topic starts)
     const nextHeadingIndex = originalText
       .substring(startIndex + 4)
