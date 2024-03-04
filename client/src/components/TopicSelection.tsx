@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { CheckTree } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
@@ -8,13 +8,21 @@ import Markdown from 'react-markdown';
 import H2 from './H2';
 import H3 from './H3';
 import Button from './Button';
-import jsonFile from './example.json';
-import mdFile from './output.md';
 
 interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
   prev: () => void;
   next: () => void;
+  md: string;
+  json: JsonType;
 }
+
+export type JsonType = (
+  | TextType
+  | ParagraphType
+  | ListItemType
+  | BulletListType
+  | HeadingType
+)[];
 
 interface NodeType {
   value: string;
@@ -22,21 +30,22 @@ interface NodeType {
   children?: NodeType[];
 }
 
+interface Style {
+  bold?: boolean;
+  italic?: boolean;
+  code?: boolean;
+  href?: boolean;
+}
+
 interface TextType {
   type: string;
   literal: string;
-}
-
-interface EmphasisType {
-  type: string;
-  openingDelimeter: string;
-  closingDelimeter: string;
-  children: TextType[];
+  style?: Style;
 }
 
 interface ParagraphType {
   type: string;
-  children: (EmphasisType | TextType)[];
+  children: TextType[];
 }
 
 interface ListItemType {
@@ -59,20 +68,13 @@ interface HeadingType {
 const TopicSelection = ({
   prev,
   next,
+  md,
+  json,
   className,
   ...rest
 }: TopicSelectionType) => {
-  const originalMd = useRef(''); // store the original markdown
-  const [markdown, setMarkdown] = useState(''); // keep track of the updated markdown
-
-  useEffect(() => {
-    fetch(mdFile)
-      .then(res => res.text())
-      .then(text => {
-        originalMd.current = text;
-        setMarkdown(text);
-      });
-  }, []);
+  const originalMd = useRef(md); // store the original markdown
+  const [markdown, setMarkdown] = useState(md); // keep track of the updated markdown
 
   // export back the markdown file to server
   async function exportNotes() {
@@ -80,7 +82,7 @@ const TopicSelection = ({
       const body = {
         data: markdown,
         exporter: 'md',
-        output: 'notes1.md' // name of the export resource to write to
+        output: 'notes1.md', // name of the export resource to write to
       };
 
       const res = await fetch('http://localhost:4567/api/v1/export', {
@@ -95,7 +97,6 @@ const TopicSelection = ({
       }
 
       const data = await res.json();
-      console.log(data);
     } catch (error) {
       console.error(error);
     }
@@ -105,47 +106,63 @@ const TopicSelection = ({
     return 'level' in object;
   }
 
-  function isEmphasisType(object: any): object is EmphasisType {
-    return 'openingDelimeter' in object;
+  function isTextType(object: any): object is TextType {
+    return 'literal' in object;
+  }
+
+  function removeColon(text: string) {
+    // remove : if any bc it doesn't look nice
+    if (text.charAt(text.length - 1) === ':') {
+      return text.substring(0, text.length - 1);
+    }
+    return text;
   }
 
   const data: NodeType[] = [];
   function parseJson() {
-    const entries = jsonFile.children;
+    const entries = json;
 
     // keep track of which node we need to add children to next
-    let parentNode: NodeType = {value: '', label: ''};
+    let parentNode: NodeType = { value: '', label: '' };
 
     for (let entry of entries) {
       if (isHeadingType(entry)) {
         const node = {
-          value: entry.children[0].literal,
-          label: entry.children[0].literal,
+          value: removeColon(entry.children[0].literal),
+          label: removeColon(entry.children[0].literal),
         };
 
-        if (entry.level == 1 || entry.level == 2) { // parent topics
+        if (entry.level == 1 || entry.level == 2) {
+          // parent topics
           data.push(node);
           parentNode = node;
-        } else if (entry.level == 3) { // children topics (in "Section by Section Breakdown")
+        } else if (entry.level == 3) {
+          // children topics (in "Section by Section Breakdown")
           if (parentNode.children) {
             parentNode.children.push(node);
           } else {
             parentNode.children = [node];
           }
         }
-      } else if (entry.type === 'bulletList' && entry.bulletMarker === '-') { // children topics
-        const listItems: ListItemType[] = entry.children;
+      } else if (entry.type === 'bulletList') {
+        // children topics
+        const listItems: ListItemType[] = (entry as BulletListType).children;
         const children: NodeType[] = [];
         for (let item of listItems) {
-          const itemChildren = item.children;
-          if (!isEmphasisType(itemChildren[0].children[0])) {
-            break;
+          const itemChild = item.children[0].children[0];
+
+          // only want the bolded heading of each subtopic
+          if (
+            isTextType(itemChild) &&
+            itemChild.style &&
+            itemChild.style.bold === true
+          ) {
+            const node = {
+              value: removeColon(itemChild.literal),
+              label: removeColon(itemChild.literal),
+            };
+            children.push(node);
           }
-          const node = {
-            value: itemChildren[0].children[0].children[0].literal,
-            label: itemChildren[0].children[0].children[0].literal,
-          };
-          children.push(node);
         }
         if (children.length != 0) {
           parentNode.children = children;
@@ -157,7 +174,9 @@ const TopicSelection = ({
 
   // keep track of which boxes/topics are selected, all selected on default
   // selectedTopics type is string[] but use (string | number)[] to align with CheckTree type
-  const [selectedTopics, setSelectedTopics] = useState<(string | number)[]>(data.map((node) => node.value));
+  const [selectedTopics, setSelectedTopics] = useState<(string | number)[]>(
+    data.map((node) => node.value)
+  );
 
   function getNotSelectedTopics(selectedTopics: (string | number)[]) {
     const topicsNotSelected: string[] = [];
@@ -189,21 +208,33 @@ const TopicSelection = ({
   function removeText(originalText: string, textToRemove: string): string {
     // find where textToRemove starts including its markdown syntax
     // start to remove text after the last line break of the text before the text to remove
-    let textBefore = originalText.substring(0, originalText.indexOf(textToRemove));
+    let textBefore = originalText.substring(
+      0,
+      originalText.indexOf(textToRemove)
+    );
     let newLineIndex = textBefore.lastIndexOf('\n');
     let startIndex = newLineIndex + 1;
 
     // find where textToRemove ends (i.e. where next topic starts)
-    const nextHeadingIndex = originalText.substring(startIndex + 4).indexOf('##');
-    const nextBulletIndex = originalText.substring(startIndex + 4).indexOf('- **');
+    const nextHeadingIndex = originalText
+      .substring(startIndex + 4)
+      .indexOf('##');
+    const nextBulletIndex = originalText
+      .substring(startIndex + 4)
+      .indexOf('- **');
+
     let endIndex = startIndex + 4;
-    if (nextHeadingIndex === -1 && nextBulletIndex === -1) { // no next topic
+    if (nextHeadingIndex === -1 && nextBulletIndex === -1) {
+      // no next topic
       endIndex = originalText.length;
-    } else if (nextHeadingIndex === -1) { // only sub topic left
+    } else if (nextHeadingIndex === -1) {
+      // only sub topic left
       endIndex += nextBulletIndex;
-    } else if (nextBulletIndex === -1) { // only big topic left
+    } else if (nextBulletIndex === -1) {
+      // only big topic left
       endIndex += nextHeadingIndex;
-    } else { // get the closest next topic
+    } else {
+      // get the closest next topic
       endIndex += Math.min(nextHeadingIndex, nextBulletIndex);
     }
 
@@ -244,23 +275,28 @@ const TopicSelection = ({
             showIndentLine
           />
         </section>
-        <section className='h-96 p-5 overflow-auto'>
+        <section className='h-96 p-5'>
           <H3 className='text-base mb-2'>Output Preview</H3>
           <Markdown
-            className='flex flex-col bg-white p-6 gap-3'
+            className='flex flex-col bg-white p-6 gap-3 overflow-scroll max-h-full'
             components={{
               h1: H3,
               h2(props) {
-                const {node, ...rest} = props
-                return <H3 className='text-base mb-2' {...rest} />
+                const { node, ...rest } = props;
+                return <H3 className='text-base mb-2' {...rest} />;
               },
               h3(props) {
-                const {node, ...rest} = props
-                return <p className='font-bold' {...rest} />
+                const { node, ...rest } = props;
+                return <p className='font-bold' {...rest} />;
               },
               ul(props) {
-                const {node, ...rest} = props
-                return <ul className='list-disc pl-6 flex flex-col gap-3' {...rest} />
+                const { node, ...rest } = props;
+                return (
+                  <ul
+                    className='list-disc pl-6 flex flex-col gap-3'
+                    {...rest}
+                  />
+                );
               },
             }}
           >

@@ -139,6 +139,7 @@ From within the `server` directory, run `ant test`. This will run the `ant build
 pytest is used for testing the Python scripts responsible for interfacing with the LLM.
 
 #### Adding a test
+
 1. Create a file with a `.py` extension in `/server/scripts/test.
 2. Write test cases using `pytest` functions to test the functionality of your Python scripts.
 
@@ -174,6 +175,7 @@ This command will discover and run all tests in the project.
 - [Mockito 5](https://site.mockito.org/) - Used with JUnit for mocking.
 - [pretty-bytes](https://www.npmjs.com/package/pretty-bytes) - Used to format file sizes with proper units.
 - [React](https://react.dev/) - Used for creating user interface components.
+- [react-craftify](https://github.com/doniaskima/react-crafitify) - Used for the loading animation.
 - [React Dropzone](https://react-dropzone.js.org/) - Used to create Dropzone component.
 - [React Icons](https://react-icons.github.io/react-icons/) - Used for SVG icons.
 - [react-markdown](https://www.npmjs.com/package/react-markdown) - Used to convert Markdown text to HTML elements.
