@@ -15,11 +15,13 @@ const REDIRECT_URI = 'http://localhost:5173';
 const ConnectToNotion = ({
   prev,
   next,
+  setNotesUrl,
 }: {
   prev: () => void;
   next: () => void;
+  setNotesUrl: (url: string) => void;
 }) => {
-  const [format, setFormat] = useState<FormatType>();
+  const [format, setFormat] = useState<FormatType>('txt');
 
   const authenticate = () => {
     window.location.href = `https://api.notion.com/v1/oauth/authorize?client_id=${encodeURIComponent(
@@ -35,20 +37,22 @@ const ConnectToNotion = ({
 
     if (code) {
       next();
-      exportNotes(code);
+      exportNotes(true, code);
     }
   };
 
-  const exportNotes = async (code: string) => {
+  const exportNotes = async (isToNotion: boolean, code?: string) => {
     try {
       const body = {
-        source: 'public:output.md', // TODO: replace with actual resource name
-        exporter: 'notion',
-        remote: {
-          mode: 'new',
-          code: code,
-          redirectUri: 'http://localhost:5173',
-        },
+        data: localStorage.getItem('markdown'),
+        exporter: isToNotion ? 'notion' : format,
+        ...(isToNotion && {
+          remote: {
+            mode: 'new',
+            code: code,
+            redirectUri: 'http://localhost:5173',
+          },
+        }),
       };
 
       const res = await fetch('http://localhost:4567/api/v1/export', {
@@ -63,6 +67,7 @@ const ConnectToNotion = ({
 
       const json = await res.json();
       console.log(json);
+      setNotesUrl(json.url);
     } catch (e) {
       console.error(e);
     }
@@ -106,7 +111,10 @@ const ConnectToNotion = ({
           // of `format` type)
           exportUrl=''
           exportFilename=''
-          onExport={next}
+          onExport={() => {
+            exportNotes(false);
+            next();
+          }}
         >
           <div className='flex flex-col gap-4'>
             <DropdownMenu

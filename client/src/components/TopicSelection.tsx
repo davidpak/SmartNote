@@ -306,7 +306,7 @@ const TopicSelection = ({
       </section>
       <Button
         onClick={() => {
-          exportNotes();
+          localStorage.setItem('markdown', markdown);
           next();
         }}
       >
