@@ -42,6 +42,7 @@ public class ServerConfig extends AbstractConfig {
     private boolean usessl;
     private String certFile;
     private String origin;
+    private boolean debug;
 
     /**
      * Creates a new ServerConfig object with default values.
@@ -52,6 +53,7 @@ public class ServerConfig extends AbstractConfig {
         this.usessl = false;
         this.certFile = DEFAULT_CERT_FILE;
         this.origin = null;
+        this.debug = false;
     }
 
     /**
@@ -99,6 +101,15 @@ public class ServerConfig extends AbstractConfig {
         return origin;
     }
 
+    /**
+     * Returns whether or not debug mode is enabled.
+     * 
+     * @return Whether or not debug mode is enabled
+     */
+    public boolean getDebug() {
+        return debug;
+    }
+
     @Override
     public void addHandlers(CommandLineParser parser) {
         parser.addHandler("port", (p, a) -> {
@@ -143,6 +154,8 @@ public class ServerConfig extends AbstractConfig {
         if (origin == null)
             throw new IllegalStateException("Origin must be set through server.origin");
         System.out.println("server.origin=`" + origin + "`");
+
+        System.out.println("server.debug=" + debug);
     }
 
     @Override
@@ -152,6 +165,7 @@ public class ServerConfig extends AbstractConfig {
         json.addProperty("ssl", usessl);
         json.addProperty("cert", certFile);
         json.addProperty("origin", origin);
+        json.addProperty("debug", debug);
         return json;
     }
 
@@ -178,5 +192,9 @@ public class ServerConfig extends AbstractConfig {
         elem = json.get("origin");
         if (elem != null && elem.isJsonPrimitive())
             origin = elem.getAsString();
+
+        elem = json.get("debug");
+        if (elem != null && elem.isJsonPrimitive())
+            debug = elem.getAsBoolean();
     }
 }
