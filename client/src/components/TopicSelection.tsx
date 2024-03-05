@@ -76,32 +76,6 @@ const TopicSelection = ({
   const originalMd = useRef(md); // store the original markdown
   const [markdown, setMarkdown] = useState(md); // keep track of the updated markdown
 
-  // export back the markdown file to server
-  async function exportNotes() {
-    try {
-      const body = {
-        data: markdown,
-        exporter: 'md',
-        output: 'notes1.md', // name of the export resource to write to
-      };
-
-      const res = await fetch('http://localhost:4567/api/v1/export', {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify(body),
-      });
-
-      // status check
-      if (!res.ok) {
-        throw new Error('HTTP error ' + res.status);
-      }
-
-      const data = await res.json();
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   function isHeadingType(object: any): object is HeadingType {
     return 'level' in object;
   }
