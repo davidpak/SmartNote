@@ -42,7 +42,6 @@ const ExportModal = ({
         }
 
         const json = await res.json();
-        console.log(json);
         const notes = await getNotes(json.name);
         return notes;
       } catch (e) {
@@ -53,6 +52,7 @@ const ExportModal = ({
 
   const getNotes = async (name: string) => {
     try {
+      console.log(`http://localhost:4567/api/v1/fetch?name=${name}`);
       const res = await fetch(
         `http://localhost:4567/api/v1/fetch?name=${name}`,
         {
@@ -60,9 +60,8 @@ const ExportModal = ({
           credentials: 'include',
         }
       );
-      const json = await res.json();
-      console.log(json.data);
-      return json.data;
+      const text = await res.text();
+      return text;
     } catch (e) {
       console.error(e);
     }
@@ -70,7 +69,7 @@ const ExportModal = ({
 
   const download = async () => {
     const data = await exportNotes(format);
-    const file = new Blob([data], {
+    const file = new Blob([data!], {
       type:
         format === 'txt'
           ? 'text/plain'
