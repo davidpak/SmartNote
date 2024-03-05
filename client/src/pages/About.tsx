@@ -12,7 +12,7 @@ const About = () => {
         parsable notes, one file at a time.
       </Body>
       <div className='flex items-center gap-8'>
-        <img src='/about.svg' alt='' className='w-56' />
+        <img src='/about.png' alt='' className='w-56' />
         <div className='mt-4 font-bold text-3xl flex flex-col gap-8'>
           <div className='flex items-center gap-4' aria-hidden>
             <img src='/notion.svg' alt='' className='w-12' />
