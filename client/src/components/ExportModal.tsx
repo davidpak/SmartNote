@@ -66,6 +66,10 @@ const ExportModal = ({
     }
   };
 
+  const padValue = (value: number) => {
+    return value.toString().padStart(2, '0');
+  };
+
   const download = async () => {
     const data = await exportNotes(format);
     const file = new Blob([data!], {
@@ -77,7 +81,11 @@ const ExportModal = ({
             : 'text/markdown',
     });
     const exportUrl = URL.createObjectURL(file);
-    const filename = `smartnote.${format}`;
+
+    const now = new Date();
+    const date = `${now.getFullYear()}-${padValue(now.getMonth() + 1)}-${padValue(now.getDate())}`;
+    const time = `${padValue(now.getHours() % 12)}.${padValue(now.getMinutes())}.${padValue(now.getSeconds())}${now.getHours() < 12 ? 'AM' : 'PM'}`;
+    const filename = `smartnote-${date}-at-${time}.${format}`;
 
     const aTag = document.createElement('a');
     aTag.href = exportUrl;
