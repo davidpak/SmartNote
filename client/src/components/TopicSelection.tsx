@@ -256,8 +256,8 @@ const TopicSelection = ({
         Back
       </Button>
       <H2 className='text-center'>Select Topics to Include</H2>
-      <section className='flex bg-neutral-100 max-w-5xl w-full'>
-        <section className='border-neutral-400 border-r-2 px-2 py-3 max-w-xs w-full'>
+      <section className='flex bg-neutral-100 max-w-5xl'>
+        <section className='border-neutral-400 border-r-2 px-2 py-3'>
           <H3 className='text-base self-center pl-3 mb-2 pt-2'>Breakdown</H3>
           <CheckTree
             data={data}
@@ -273,13 +273,13 @@ const TopicSelection = ({
             }}
             defaultExpandAll
             showIndentLine
-            className='max-w-xs'
+            className='max-w-xs truncate'
           />
         </section>
-        <section className='h-96 p-5 w-full'>
+        <section className='h-96 p-5'>
           <H3 className='text-base mb-2'>Output Preview</H3>
           <Markdown
-            className='flex flex-col bg-white p-6 gap-3 overflow-scroll max-h-full w-full'
+            className='flex flex-col bg-white p-6 gap-3 overflow-scroll max-h-full'
             components={{
               h1: H3,
               h2(props) {
@@ -306,6 +306,7 @@ const TopicSelection = ({
         </section>
       </section>
       <Button
+        {...((selectedTopics.length === 0) && { disabled: true })}
         onClick={() => {
           exportNotes();
           next();
