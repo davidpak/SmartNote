@@ -100,6 +100,7 @@ const ConnectToNotion = ({
           Export to your desired alternate file format. Flexibility in learning
           is key.
         </Body>
+        <img src='/alternateExport.png' alt='' className='w-64' />
         <ExportModal
           // this is only for demo. exportUrl should be generated using the notes
           // file obtained from back-end (maybe use a Blob object to create a file

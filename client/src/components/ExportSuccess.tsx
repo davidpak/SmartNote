@@ -30,6 +30,7 @@ const ExportSuccess = ({
         Back
       </Button>
       <H2>Export Successful!</H2>
+      <img src='/export.png' alt='' className='w-64' />
       <Body>Congrats! Check out your new notes page :&#41;</Body>
       <div className='flex gap-5'>
         <Button onClick={goHome} variant='secondary'>

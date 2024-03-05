@@ -29,13 +29,21 @@ const Customization = ({
   ...rest
 }: CustomizationType) => {
   const [verbosity, setVerbosity] = useState(0.0);
-  const [hasOverview, setHasOverview] = useState(false);
-  const [hasKeyConcepts, setHasKeyConcepts] = useState(false);
-  const [hasSections, setHasSections] = useState(false);
-  const [hasAdditionalInfo, setHasAdditionalInfo] = useState(false);
-  const [hasVocab, setHasVocab] = useState(false);
-  const [hasSimpleExplanation, setHasSimpleExplanation] = useState(false);
-  const [hasConclusion, setHasConclusion] = useState(false);
+  const [hasOverview, setHasOverview] = useState(true);
+  const [hasKeyConcepts, setHasKeyConcepts] = useState(true);
+  const [hasSections, setHasSections] = useState(true);
+  const [hasAdditionalInfo, setHasAdditionalInfo] = useState(true);
+  const [hasVocab, setHasVocab] = useState(true);
+  const [hasSimpleExplanation, setHasSimpleExplanation] = useState(true);
+  const [hasConclusion, setHasConclusion] = useState(true);
+  const isSelected =
+    hasOverview ||
+    hasKeyConcepts ||
+    hasSections ||
+    hasAdditionalInfo ||
+    hasVocab ||
+    hasSimpleExplanation ||
+    hasConclusion;
 
   async function generateNotes() {
     const options = {
@@ -128,6 +136,7 @@ const Customization = ({
           </div>
         </div>
         <Button
+          {...(!isSelected && { disabled: true })}
           onClick={() => {
             generateNotes();
             next();

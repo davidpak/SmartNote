@@ -9,16 +9,11 @@ const Help = () => {
       <section>
         <H2 className='mb-4'>Contact Us</H2>
         <Body className='font-semibold text-lg text-neutral-500'>
-          SmartNote is a work in progress—feedback and questions are welcome!
+          SmartNote is a work in progress, feedback and questions are welcome!
         </Body>
-        <Body>Email us at example@gmail.com</Body>
+        <Body>Email us at smartnote.help@gmail.com</Body>
       </section>
-      <img src='/help-contact.png' alt='' className='w-64' />
-      <section>
-        <H2>FAQ & Guides</H2>
-        <p>Coming soon...</p>
-      </section>
-      <img src='/help-faq.png' alt='' className='w-64' />
+      <img src='/contactUs.png' alt='' className='w-64' />
     </div>
   );
 };

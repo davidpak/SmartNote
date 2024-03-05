@@ -79,7 +79,7 @@ const FileUpload = ({
         <Link to='/about' tabIndex={-1}>
           <Button variant='secondary'>Learn More</Button>
         </Link>
-        <img src={'/home-hero.png'} alt='' className='max-w-xl' />
+        <img src={'/splash.png'} alt='' className='max-w-xl' />
       </section>
       <section className='flex flex-col gap-6 items-center w-full max-w-xl'>
         <div className='flex flex-col gap-4 items-center'>
