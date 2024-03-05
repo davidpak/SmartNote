@@ -31,7 +31,9 @@ import spark.Route;
 
 
 /**
- * <p>Fetches resources on server.</p>
+ * <p>
+ * Fetches resources on server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @author Jaden Summerville
