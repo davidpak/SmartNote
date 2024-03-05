@@ -103,6 +103,7 @@ const ConnectToNotion = ({
           Export to your desired alternate file format. Flexibility in learning
           is key.
         </Body>
+        <img src='/alternateExport.png' alt='' className='w-64' />
         <ExportModal
           markdown={markdown}
           format={format}

@@ -17,6 +17,7 @@ const ErrorPage = () => {
       <Link to='/' tabIndex={-1}>
         <Button>Home</Button>
       </Link>
+      <img src='/404Error.png' alt='' className='w-64' />
     </div>
   );
 };
