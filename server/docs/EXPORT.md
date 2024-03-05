@@ -17,9 +17,12 @@ The body must be a JSON object with the following fields:
 | Name | Type | Contents |
 | ---- | ---- | ----------- |
 | `source` | `string` | The name of the summary resource to export. |
+| `data` | `string` | Explicitly specify the data to export. |
 | `exporter` | `string` | The exporter to use. |
 | `output` | `string` | A resource name to use when exporting to a local file. Optional. |
 | `remote` | `object` | Remote export location information. |
+
+Either `source` or `data` must be specified, but not both. If `source` is specified, the server will use the data associated with the resource. If `data` is specified, the server will use the markdown data provided. If neither is specified, the request fails.
 
 `exporter` is a case-insensitive `string` describing the type of export to perform. The following types are recognized:
 
@@ -29,6 +32,7 @@ The body must be a JSON object with the following fields:
 | `rtf` | Exports to a Rich Text Format (RTF) file. |
 | `json` | Exports to a JSON file. |
 | `md` | Exports to a Markdown file. |
+| `txt` | Exports to a plain text file. |
 
 `output` is a `string` containing the name of the export resource to write to. The resource will be overwritten if it already exists. The resource will be associated with the client's session and can be fetched using the [`fetch`](FETCH.md) RPC. If `output` is not specified, the server will generate a unique name for the resource which will be returned in the response body. This has special behavior if the export type is remote.
 

@@ -1,15 +1,22 @@
 package com.smartnote.server.api.v1;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.InvalidPathException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.security.Permission;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.smartnote.server.util.JSONUtil.*;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.smartnote.server.GeneratorConfig;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
@@ -17,6 +24,7 @@ import com.smartnote.server.format.ParsedMarkdown;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
+import com.smartnote.server.util.FileUtils;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -25,7 +33,9 @@ import spark.Response;
 import spark.Route;
 
 /**
- * <p>Generates summaries from uploaded files.</p>
+ * <p>
+ * Generates summaries from uploaded files.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see com.smartnote.server.auth.Session
@@ -33,10 +43,14 @@ import spark.Route;
 @ServerRoute(method = MethodType.POST, path = "/api/v1/generate")
 public class Generate implements Route {
 
+    public static final String OUTPUT_RESOURCE = "session:output.md";
+
     @Override
     public Object handle(Request request, Response response) throws Exception {
         SessionManager sessionManager = Server.getServer().getSessionManager();
         ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+        GeneratorConfig generatorConfig = Server.getServer().getConfig().getGeneratorConfig();
+        String summarizer = generatorConfig.getSummarizer();
 
         long startTime = System.currentTimeMillis();
 
@@ -46,81 +60,209 @@ public class Generate implements Route {
             return "{\"message\":\"No session\"}";
         }
 
+        JsonObject generateJson = new Gson().fromJson(request.body(), JsonObject.class);
+
         Permission permission = session.getPermission();
 
-        Gson gson = new Gson();
-        JsonObject generateJson = gson.fromJson(request.body(), JsonObject.class);
-
-        JsonObject generalOptions = getObjectOrNull(generateJson, "general");
-        if (generalOptions == null) {
-            response.status(400);
-            return "{\"message\":\"Missing field general\"}";
-        }
-
-        JsonArray files = getArrayOrNull(generalOptions, "files");
-        if (files == null) {
-            response.status(400);
-            return "{\"message\":\"Missing field general.files\"}";
-        }
-
-        JsonObject llmOptions = getObjectOrNull(generateJson, "llm");
-        if (llmOptions == null) {
-            response.status(400);
-            return "{\"message\":\"Missing field llm\"}";
-        }
-
-        double verbosity = getNumberOrDefault(llmOptions, "verbosity", 0.5);
-
-        // TODO: replace with actual implementation
-        final String DEBUG_RESOURCE = "public:output.md";
-
-        Resource resource;
-        
+        // generate the summary
+        Resource outResource;
         try {
-            resource = resourceSystem.findResource(DEBUG_RESOURCE, permission);
-        } catch (SecurityException e) {
-            response.status(403);
-            return "{\"message\":\"Permission denied\"}";
-        } catch (InvalidPathException e) {
-            response.status(400);
-            return "{\"message\":\"Invalid path\"}";
-        } catch (NoSuchResourceException e) {
-            response.status(404);
-            return "{\"message\":\"Resource not found\"}";
-        } catch (IOException e) {
-            response.status(500);
-            return "{\"message\":\"Internal server error\"}";
-        }
-
-        ParsedMarkdown md;
-        InputStream in = null;
-        try {
-            in = resource.openInputStream();
-            md = ParsedMarkdown.parse(new String(in.readAllBytes()));
-        } catch (SecurityException e) {
-            response.status(403);
-            return "{\"message\":\"Permission denied\"}";
-        } catch (NoSuchResourceException e) {
-            response.status(404);
-            return "{\"message\":\"Resource not found\"}";
-        } catch (IOException e) {
-            response.status(500);
-            return "{\"message\":\"Internal server error\"}";
+            if (generatorConfig.isDebug())
+                outResource = resourceSystem.findResource(generatorConfig.getDebugResource(), permission);
+            else {
+                summarizer = FileUtils.getCanonicalPath(summarizer);
+                outResource = generate(summarizer, generateJson, session, permission);
+            }
         } catch (IllegalArgumentException e) {
+            response.status(400);
+            return "{\"message\":" + e.getMessage() + "\"}";
+        } catch (NoSuchResourceException e) {
+            response.status(404);
+            return "{\"message\":\"Resource not found\"}";
+        } catch (SecurityException e) {
+            response.status(403);
+            return "{\"message\":\"Permission denied\"}";
+        } catch (IOException e) {
             response.status(500);
-            return "{\"message\":\"Generated content is invalid\"}";
-        } finally {
-            if (in != null)
-                in.close();
+            return "{\"message\":\"Generation failed\"}";
+        } catch (InterruptedException e) {
+            response.status(500);
+            return "{\"message\":\"Data generation interrupted\"}";
+        }
+
+        JsonObject general = generateJson.getAsJsonObject("general");
+        boolean includeJson = getBooleanOrFalse(general, "includeJson");
+        boolean includeMarkdown = getBooleanOrFalse(general, "includeMarkdown");
+
+        // parse the generated markdown
+        String markdownString = null;
+        ParsedMarkdown md = null;
+        if (includeJson || includeMarkdown) {
+            InputStream in = null;
+            try {
+                in = outResource.openInputStream();
+                markdownString = new String(in.readAllBytes());
+
+                if (includeJson)
+                    md = ParsedMarkdown.parse(markdownString);
+            } catch (SecurityException e) {
+                response.status(403);
+                return "{\"message\":\"Permission denied\"}";
+            } catch (NoSuchResourceException e) {
+                response.status(404);
+                return "{\"message\":\"Resource not found\"}";
+            } catch (IOException e) {
+                response.status(500);
+                return "{\"message\":\"Internal server error\"}";
+            } catch (IllegalArgumentException e) {
+                response.status(500);
+                return "{\"message\":\"Generated content is invalid\"}";
+            } finally {
+                if (in != null)
+                    in.close();
+            }
         }
 
         long endTime = System.currentTimeMillis();
 
+        // return the result
         JsonObject resObject = new JsonObject();
-        resObject.addProperty("name", DEBUG_RESOURCE);
+        resObject.addProperty("name", outResource.getName());
         resObject.addProperty("time", (endTime - startTime) / 1000.0);
-        resObject.add("result", md.writeJSON());
 
-        return gson.toJson(resObject);
+        if (md != null)
+            resObject.add("result", md.writeJSON());
+
+        if (markdownString != null)
+            resObject.addProperty("markdown", markdownString);
+
+        return new Gson().toJson(resObject);
+    }
+
+    /**
+     * Generates a summary from the given body.
+     * 
+     * @param summarizer The summarizer to use.
+     * @param json       The generation options.
+     * @param session    The session.
+     * @param permission The permission.
+     * @return The generated resource.
+     * @throws IllegalArgumentException If the body is invalid.
+     * @throws NoSuchResourceException  If the resource does not exist.
+     * @throws SecurityException        If the user does not have permission to
+     *                                  access the resource.
+     * @throws IOException              If an I/O error occurs.
+     * @throws InterruptedException     If the thread is interrupted while waiting
+     *                                  for the summarizer to finish.
+     */
+    private Resource generate(String summarizer, JsonObject json, Session session,
+            Permission permission)
+            throws IllegalArgumentException, NoSuchResourceException, SecurityException, IOException,
+            InterruptedException {
+        JsonObject generalOptions = getObjectOrNull(json, "general");
+        if (generalOptions == null)
+            throw new IllegalArgumentException("Missing field general");
+
+        JsonArray files = getArrayOrNull(generalOptions, "files");
+        if (files == null)
+            throw new IllegalArgumentException("Missing field general.files");
+
+        if (files.size() == 0)
+            throw new IllegalArgumentException("No files specified");
+
+        JsonObject llmOptions = getObjectOrNull(json, "llm");
+        if (llmOptions == null)
+            throw new IllegalArgumentException("Missing field llm");
+
+        // Get all the options, defaulting to true
+        double verbosity = getNumberOrDefault(llmOptions, "verbosity", 1.0);
+        boolean generalOverview = getBooleanOrTrue(llmOptions, "generalOptions");
+        boolean keyConcepts = getBooleanOrTrue(llmOptions, "keyConcepts");
+        boolean sectionBySection = getBooleanOrTrue(llmOptions, "sectionBySection");
+        boolean additionalInformation = getBooleanOrTrue(llmOptions, "additionalInformation");
+        boolean helpfulVocabulary = getBooleanOrTrue(llmOptions, "helpfulVocabulary");
+        boolean explainToFifthGrader = getBooleanOrTrue(llmOptions, "explainToFifthGrader");
+        boolean conclusion = getBooleanOrTrue(llmOptions, "conclusion");
+
+        if (!generalOverview && !keyConcepts && !sectionBySection && !additionalInformation
+                && !helpfulVocabulary && !explainToFifthGrader && !conclusion)
+            throw new IllegalArgumentException("Need at least one summarization option to include");
+
+        ResourceSystem resourceSystem = Server.getServer().getResourceSystem();
+        GeneratorConfig generatorConfig = Server.getServer().getConfig().getGeneratorConfig();
+
+        // find all the input files
+        List<String> inputFiles = new ArrayList<>();
+        for (JsonElement e : files) {
+            String name = e.getAsString();
+            
+            if (name.startsWith("http://") || name.startsWith("https://")) {
+                URL url = new URL(name);
+                if (!url.getHost().equals("www.youtube.com"))
+                    throw new IllegalArgumentException("URL must be a YouTube video");
+
+                inputFiles.add(name);
+                continue;
+            }
+
+            Resource resource = resourceSystem.findResource(name, permission);
+            if (resource == null)
+                throw new NoSuchResourceException("Input resource not found: " + name);
+            inputFiles.add(FileUtils.getCanonicalPath(resource.getPath().toString()));
+        }
+
+        String envPath = FileUtils.getCanonicalPath(generatorConfig.getEnv());
+
+        Resource outResource = resourceSystem.findResource(OUTPUT_RESOURCE, permission);
+        String outPath = FileUtils.getCanonicalPath(outResource.getPath().toString());
+
+        // get directory of summarizer
+        Path summarizerPath = new File(summarizer).toPath();
+        File summarizerDir = summarizerPath.getParent().toFile();
+
+        // build command
+        List<String> command = new ArrayList<>();
+        command.add(generatorConfig.getPython());
+        command.add(summarizer);
+        command.add("--env");
+        command.add(envPath);
+        command.add("--verbose");
+        command.add(Double.toString(verbosity));
+        if (!generalOverview)
+            command.add("--no_general_overview");
+        if (!keyConcepts)
+            command.add("--no_key_concepts");
+        if (!sectionBySection)
+            command.add("--no_section_by_section");
+        if (!additionalInformation)
+            command.add("--no_additional_information");
+        if (!helpfulVocabulary)
+            command.add("--no_helpful_vocabulary");
+        if (!explainToFifthGrader)
+            command.add("--no_explain_to_5th_grader");
+        if (!conclusion)
+            command.add("--no_conclusion");
+
+        command.add("--out");
+        command.add(outPath);
+
+        command.addAll(inputFiles);
+
+        String[] commandArray = command.toArray(new String[command.size()]);
+
+        // build process
+        ProcessBuilder pb = new ProcessBuilder(commandArray);
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        pb.directory(summarizerDir);
+
+        // start and wait for process to finish
+        Process p = pb.start();
+        int exitCode = p.waitFor();
+
+        if (exitCode != 0)
+            throw new IOException("Summarizer exited with non-zero exit code");
+
+        return outResource;
     }
 }

@@ -1,0 +1,705 @@
+{
+  "type": "document",
+  "children": [
+    {
+      "type": "heading",
+      "level": 1,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Exploring Quaternions for 3D Orientation"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "General Overview"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "literal": "This video explores the concept of quaternions and their application in describing 3D orientation. Quaternions are a 4-dimensional number system that provide a robust and bug-free method for representing 3D rotations. The video highlights the importance of quaternions in computer graphics, robotics, virtual reality, and other fields involving 3D orientation."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Key Concepts"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "Concept 1: Quaternions"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "bulletMarker": "-",
+              "children": [
+                {
+                  "type": "listItem",
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "children": [
+                        {
+                          "type": "text",
+                          "literal": "Quaternions are a 4-dimensional number system used to represent 3D rotations."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "Concept 2: 3D Orientation"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "bulletMarker": "-",
+              "children": [
+                {
+                  "type": "listItem",
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "children": [
+                        {
+                          "type": "text",
+                          "literal": "Quaternions provide a reliable way to describe and manipulate 3D orientation without encountering bugs or edge cases."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "Concept 3: Applications"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "bulletMarker": "-",
+              "children": [
+                {
+                  "type": "listItem",
+                  "children": [
+                    {
+                      "type": "paragraph",
+                      "children": [
+                        {
+                          "type": "text",
+                          "literal": "Quaternions are widely "
+                        },
+                        {
+                          "type": "code",
+                          "literal": "used"
+                        },
+                        {
+                          "type": "text",
+                          "literal": " in computer graphics, robotics, virtual reality, and other fields involving 3D orientation."
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fencedCodeBlock",
+      "fenceChar": "`",
+      "fenceLength": 3,
+      "fenceIndent": 0,
+      "info": "javascript",
+      "literal": "function myfunc() {\n    console.log(\"Hello, World!\");\n}\n"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Section by Section Breakdown"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "1. Introduction and Context"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The video introduces the collaboration with Ben Eater and the explorable videos created."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "Quaternions are briefly mentioned as a 4-dimensional number system for describing 3D orientation."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "2. Importance of Quaternions"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "Quaternions are highlighted as a preferred method for describing 3D orientation due to their bug-free nature."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The example of using quaternions to track a phone\u0027s orientation in software is mentioned."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "3. Quaternion Multiplication"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The method for quaternion multiplication is reviewed, including the use of half the angle and multiplying from the right by the inverse."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The goal is to break down and visualize the computation of quaternion multiplication."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "4. Comparison to Complex Numbers"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The similarity between using complex numbers for 2D rotations and using quaternions for 3D rotations is explained."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The computation of rotating a point using complex numbers is briefly described."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "5. Quaternion Rotation"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The process of rotating a 3D point using quaternions is explained."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The use of a quaternion sandwich, multiplying by q from the left and the inverse of q from the right, is introduced."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "6. Alternative Methods and Issues"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "Other methods for computing rotations, such as using 3x3 matrices and Euler angles, are mentioned."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The issues of gimbal lock and difficulties in interpolation with Euler angles are highlighted."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "children": [
+        {
+          "type": "text",
+          "literal": "7. Advantages of Quaternions"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "Quaternions are praised for avoiding gimbal lock and providing seamless interpolation between orientations."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The benefits of using quaternions over other methods, such as rotation matrices, are emphasized."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Additional Information"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "The video encourages viewers to explore the explorable video tutorial created by Ben Eater for a more immersive experience."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "text",
+                  "literal": "Links to resources about Euler angles and gimbal lock are provided in the video description."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Helpful Vocabulary"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "bulletMarker": "-",
+      "children": [
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "Quaternions:"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "literal": " A 4-dimensional number system used to represent 3D rotations."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "3D Orientation:"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "literal": " The positioning and orientation of objects in three-dimensional space."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "Gimbal Lock:"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "literal": " A phenomenon where two axes of rotation align, causing a loss of a degree of freedom."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "children": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "type": "strongEmphasis",
+                  "openingDelimeter": "**",
+                  "closingDelimeter": "**",
+                  "children": [
+                    {
+                      "type": "text",
+                      "literal": "Interpolation:"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "literal": " The process of estimating values between two known values."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Explain it to a 5th grader:"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "literal": "Quaternions are a special kind of numbers that help us describe how things rotate in 3D. They are like a secret code that tells us how an object is turned or oriented in space. Quaternions are really useful for computer graphics, robots, and virtual reality because they don\u0027t have any bugs or problems like other methods. They make it easy to rotate things smoothly and without any mistakes."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "children": [
+        {
+          "type": "text",
+          "literal": "Conclusion"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        {
+          "type": "text",
+          "literal": "This video introduces the concept of quaternions and their significance in describing 3D orientation. Quaternions provide a reliable and bug-free method for representing rotations in computer graphics, robotics, and virtual reality. They offer advantages over other methods, such as avoiding gimbal lock and providing seamless interpolation between orientations."
+        }
+      ]
+    }
+  ]
+}

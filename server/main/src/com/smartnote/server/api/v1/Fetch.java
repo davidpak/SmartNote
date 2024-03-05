@@ -11,6 +11,7 @@ import java.security.Permission;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.http.protocol.RequestDate;
+import org.apache.tika.Tika;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -58,14 +59,14 @@ public class Fetch implements Route {
 
         byte[] body;
         try{
-        // get file
-        Resource resource = Server.getServer().getResourceSystem().findResource(name, session.getPermission());
-        //load file
-        InputStream inputStream = resource.openInputStream();
-        //add info to body
-        body = inputStream.readAllBytes();
-        //send
-        }catch(SecurityException e){
+            // get file
+            Resource resource = Server.getServer().getResourceSystem().findResource(name, session.getPermission());
+            //load file
+            InputStream inputStream = resource.openInputStream();
+            //add info to body
+            body = inputStream.readAllBytes();
+            //send
+        } catch(SecurityException e) {
             response.status(403);
             return "{\"message\":\"Access denied\"}";
         } catch (FileNotFoundException e) {
@@ -74,7 +75,7 @@ public class Fetch implements Route {
             return "{\"message\":\"File not found\"}";
         }
 
-        response.header("Content-Type", MIME.fromExtension(name.split(":")[0]));
+        response.header("Content-Type", new Tika().detect(body));
         response.status(200); // OK
 
         return body;

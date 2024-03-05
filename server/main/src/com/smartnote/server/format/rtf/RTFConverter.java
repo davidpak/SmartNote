@@ -14,6 +14,9 @@ public class RTFConverter implements MarkdownConverter<String> {
 
     @Override
     public String convert(ParsedMarkdown markdown) {
-        throw new UnsupportedOperationException("Unimplemented method 'convert'");
+        StringBuilder builder = new StringBuilder();
+        RTFVisitor visitor = new RTFVisitor(builder);
+        markdown.getDocument().accept(visitor);
+        return builder.toString();
     }
  }

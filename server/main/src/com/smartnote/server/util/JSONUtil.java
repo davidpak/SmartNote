@@ -138,6 +138,18 @@ public class JSONUtil {
         return primitive.getAsBoolean();
     }
 
+    public static boolean getBooleanOrTrue(JsonObject json, String key) {
+        JsonElement element = json.get(key);
+        if (element == null)
+            return true;
+        if (!element.isJsonPrimitive())
+            return true;
+        JsonPrimitive primitive = element.getAsJsonPrimitive();
+        if (!primitive.isBoolean())
+            return true;
+        return primitive.getAsBoolean();
+    }
+
     public static int getIntOrDefault(JsonObject json, String key, int def) {
         JsonElement element = json.get(key);
         if (element == null)

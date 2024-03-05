@@ -48,14 +48,14 @@ public class ResourceSystem {
      * The supported MIME types for uploads.
      */
     public static final String[] SUPPORTED_MIME_TYPES = {
-        MIME.PDF,
-        MIME.PPTX,
-        MIME.PPT,
+            MIME.PDF,
+            MIME.PPTX,
+            MIME.PPT,
 
-        // TODO: remove these later, they are for testing
-        MIME.TEXT,
-        MIME.JSON,
-        MIME.MARKDOWN
+            // TODO: remove these later, they are for testing
+            MIME.TEXT,
+            MIME.JSON,
+            MIME.MARKDOWN
     };
 
     /**
@@ -143,7 +143,7 @@ public class ResourceSystem {
         this.privateDir = FileUtils.getCanonicalFile(config.getPrivateDir()).toPath();
         this.sessionDir = FileUtils.getCanonicalFile(config.getSessionDir()).toPath();
 
-        this.fileResourceFactory = (file, mode) -> new FileResource(file.toFile(), mode);
+        this.fileResourceFactory = (name, path, mode) -> new FileResource(name, path.toFile(), mode);
     }
 
     /**
@@ -255,11 +255,11 @@ public class ResourceSystem {
         // find resource
         try {
             if (authority.equals(PUBLIC_AUTH))
-                return getPublicResource(path, permission);
+                return getPublicResource(authority + ":" + path, path, permission);
             else if (authority.equals(PRIVATE_AUTH))
-                return getPrivateResource(path, permission);
+                return getPrivateResource(authority + ":" + path, path, permission);
             else if (authority.equals(SESSION_AUTH))
-                return getSessionResource(path, permission);
+                return getSessionResource(authority + ":" + path, path, permission);
         } catch (NoSuchResourceException e) {
             throw new NoSuchResourceException(authority + ":" + path.toString()); // rethrow with original name
         }
@@ -293,36 +293,38 @@ public class ResourceSystem {
                 if (collapsed == null)
                     throw new InvalidPathException(abstractPath, "Path is outside of authority");
 
-                collapsed = collapsed.getParent();          
+                collapsed = collapsed.getParent();
             } else {
-                if (collapsed == null) collapsed = part;
-                else collapsed = collapsed.resolve(part);
+                if (collapsed == null)
+                    collapsed = part;
+                else
+                    collapsed = collapsed.resolve(part);
             }
         }
 
         return authority + ":" + collapsed.toString().replace('\\', '/');
     }
 
-    private Resource getPublicResource(Path path, Permission permission)
+    private Resource getPublicResource(String name, Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
-        return fileResourceFactory.openFileResource(getFullPath(publicDir, path), AccessMode.READ);
+        return fileResourceFactory.openFileResource(name, getFullPath(publicDir, path), AccessMode.READ);
     }
 
-    private Resource getPrivateResource(Path path, Permission permission)
+    private Resource getPrivateResource(String name, Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         if (permission == null || !permission.implies(getPrivatePermission()))
             throw new SecurityException("Access denied");
-        return fileResourceFactory.openFileResource(getFullPath(privateDir, path), AccessMode.READ);
+        return fileResourceFactory.openFileResource(name, getFullPath(privateDir, path), AccessMode.READ);
     }
 
-    private Resource getSessionResource(Path path, Permission permission)
+    private Resource getSessionResource(String name, Path path, Permission permission)
             throws SecurityException, InvalidPathException, NoSuchResourceException, IOException {
         if (permission == null || !(permission instanceof SessionPermission))
             throw new SecurityException("Access denied");
 
         SessionPermission sessionPermission = (SessionPermission) permission;
         Path fullPath = sessionPermission.getSession().pathInSession(path);
-        return fileResourceFactory.openFileResource(fullPath, AccessMode.READ_WRITE_DELETE);
+        return fileResourceFactory.openFileResource(name, fullPath, AccessMode.READ_WRITE_DELETE);
     }
 
     private Path getFullPath(Path root, Path path) throws SecurityException {

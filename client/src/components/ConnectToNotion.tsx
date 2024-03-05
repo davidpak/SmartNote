@@ -1,13 +1,16 @@
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
+import { useEffect, useState } from 'react';
 
 import Body from './Body';
 import Button from './Button';
 import H2 from './H2';
 import ExportModal from './ExportModal';
 import DropdownMenu from './DropdownMenu';
-import { useState } from 'react';
 
 type FormatType = 'txt' | 'rtf' | 'md';
+
+const CLIENT_ID = '42429aa5-68fe-48dd-9cae-d0702fb33b39';
+const REDIRECT_URI = 'http://localhost:5173';
 
 const ConnectToNotion = ({
   prev,
@@ -18,22 +21,56 @@ const ConnectToNotion = ({
 }) => {
   const [format, setFormat] = useState<FormatType>();
 
-  // const exportFile = async () => {
-  // need to first export to the intended format and get the name of the resource
-  // const fileName; // need name of resource
-  // const res = await fetch(
-  //   `http://localhost:4567/api/v1/fetch?name=${fileName}`,
-  //   {
-  //     method: 'GET',
-  //     credentials: 'include',
-  //   }
-  // );
-  // if (!res.ok) {
-  //   throw new Error('HTTP error ' + res.status);
-  // }
-  // const fileData = await res.body;
-  // const url = window.URL.createObjectURL(new Blob([fileData]));
-  // };
+  const authenticate = () => {
+    window.location.href = `https://api.notion.com/v1/oauth/authorize?client_id=${encodeURIComponent(
+      CLIENT_ID
+    )}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(
+      REDIRECT_URI
+    )}`;
+  };
+
+  const handleRedirect = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code) {
+      next();
+      exportNotes(code);
+    }
+  };
+
+  const exportNotes = async (code: string) => {
+    try {
+      const body = {
+        source: 'public:output.md', // TODO: replace with actual resource name
+        exporter: 'notion',
+        remote: {
+          mode: 'new',
+          code: code,
+          redirectUri: 'http://localhost:5173',
+        },
+      };
+
+      const res = await fetch('http://localhost:4567/api/v1/export', {
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        throw new Error('HTTP error ' + res.status);
+      }
+
+      const json = await res.json();
+      console.log(json);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    handleRedirect();
+  }, []);
 
   return (
     <div className='flex flex-col items-center gap-10 text-center'>
@@ -55,7 +92,7 @@ const ConnectToNotion = ({
             Make sure to select one or more Notion pages.
           </span>
         </Body>
-        <Button>Connect to Notion</Button>
+        <Button onClick={authenticate}>Connect to Notion</Button>
       </section>
       <section className='flex flex-col items-center gap-3 text-center'>
         <H2>No Notion? No Problem.</H2>

@@ -38,7 +38,7 @@ public class VirtualFileSystem {
      * @return the FileResourceFactory
      */
     public FileResourceFactory createResourceFactory() {
-        return (path, mode) -> new VirtualFileResource(path, mode);
+        return (name, path, mode) -> new VirtualFileResource(name, path, mode);
     }
 
     /**
@@ -117,10 +117,12 @@ public class VirtualFileSystem {
      * Represents a resource in the virtual file system.
      */
     private class VirtualFileResource implements Resource {
+        final String name;
         final Path path;
         final AccessMode mode;
 
-        VirtualFileResource(Path path, AccessMode mode) {
+        VirtualFileResource(String name, Path path, AccessMode mode) {
+            this.name = name;
             this.path = path;
             this.mode = mode;
         }
@@ -154,6 +156,11 @@ public class VirtualFileSystem {
         public boolean exists() throws SecurityException, IOException {
             mode.checkRead();
             return VirtualFileSystem.this.exists(path);
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
         }
 
         @Override

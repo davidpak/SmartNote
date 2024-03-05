@@ -8,7 +8,13 @@ import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
 
-const FileUpload = ({ next }: { next: () => void }) => {
+const FileUpload = ({
+  next,
+  updateFiles,
+}: {
+  next: () => void;
+  updateFiles: (files: string[]) => void;
+}) => {
   const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,14 +23,18 @@ const FileUpload = ({ next }: { next: () => void }) => {
 
   useEffect(() => {
     const login = async () => {
-      const res = await fetch('http://localhost:4567/api/v1/login', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error('HTTP error ' + res.status);
+      try {
+        const res = await fetch('http://localhost:4567/api/v1/login', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          throw new Error('HTTP error ' + res.status);
+        }
+        setIsLoggedIn(true);
+      } catch (e) {
+        console.error(e);
       }
-      setIsLoggedIn(true);
     };
     if (!isLoggedIn) {
       login();
@@ -35,9 +45,9 @@ const FileUpload = ({ next }: { next: () => void }) => {
     if (!isLoggedIn) {
       throw new Error('not authenticated');
     }
-    const reader = new FileReader();
 
     files.forEach(async (file) => {
+      const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async () => {
         const res = await fetch(
@@ -81,7 +91,10 @@ const FileUpload = ({ next }: { next: () => void }) => {
         </div>
         <Dropzone
           files={files}
-          setFiles={(files) => setFiles(files)}
+          setFiles={(files) => {
+            setFiles(files);
+            updateFiles(files.map((file) => `session:uploads/${file.name}`));
+          }}
           errors={errors}
           setErrors={(errors) => setErrors(errors)}
           className='w-full'

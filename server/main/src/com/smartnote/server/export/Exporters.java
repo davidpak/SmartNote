@@ -36,6 +36,7 @@ public final class Exporters {
             registerExporter(JSONExporter.class);
             registerExporter(RTFExporter.class);
             registerExporter(NotionExporter.class);
+            registerExporter(TextExporter.class);
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

@@ -2,8 +2,10 @@ package com.smartnote.server.format.rtf;
 
 import java.util.Stack;
 
-import org.commonmark.node.*;
+import com.smartnote.server.format.nodes.*;
 
+import com.smartnote.server.format.MarkdownVisitor;
+import com.smartnote.server.format.Style;
 import com.smartnote.server.util.SafeAppendable;
 
 /**
@@ -12,7 +14,7 @@ import com.smartnote.server.util.SafeAppendable;
  * @author Ethan Vrhel
  * @see RTFRenderer
  */
-class RTFVisitor extends AbstractVisitor {
+class RTFVisitor extends MarkdownVisitor {
     public static final String RTF_FONT = "\\fswiss\\fcharset0 Arial";
     public static final String RTF_MONO_FONT = "\\fmodern\\fcharset0 Courier New";
 
@@ -61,15 +63,6 @@ class RTFVisitor extends AbstractVisitor {
     }
 
     @Override
-    public void visit(Code code) {
-        rtf.append("{\\f1 ");
-        styleSpecial(code);
-        rtf.append(code.getLiteral());
-        visitChildren(code);
-        rtf.append("}");
-    }
-
-    @Override
     public void visit(Document document) {
         rtf.append("{\\rtf1\\ansi");
 
@@ -80,13 +73,6 @@ class RTFVisitor extends AbstractVisitor {
         rtf.append(colors);
 
         visitChildren(document);
-        rtf.append("}");
-    }
-
-    @Override
-    public void visit(Emphasis emphasis) {
-        rtf.append("{\\i ");
-        visitChildren(emphasis);
         rtf.append("}");
     }
 
@@ -116,35 +102,8 @@ class RTFVisitor extends AbstractVisitor {
     }
 
     @Override
-    public void visit(HtmlInline htmlInline) {
-        visitChildren(htmlInline);
-    }
-
-    @Override
-    public void visit(HtmlBlock htmlBlock) {
-        visitChildren(htmlBlock);
-    }
-
-    @Override
-    public void visit(Image image) {
-        visitChildren(image);
-    }
-
-    @Override
     public void visit(IndentedCodeBlock indentedCodeBlock) {
         visitChildren(indentedCodeBlock);
-    }
-
-    @Override
-    public void visit(Link link) {
-        String url = link.getDestination();
-
-        String content = String.format("{\\field{\\*\\fldinst{HYPERLINK \"%s\"}}{\\fldrslt{\\cf4\\ul\\ulc4 ", url);
-        rtf.append(content);
-
-        visitChildren(link);
-
-        rtf.append("}}}");
     }
 
     @Override
@@ -185,36 +144,55 @@ class RTFVisitor extends AbstractVisitor {
     }
 
     @Override
-    public void visit(StrongEmphasis strongEmphasis) {
-        rtf.append("{\\b ");
-        visitChildren(strongEmphasis);
-        rtf.append("}");
-    }
-
-    @Override
     public void visit(Text text) {
         rtf.append("{\\f0");
+
+        int toClose = 0;
+        Style style = text.getStyle();
+
+        if (style.bold()) {
+            rtf.append("{\\b ");
+            toClose++;
+        }
+
+        if (style.italic()) {
+            rtf.append("{\\i ");
+            toClose++;
+        }
+
+        if (style.strikethrough()) {
+            rtf.append("{\\strike ");
+            toClose++;
+        }
+
+        if (style.underline()) {
+            rtf.append("{\\ul ");
+            toClose++;
+        }
+
+        if (style.code()) {
+            rtf.append("{\\f1 ");
+            toClose++;
+        }
+
+        if (style.link() != null) {
+            String content = String.format("{\\field{\\*\\fldinst{HYPERLINK \"%s\"}}{\\fldrslt{\\cf4\\ul\\ulc4 ", style.link());
+            rtf.append(content);
+            toClose += 3;
+        }
+
         styleSpecial(text);
+
         rtf.append(text.getLiteral());
+
         visitChildren(text);
+
+        for (int i = 0; i < toClose; i++)
+            rtf.append("}");
+
         rtf.append("}");
     }
     
-    @Override
-    public void visit(LinkReferenceDefinition linkReferenceDefinition) {
-        visitChildren(linkReferenceDefinition);
-    }
-
-    @Override
-    public void visit(CustomBlock customBlock) {
-        visitChildren(customBlock);
-    }
-
-    @Override
-    public void visit(CustomNode customNode) {
-        visitChildren(customNode);
-    }
-
     private void appendVerbatim(String s) {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
@@ -241,9 +219,9 @@ class RTFVisitor extends AbstractVisitor {
         }
     }
 
-    private void styleSpecial(Node node) {
+    private void styleSpecial(MarkdownNode node) {
         Heading heading = null;
-        Node parentNode = node.getParent();
+        MarkdownNode parentNode = node.getParent();
         if (parentNode instanceof Heading) {
             heading = (Heading) parentNode;
             rtf.append("\\pard\\par\\b ");

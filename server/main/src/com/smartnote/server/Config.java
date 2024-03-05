@@ -66,6 +66,7 @@ public class Config extends AbstractConfig {
     private ServerConfig server;
     private ResourceConfig resource;
     private NotionConfig notion;
+    private GeneratorConfig generator;
 
     /**
      * Creates a new Config object with default values.
@@ -74,6 +75,7 @@ public class Config extends AbstractConfig {
         this.server = new ServerConfig();
         this.resource = new ResourceConfig();
         this.notion = new NotionConfig();
+        this.generator = new GeneratorConfig();
     }
 
     /**
@@ -103,11 +105,21 @@ public class Config extends AbstractConfig {
         return notion;
     }
 
+    /**
+     * Gets the generator configuration.
+     * 
+     * @return The generator configuration
+     */
+    public GeneratorConfig getGeneratorConfig() {
+        return generator;
+    }
+
     @Override
     public void validate() throws IllegalStateException {
         server.validate();
         resource.validate();
         notion.validate();
+        generator.validate();
     }
 
     @Override
@@ -115,6 +127,7 @@ public class Config extends AbstractConfig {
         parser.addHandler(server);
         parser.addHandler(resource);
         parser.addHandler(notion);
+        parser.addHandler(generator);
     }
 
     @Override
@@ -122,6 +135,7 @@ public class Config extends AbstractConfig {
         server.writeJSON(json);
         resource.writeJSON(json);
         notion.writeJSON(json);
+        generator.writeJSON(json);
         return json;
     }
 
@@ -135,5 +149,8 @@ public class Config extends AbstractConfig {
 
         if (object.has("notion"))
             notion.loadJSON(object.getAsJsonObject("notion"));
+
+        if (object.has("generator"))
+            generator.loadJSON(object.getAsJsonObject("generator"));
     }
 }
