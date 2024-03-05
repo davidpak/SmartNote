@@ -7,6 +7,7 @@ import Warning from '../components/Warning';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
+import YouTubeUpload from './YouTubeUpload';
 
 const FileUpload = ({
   next,
@@ -81,7 +82,7 @@ const FileUpload = ({
         </Link>
         <img src={'/home-hero.png'} alt='' className='max-w-xl' />
       </section>
-      <section className='flex flex-col gap-6 items-center w-full max-w-xl'>
+      <section className='flex flex-col gap-6 items-center w-full'>
         <div className='flex flex-col gap-4 items-center'>
           <H2>Upload Files</H2>
           <Body>
@@ -89,19 +90,26 @@ const FileUpload = ({
             here:
           </Body>
         </div>
-        <Dropzone
-          files={files}
-          setFiles={(files) => {
-            setFiles(files);
-            updateFiles(files.map((file) => `session:uploads/${file.name}`));
-          }}
-          errors={errors}
-          setErrors={(errors) => setErrors(errors)}
-          className='w-full'
-        />
-        {hasErrors() && (
-          <Warning>Remove all invalid files to continue.</Warning>
-        )}
+        <div className='max-w-4xl w-full'>
+          <div className='flex gap-4 w-full justify-center'>
+            <Dropzone
+              files={files}
+              setFiles={(files) => {
+                setFiles(files);
+                updateFiles(
+                  files.map((file) => `session:uploads/${file.name}`)
+                );
+              }}
+              errors={errors}
+              setErrors={(errors) => setErrors(errors)}
+              className='basis-1/2'
+            />
+            <YouTubeUpload className='basis-1/2' />
+          </div>
+          {hasErrors() && (
+            <Warning>Remove all invalid files to continue.</Warning>
+          )}
+        </div>
       </section>
       <Button
         {...((files.length === 0 || hasErrors()) && { disabled: true })}

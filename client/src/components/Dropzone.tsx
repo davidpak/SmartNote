@@ -1,7 +1,7 @@
 import { FileRejection, ErrorCode, useDropzone } from 'react-dropzone';
 import { IoCloudUploadOutline as Upload } from 'react-icons/io5';
 
-import FileListItem from './FileListItem';
+import FileList from './FileList';
 import Button from './Button';
 
 interface DropzoneType extends React.HTMLAttributes<HTMLDivElement> {
@@ -56,12 +56,12 @@ const Dropzone = ({
       <div
         {...getRootProps({
           className:
-            'dropzone px-8 py-12 border border-dashed border-neutral-300 rounded-3xl text-center',
+            'dropzone p-8 border border-dashed border-neutral-300 rounded-3xl text-center h-56',
         })}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className='flex flex-col items-center gap-4'>
+        <div className='flex flex-col items-center justify-center gap-4 h-full'>
           <Upload size={40} className='text-neutral-500' aria-hidden />
           <div className='text-center'>
             <label className='font-medium text-lg text-neutral-500'>
@@ -78,19 +78,7 @@ const Dropzone = ({
         </div>
       </div>
 
-      {files.length > 0 && (
-        <ul className='flex flex-col gap-4 mt-6'>
-          {files.map((file: File, index: number) => (
-            <li key={index}>
-              <FileListItem
-                file={file}
-                onRemove={() => removeFile(index)}
-                errorMessage={errors[index] ?? undefined}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <FileList files={files} errors={errors} removeFile={removeFile} />
     </section>
   );
 };
