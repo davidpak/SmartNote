@@ -105,7 +105,6 @@ const ConnectToNotion = ({
         </Body>
         <ExportModal
           markdown={markdown}
-          filename={`smartnote.${format}`}
           format={format}
           onExport={() => {
             next();

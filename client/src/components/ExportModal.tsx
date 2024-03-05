@@ -7,14 +7,12 @@ import { FormatType } from './ConnectToNotion';
 
 interface ExportModalType extends React.HTMLAttributes<HTMLDivElement> {
   markdown: string;
-  filename: string;
   format: FormatType;
   onExport: () => void;
 }
 
 const ExportModal = ({
   markdown,
-  filename,
   format,
   onExport,
   children,
@@ -81,6 +79,7 @@ const ExportModal = ({
             : 'text/markdown',
     });
     const exportUrl = URL.createObjectURL(file);
+    const filename = `smartnote.${format}`;
 
     const aTag = document.createElement('a');
     aTag.href = exportUrl;
