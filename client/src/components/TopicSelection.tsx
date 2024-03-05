@@ -76,32 +76,6 @@ const TopicSelection = ({
   const originalMd = useRef(md); // store the original markdown
   const [markdown, setMarkdown] = useState(md); // keep track of the updated markdown
 
-  // export back the markdown file to server
-  async function exportNotes() {
-    try {
-      const body = {
-        data: markdown,
-        exporter: 'md',
-        output: 'notes1.md', // name of the export resource to write to
-      };
-
-      const res = await fetch('http://localhost:4567/api/v1/export', {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify(body),
-      });
-
-      // status check
-      if (!res.ok) {
-        throw new Error('HTTP error ' + res.status);
-      }
-
-      const data = await res.json();
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   function isHeadingType(object: any): object is HeadingType {
     return 'level' in object;
   }
@@ -256,8 +230,8 @@ const TopicSelection = ({
         Back
       </Button>
       <H2 className='text-center'>Select Topics to Include</H2>
-      <section className='flex bg-neutral-100 max-w-5xl'>
-        <section className='border-neutral-400 border-r-2 px-2 py-3'>
+      <section className='flex bg-neutral-100 max-w-5xl w-full'>
+        <section className='border-neutral-400 border-r-2 px-2 py-3 max-w-xs w-full'>
           <H3 className='text-base self-center pl-3 mb-2 pt-2'>Breakdown</H3>
           <CheckTree
             data={data}
@@ -273,12 +247,13 @@ const TopicSelection = ({
             }}
             defaultExpandAll
             showIndentLine
+            className='max-w-xs'
           />
         </section>
-        <section className='h-96 p-5'>
+        <section className='h-96 p-5 w-full'>
           <H3 className='text-base mb-2'>Output Preview</H3>
           <Markdown
-            className='flex flex-col bg-white p-6 gap-3 overflow-scroll max-h-full'
+            className='flex flex-col bg-white p-6 gap-3 overflow-scroll max-h-full w-full'
             components={{
               h1: H3,
               h2(props) {
@@ -305,8 +280,9 @@ const TopicSelection = ({
         </section>
       </section>
       <Button
+        {...((selectedTopics.length === 0) && { disabled: true })}
         onClick={() => {
-          exportNotes();
+          localStorage.setItem('markdown', markdown);
           next();
         }}
       >

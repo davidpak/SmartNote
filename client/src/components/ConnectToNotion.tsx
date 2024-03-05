@@ -7,7 +7,7 @@ import H2 from './H2';
 import ExportModal from './ExportModal';
 import DropdownMenu from './DropdownMenu';
 
-type FormatType = 'txt' | 'rtf' | 'md';
+export type FormatType = 'txt' | 'rtf' | 'md' | 'json';
 
 const CLIENT_ID = '42429aa5-68fe-48dd-9cae-d0702fb33b39';
 const REDIRECT_URI = 'http://localhost:5173';
@@ -15,11 +15,14 @@ const REDIRECT_URI = 'http://localhost:5173';
 const ConnectToNotion = ({
   prev,
   next,
+  setNotesUrl,
 }: {
   prev: () => void;
   next: () => void;
+  setNotesUrl: (url: string) => void;
 }) => {
-  const [format, setFormat] = useState<FormatType>();
+  const [format, setFormat] = useState<FormatType>('txt');
+  const markdown = localStorage.getItem('markdown')!;
 
   const authenticate = () => {
     window.location.href = `https://api.notion.com/v1/oauth/authorize?client_id=${encodeURIComponent(
@@ -35,14 +38,14 @@ const ConnectToNotion = ({
 
     if (code) {
       next();
-      exportNotes(code);
+      exportToNotion(code);
     }
   };
 
-  const exportNotes = async (code: string) => {
+  const exportToNotion = async (code: string) => {
     try {
       const body = {
-        source: 'public:output.md', // TODO: replace with actual resource name
+        data: markdown,
         exporter: 'notion',
         remote: {
           mode: 'new',
@@ -62,7 +65,7 @@ const ConnectToNotion = ({
       }
 
       const json = await res.json();
-      console.log(json);
+      setNotesUrl(json.url);
     } catch (e) {
       console.error(e);
     }
@@ -100,22 +103,20 @@ const ConnectToNotion = ({
           Export to your desired alternate file format. Flexibility in learning
           is key.
         </Body>
+        <img src='/alternateExport.png' alt='' className='w-64' />
         <ExportModal
-          // this is only for demo. exportUrl should be generated using the notes
-          // file obtained from back-end (maybe use a Blob object to create a file
-          // of `format` type)
-          exportUrl=''
-          exportFilename=''
-          onExport={next}
+          markdown={markdown}
+          format={format}
+          onExport={() => {
+            next();
+          }}
         >
           <div className='flex flex-col gap-4'>
             <DropdownMenu
               label='Export Format'
-              options={['TXT', 'RTF', 'Markdown']}
-              selectOption={(value) => {
-                setFormat(
-                  value === 'TXT ' ? 'txt' : value === 'RTF' ? 'rtf' : 'md'
-                );
+              options={['txt', 'rtf', 'md', 'json']}
+              selectOption={(value: FormatType) => {
+                setFormat(value);
               }}
             />
           </div>

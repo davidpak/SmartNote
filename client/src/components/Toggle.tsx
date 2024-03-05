@@ -8,7 +8,7 @@ interface ToggleType extends React.HTMLAttributes<HTMLLabelElement> {
 }
 
 const Toggle = ({ label, updateToggle, className, ...rest }: ToggleType) => {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
 
   return (
     <label

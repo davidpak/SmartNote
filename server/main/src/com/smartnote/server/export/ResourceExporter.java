@@ -1,7 +1,5 @@
 package com.smartnote.server.export;
 
-import static org.mockito.ArgumentMatchers.nullable;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.InvalidPathException;
@@ -14,7 +12,10 @@ import com.smartnote.server.format.ParsedMarkdown;
 import com.smartnote.server.resource.Resource;
 
 /**
- * <p>Interface for exporting to a server resource through the use of a <code>Renderer</code>.</p>
+ * <p>
+ * Interface for exporting to a server resource through the use of a
+ * <code>Renderer</code>.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @see Exporter
@@ -24,27 +25,30 @@ public interface ResourceExporter extends Exporter {
     /**
      * Create the converter for the exporter.
      * 
-     * @param options The options for the renderer.
+     * @param options    The options for the renderer.
      * @param permission The permission of the user.
      * @return The renderer.
      * @throws IllegalArgumentException If the options are invalid.
-     * @throws SecurityException If the user does not have the permission to create the renderer.
+     * @throws SecurityException        If the user does not have the permission to
+     *                                  create the renderer.
      */
-    MarkdownConverter<?> createConverter(ExportOptions options, Permission permission) throws IllegalArgumentException, SecurityException;
+    MarkdownConverter<?> createConverter(ExportOptions options, Permission permission)
+            throws IllegalArgumentException, SecurityException;
 
     @Override
-    default JsonObject export(ExportOptions options, Permission permission) throws SecurityException, InvalidPathException, IOException, MalformedExportOptionsException {
+    default JsonObject export(ExportOptions options, Permission permission)
+            throws SecurityException, InvalidPathException, IOException, MalformedExportOptionsException {
         String data = options.readInputData(permission);
 
         ParsedMarkdown md = ParsedMarkdown.parse(data);
         Object obj = createConverter(options, permission).convert(md);
-        if (obj == nullable(null))
+        if (obj == null)
             throw new IOException("Error converting markdown to resource");
 
         String output = obj.toString();
         String source = options.getSource();
 
-        String dest = source + "_exported";
+        String dest = "session:" + source + "_exported";
 
         String extension = getExtension();
         if (extension != null && extension.length() > 0)

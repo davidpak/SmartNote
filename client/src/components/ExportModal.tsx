@@ -3,15 +3,17 @@ import { useState, Fragment } from 'react';
 
 import Button from './Button';
 
+import { FormatType } from './ConnectToNotion';
+
 interface ExportModalType extends React.HTMLAttributes<HTMLDivElement> {
-  exportUrl: string;
-  exportFilename: string;
+  markdown: string;
+  format: FormatType;
   onExport: () => void;
 }
 
 const ExportModal = ({
-  exportUrl,
-  exportFilename,
+  markdown,
+  format,
   onExport,
   children,
   className,
@@ -19,15 +21,80 @@ const ExportModal = ({
 }: ExportModalType) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  function download(): void {
+  const exportNotes = async (format: FormatType) => {
+    if (format === 'md') {
+      return markdown;
+    } else {
+      try {
+        const body = {
+          data: markdown,
+          exporter: format,
+        };
+
+        const res = await fetch('http://localhost:4567/api/v1/export', {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          throw new Error('HTTP error ' + res.status);
+        }
+
+        const json = await res.json();
+        const notes = await getNotes(json.name);
+        return notes;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const getNotes = async (name: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:4567/api/v1/fetch?name=${name}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
+      const text = await res.text();
+      return text;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const padValue = (value: number) => {
+    return value.toString().padStart(2, '0');
+  };
+
+  const download = async () => {
+    const data = await exportNotes(format);
+    const file = new Blob([data!], {
+      type:
+        format === 'txt'
+          ? 'text/plain'
+          : format === 'rtf'
+            ? 'application/rtf'
+            : 'text/markdown',
+    });
+    const exportUrl = URL.createObjectURL(file);
+
+    const now = new Date();
+    const date = `${now.getFullYear()}-${padValue(now.getMonth() + 1)}-${padValue(now.getDate())}`;
+    const time = `${padValue(now.getHours() % 12)}.${padValue(now.getMinutes())}.${padValue(now.getSeconds())}${now.getHours() < 12 ? 'AM' : 'PM'}`;
+    const filename = `smartnote-${date}-at-${time}.${format}`;
+
     const aTag = document.createElement('a');
     aTag.href = exportUrl;
-    aTag.download = exportFilename;
+    aTag.download = filename;
     document.body.appendChild(aTag);
     aTag.click();
     document.body.removeChild(aTag);
     onExport();
-  }
+  };
 
   return (
     <div className={className} {...rest}>

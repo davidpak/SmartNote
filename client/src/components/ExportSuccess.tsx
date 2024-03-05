@@ -8,11 +8,13 @@ import Button from './Button';
 interface ExportSuccessType extends React.HTMLAttributes<HTMLDivElement> {
   prev: () => void;
   goHome: () => void;
+  notesUrl: string;
 }
 
 const ExportSuccess = ({
   prev,
   goHome,
+  notesUrl,
   className,
   ...rest
 }: ExportSuccessType) => {
@@ -30,12 +32,13 @@ const ExportSuccess = ({
         Back
       </Button>
       <H2>Export Successful!</H2>
+      <img src='/export.png' alt='' className='w-64' />
       <Body>Congrats! Check out your new notes page :&#41;</Body>
       <div className='flex gap-5'>
         <Button onClick={goHome} variant='secondary'>
           Home
         </Button>
-        <a href='https://www.notion.so/' target='_blank' tabIndex={-1}>
+        <a href={notesUrl} target='_blank' tabIndex={-1}>
           <Button>Go to Notion</Button>
         </a>
       </div>

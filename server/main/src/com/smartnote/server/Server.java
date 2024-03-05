@@ -232,6 +232,13 @@ public class Server {
             if (debug) addDebugInfo(e, result);
 
             res.body(new Gson().toJson(result));
+
+            // CORS
+            res.header("Access-Control-Allow-Origin", serverConfig.getOrigin());
+            res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+            res.header("Access-Control-Allow-Credentials", "true");
+            res.header("Access-Control-Allow-Headers", "Content-Type");
+            res.header("Access-Control-Expose-Headers", "Content-Type");
         });
 
         exception(UnsupportedOperationException.class, (e, req, res) -> {
@@ -244,6 +251,13 @@ public class Server {
             if (debug) addDebugInfo(e, result);
 
             res.body(new Gson().toJson(result));
+
+            // CORS
+            res.header("Access-Control-Allow-Origin", serverConfig.getOrigin());
+            res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+            res.header("Access-Control-Allow-Credentials", "true");
+            res.header("Access-Control-Allow-Headers", "Content-Type");
+            res.header("Access-Control-Expose-Headers", "Content-Type");
         });
 
         port(serverConfig.getPort());

@@ -10,22 +10,23 @@ componentSmokeTest({
   Component: DropdownMenu,
   props: {
     label: 'Export Format',
-    options: ['RTF', 'TXT', 'PDF', 'HTML', 'Markdown & CSV'],
+    options: ['txt', 'rtf', 'md', 'json'],
     selectOption: () => {},
   },
 });
 
-const dropdown =
+const dropdown = (
   <DropdownMenu
     label='Export Format'
-    options={['RTF', 'TXT', 'PDF', 'HTML', 'Markdown & CSV']}
+    options={['txt', 'rtf', 'md', 'json']}
     selectOption={() => {}}
     data-testid='dropdown-test'
-  />;
+  />
+);
 
 it('should render with correct label and default value', () => {
   render(dropdown);
-  expect(screen.getByLabelText('Export Format')).toHaveTextContent('RTF');
+  expect(screen.getByLabelText('Export Format')).toHaveTextContent('txt');
   expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
 });
 
@@ -36,5 +37,5 @@ it('should update value when selecting a new value', () => {
   fireEvent.click(options[2]);
   expect(options[0]).toHaveAttribute('aria-selected', 'false');
   expect(options[2]).toHaveAttribute('aria-selected', 'true');
-  expect(screen.getByLabelText('Export Format')).toHaveTextContent('PDF');
+  expect(screen.getByLabelText('Export Format')).toHaveTextContent('md');
 });
