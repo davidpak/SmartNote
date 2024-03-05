@@ -3,10 +3,12 @@ import { Listbox, Transition } from '@headlessui/react';
 import { LuChevronDown as Chevron } from 'react-icons/lu';
 import { twMerge } from 'tailwind-merge';
 
+import { FormatType } from './ConnectToNotion';
+
 interface DropdownMenuType extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
-  options: string[];
-  selectOption: (option: string) => void;
+  options: FormatType[];
+  selectOption: (option: FormatType) => void;
 }
 
 const DropdownMenu = ({

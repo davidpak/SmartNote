@@ -52,7 +52,6 @@ const ExportModal = ({
 
   const getNotes = async (name: string) => {
     try {
-      console.log(`http://localhost:4567/api/v1/fetch?name=${name}`);
       const res = await fetch(
         `http://localhost:4567/api/v1/fetch?name=${name}`,
         {

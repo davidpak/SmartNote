@@ -7,7 +7,7 @@ import H2 from './H2';
 import ExportModal from './ExportModal';
 import DropdownMenu from './DropdownMenu';
 
-export type FormatType = 'txt' | 'rtf' | 'md';
+export type FormatType = 'txt' | 'rtf' | 'md' | 'json';
 
 const CLIENT_ID = '42429aa5-68fe-48dd-9cae-d0702fb33b39';
 const REDIRECT_URI = 'http://localhost:5173';
@@ -113,11 +113,9 @@ const ConnectToNotion = ({
           <div className='flex flex-col gap-4'>
             <DropdownMenu
               label='Export Format'
-              options={['TXT', 'RTF', 'Markdown']}
-              selectOption={(value) => {
-                setFormat(
-                  value === 'TXT ' ? 'txt' : value === 'RTF' ? 'rtf' : 'md'
-                );
+              options={['txt', 'rtf', 'md', 'json']}
+              selectOption={(value: FormatType) => {
+                setFormat(value);
               }}
             />
           </div>
