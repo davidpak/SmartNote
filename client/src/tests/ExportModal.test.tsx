@@ -9,18 +9,20 @@ afterEach(cleanup);
 componentSmokeTest({
   Component: ExportModal,
   props: {
-    exportUrl: '../components/Toggle',
-    exportFilename: 'smartnotes.txt',
+    markdown: 'Sample Text',
+    format: 'txt',
+    onExport: () => {},
   },
 });
 
-const modal =
+const modal = (
   <ExportModal
-    exportUrl='../components/Toggle'
-    exportFilename={'smartnotes.txt'}
+    markdown='Sample Text'
+    format='txt'
     onExport={() => {}}
     data-testid='modal-test'
-  />;
+  />
+);
 
 it('should render button with correct label', () => {
   render(modal);
