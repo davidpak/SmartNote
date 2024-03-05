@@ -273,7 +273,7 @@ const TopicSelection = ({
             }}
             defaultExpandAll
             showIndentLine
-            className='max-w-xs truncate'
+            className='max-w-xs'
           />
         </section>
         <section className='h-96 p-5'>
