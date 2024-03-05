@@ -38,7 +38,7 @@ const About = () => {
         </Body>
       </section>
       <section className='flex flex-col items-center gap-3'>
-      <H2>How does it work?</H2>
+        <H2>How does it work?</H2>
         <Body>
           Once your files are uploaded, first customize the structure and desired
           sections of your generated notes!
