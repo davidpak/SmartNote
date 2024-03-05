@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
-import Warning from '../components/Warning';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
@@ -17,6 +16,7 @@ const FileUpload = ({
   updateFiles: (files: string[]) => void;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [links, setLinks] = useState<string[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -90,25 +90,26 @@ const FileUpload = ({
             here:
           </Body>
         </div>
-        <div className='max-w-4xl w-full'>
-          <div className='flex gap-4 w-full justify-center'>
-            <Dropzone
-              files={files}
-              setFiles={(files) => {
-                setFiles(files);
-                updateFiles(
-                  files.map((file) => `session:uploads/${file.name}`)
-                );
-              }}
-              errors={errors}
-              setErrors={(errors) => setErrors(errors)}
-              className='basis-1/2'
-            />
-            <YouTubeUpload className='basis-1/2' />
-          </div>
-          {hasErrors() && (
-            <Warning>Remove all invalid files to continue.</Warning>
-          )}
+        <div className='flex gap-4 w-full max-w-4xl justify-center'>
+          <Dropzone
+            files={files}
+            setFiles={(files) => {
+              setFiles(files);
+              updateFiles(files.map((file) => `session:uploads/${file.name}`));
+            }}
+            errors={errors}
+            setErrors={(errors) => setErrors(errors)}
+            hasErrors={hasErrors}
+            className='basis-1/2'
+          />
+          <YouTubeUpload
+            links={links}
+            setLinks={(links) => {
+              setLinks(links);
+              // updateFiles(links.map((file) => `${file.name}`));
+            }}
+            className='basis-1/2'
+          />
         </div>
       </section>
       <Button
