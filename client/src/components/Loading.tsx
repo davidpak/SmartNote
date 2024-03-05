@@ -5,7 +5,7 @@ import Button from './Button';
 
 const Loading = ({ prev }: { prev: () => void }) => {
   return (
-    <div className='max-w-48 m-auto'>
+    <div className='max-w-lg m-auto'>
       <Button
         icon={Arrow}
         variant='tertiary'
@@ -16,7 +16,7 @@ const Loading = ({ prev }: { prev: () => void }) => {
       </Button>
       <div className='flex flex-col items-center gap-8 text-center py-40'>
         <AnimatedCircle color='#375EF9' />
-        <p>Generating your notes...</p>
+        <p className='text-xl font-bold text-black'>Generating your notes...</p>
       </div>
     </div>
   );
