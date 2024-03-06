@@ -32,7 +32,7 @@ const FileListItem = ({
     file = file as VideoType;
     name = file.name;
     url = file.url;
-    type = 'mov';
+    type = 'video';
   } else {
     file = file as File;
     name = file.name;
@@ -47,7 +47,7 @@ const FileListItem = ({
     >
       <div className='flex items-center gap-5'>
         <img
-          src={`/${type === 'pdf' || type === 'pptx' || type === 'mov' ? type : 'default'}.svg`}
+          src={`/${type === 'pdf' || type === 'pptx' || type === 'video' ? type : 'default'}.svg`}
           alt=''
           className='w-6 drop-shadow-sm'
         />
