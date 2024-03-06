@@ -2,6 +2,7 @@ import prettyBytes from 'pretty-bytes';
 import { FiX as Remove } from 'react-icons/fi';
 import { IoMdWarning as Error } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
+import Truncate from 'react-truncate-inside';
 
 export interface File {
   name: string;
@@ -36,10 +37,12 @@ const FileListItem = ({
           className='w-6 drop-shadow-sm'
         />
         <div className='flex gap-5'>
-          <div className='flex flex-col items-start'>
-            <p className='font-medium text-neutral-500'>{name}</p>
+          <div className='flex flex-col items-start text-start'>
+            <div className='font-medium text-neutral-500'>
+              <Truncate text={name} width={200} />
+            </div>
             <div className='flex gap-1 items-start'>
-              <p className='text-sm text-neutral-450 w-16 text-start'>
+              <p className='text-sm text-neutral-450 w-16'>
                 {prettyBytes(size)}
               </p>
               <div className='flex items-center gap-2 text-sm text-neutral-500'>
