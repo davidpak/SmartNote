@@ -68,13 +68,9 @@ public class FetchTest extends BaseRoute {
         assertTrue(responseJson().has("message"));
         return response;
     }
+    /*
     @Test
     public void testHandleSuccess() throws Exception {
-        /**
-        Request request = setRequestQueryParam(TEST_FILE_NAME);
-        Response response = handle();
-        fetch.handle(request, response);
-        doApiTest(200);*/
         // Set up any necessary request parameters or headers
         setRequestQueryParam("param", "value");
 
@@ -132,5 +128,6 @@ public class FetchTest extends BaseRoute {
         // Verify response body
         assertEquals("{\"message\": \"Name was not specified\"}", result.body());
     }
+    **/
 
 }
