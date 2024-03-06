@@ -5,6 +5,8 @@ import Button from './Button';
 
 import { FormatType } from './ConnectToNotion';
 
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+
 interface ExportModalType extends React.HTMLAttributes<HTMLDivElement> {
   markdown: string;
   format: FormatType;
@@ -31,7 +33,7 @@ const ExportModal = ({
           exporter: format,
         };
 
-        const res = await fetch('http://localhost:4567/api/v1/export', {
+        const res = await fetch(`${BASE_URL}/export`, {
           method: 'POST',
           credentials: 'include',
           body: JSON.stringify(body),
@@ -52,13 +54,10 @@ const ExportModal = ({
 
   const getNotes = async (name: string) => {
     try {
-      const res = await fetch(
-        `http://localhost:4567/api/v1/fetch?name=${name}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-        }
-      );
+      const res = await fetch(`${BASE_URL}/fetch?name=${name}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
       const text = await res.text();
       return text;
     } catch (e) {

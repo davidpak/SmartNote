@@ -11,6 +11,8 @@ import Slider from './Slider';
 import Carousel from './Carousel';
 import { JsonType } from './TopicSelection';
 
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+
 interface CustomizationType extends React.HTMLAttributes<HTMLDivElement> {
   files: string[];
   prev: () => void;
@@ -65,7 +67,7 @@ const Customization = ({
     };
 
     try {
-      const res = await fetch('http://localhost:4567/api/v1/generate', {
+      const res = await fetch(`${BASE_URL}/generate`, {
         method: 'POST',
         credentials: 'include',
         headers: {
