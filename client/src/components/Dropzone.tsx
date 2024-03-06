@@ -65,7 +65,7 @@ const Dropzone = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className='flex flex-col items-center justify-center gap-4 h-full'>
-          <Upload size={40} className='text-neutral-500' aria-hidden />
+          <Upload size={40} className='text-neutral-500 shrink-0' aria-hidden />
           <div className='text-center'>
             <label className='font-medium text-lg text-neutral-500'>
               {isDragActive

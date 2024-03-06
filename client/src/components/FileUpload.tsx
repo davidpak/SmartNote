@@ -89,7 +89,7 @@ const FileUpload = ({
             here:
           </Body>
         </div>
-        <div className='flex gap-4 w-full max-w-4xl justify-center'>
+        <div className='flex flex-col md:flex-row gap-4 w-full max-w-4xl justify-center'>
           <Dropzone
             files={files}
             setFiles={(files) => {

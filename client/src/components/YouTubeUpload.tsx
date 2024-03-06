@@ -102,7 +102,7 @@ const YouTubeUpload = ({
             <input
               type='text'
               id='youtubeInput'
-              className='border border-neutral-400 rounded-lg px-3 w-56'
+              className='border border-neutral-400 rounded-lg px-3 w-full max-w-56'
               placeholder='youtube.com/watch...'
               value={input}
               onChange={(e) => setInput(e.target.value)}

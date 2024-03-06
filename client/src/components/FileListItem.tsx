@@ -82,7 +82,7 @@ const FileListItem = ({
       <button
         onClick={onRemove}
         aria-label={`Remove ${name}`}
-        className='h-fit'
+        className='h-fit shrink-0'
       >
         <Remove size={24} className='text-neutral-500' aria-hidden />
       </button>
