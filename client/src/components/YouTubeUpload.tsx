@@ -1,17 +1,22 @@
 import { IoLinkOutline as Link } from 'react-icons/io5';
 
-// import FileList from './FileList';
+import FileList from './FileList';
 import Button from './Button';
 import { useState } from 'react';
 
+export type VideoType = {
+  name: string;
+  url: string;
+};
+
 interface YoutubeUploadType extends React.HTMLAttributes<HTMLDivElement> {
-  links: string[];
-  setLinks: (links: string[]) => void;
+  videos: VideoType[];
+  setVideos: (videos: VideoType[]) => void;
 }
 
 const YouTubeUpload = ({
-  links,
-  setLinks,
+  videos,
+  setVideos,
   className,
   ...rest
 }: YoutubeUploadType) => {
@@ -19,12 +24,14 @@ const YouTubeUpload = ({
 
   const addLink = () => {
     if (isValidLink(input)) {
+      // TODO: get video name
+      const video = {
+        name: 'name',
+        url: input,
+      };
+      setVideos([...videos, video]);
     } else {
     }
-  };
-
-  const removeFile = (idx: number) => {
-    setLinks(links.filter((_, index) => idx !== index));
   };
 
   const isValidLink = (url: string) => {
@@ -32,6 +39,10 @@ const YouTubeUpload = ({
     const pattern =
       /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu\.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/;
     return pattern.test(url);
+  };
+
+  const removeLink = (idx: number) => {
+    setVideos(videos.filter((_, index) => idx !== index));
   };
 
   return (
@@ -70,12 +81,12 @@ const YouTubeUpload = ({
           </div>
         </form>
       </div>
-      {/* <FileList
-        files={files}
-        errors={errors}
-        removeFile={removeFile}
+      <FileList
+        files={videos}
+        errors={[]}
+        removeFile={removeLink}
         className='px-4'
-      /> */}
+      />
     </section>
   );
 };

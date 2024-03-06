@@ -1,8 +1,10 @@
-import FileListItem from './FileListItem';
 import { twMerge } from 'tailwind-merge';
 
+import FileListItem from './FileListItem';
+import { VideoType } from './YouTubeUpload';
+
 interface FileListType extends React.HTMLAttributes<HTMLUListElement> {
-  files: File[];
+  files: (File | VideoType)[];
   errors: (string | null)[];
   removeFile: (idx: number) => void;
 }
@@ -21,7 +23,7 @@ const FileList = ({
           className={twMerge('flex flex-col gap-4 mt-6', className)}
           {...rest}
         >
-          {files.map((file: File, index: number) => (
+          {files.map((file: File | VideoType, index: number) => (
             <li key={index}>
               <FileListItem
                 file={file}

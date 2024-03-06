@@ -6,7 +6,7 @@ import Button from '../components/Button';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
-import YouTubeUpload from './YouTubeUpload';
+import YouTubeUpload, { VideoType } from './YouTubeUpload';
 
 const FileUpload = ({
   next,
@@ -16,7 +16,7 @@ const FileUpload = ({
   updateFiles: (files: string[]) => void;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
-  const [links, setLinks] = useState<string[]>([]);
+  const [videos, setVideos] = useState<VideoType[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -103,10 +103,10 @@ const FileUpload = ({
             className='basis-1/2'
           />
           <YouTubeUpload
-            links={links}
-            setLinks={(links) => {
-              setLinks(links);
-              // updateFiles(links.map((file) => `${file.name}`));
+            videos={videos}
+            setVideos={(videos) => {
+              setVideos(videos);
+              // updateFiles(videos.map((file) => `${file.name}`));
             }}
             className='basis-1/2'
           />
