@@ -7,10 +7,11 @@ import H2 from './H2';
 import ExportModal from './ExportModal';
 import DropdownMenu from './DropdownMenu';
 
-export type FormatType = 'txt' | 'rtf' | 'md' | 'json';
+const CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
+const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
-const CLIENT_ID = '42429aa5-68fe-48dd-9cae-d0702fb33b39';
-const REDIRECT_URI = 'http://localhost:5173';
+export type FormatType = 'txt' | 'rtf' | 'md' | 'json';
 
 const ConnectToNotion = ({
   prev,
@@ -53,11 +54,11 @@ const ConnectToNotion = ({
         remote: {
           mode: 'new',
           code: code,
-          redirectUri: 'http://localhost:5173',
+          redirectUri: REDIRECT_URI,
         },
       };
 
-      const res = await fetch('http://localhost:4567/api/v1/export', {
+      const res = await fetch(`${BASE_URL}/export`, {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify(body),
