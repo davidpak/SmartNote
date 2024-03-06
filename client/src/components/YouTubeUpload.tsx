@@ -20,13 +20,39 @@ const YouTubeUpload = ({
   className,
   ...rest
 }: YoutubeUploadType) => {
+  const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
   const [input, setInput] = useState<string>('');
 
-  const addLink = () => {
+  const getVideoId = (url: string) => {
+    // Source: https://stackoverflow.com/questions/3452546/how-do-i-get-the-youtube-video-id-from-a-url
+    const regExp =
+      /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[7].length == 11 ? match[7] : false;
+  };
+
+  const getVideoName = async (url: string) => {
+    const id = getVideoId(url);
+
+    try {
+      const res = await fetch(
+        `https://youtube.googleapis.com/youtube/v3/videos?part=snippet&key=${API_KEY}&id=${id}`,
+        {
+          method: 'GET',
+        }
+      );
+      const json = await res.json();
+      return json.items[0].snippet.title;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addLink = async () => {
     if (isValidLink(input)) {
-      // TODO: get video name
+      const name = await getVideoName(input);
       const video = {
-        name: 'name',
+        name: name,
         url: input,
       };
       setVideos([...videos, video]);
