@@ -65,6 +65,8 @@ public class Fetch implements Route {
             InputStream inputStream = resource.openInputStream();
             //add info to body
             body = inputStream.readAllBytes();
+            //close inputStream
+            inputStream.close();
             //send
         } catch(SecurityException e) {
             response.status(403);
