@@ -15,6 +15,7 @@ import org.apache.tika.Tika;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.Server;
 import com.smartnote.server.ServerConfig;
 import com.smartnote.server.auth.Session;
@@ -68,13 +69,28 @@ public class Fetch implements Route {
             //close inputStream
             inputStream.close();
             //send
+        } catch (JsonSyntaxException e) {
+            response.status(400);
+            return "{\"message\":\"Malformed fetch options\"}";
+        } catch (InvalidPathException e) {
+            response.status(400);
+            return "{\"message\":\"Invalid path\"}";
+        } catch (IllegalArgumentException e) {
+            response.status(400);
+            return "{\"message\":" + e.getMessage() + "\"}";
         } catch(SecurityException e) {
             response.status(403);
             return "{\"message\":\"Access denied\"}";
+        } catch(NoSuchResourceException e) {
+            response.status(404);
+            return "{\"message\":\"Resource not found\"}";
         } catch (FileNotFoundException e) {
             // File not found
             response.status(404);
             return "{\"message\":\"File not found\"}";
+        } catch (IOException e) {
+            response.status(500);
+            return "{\"message\":\"Generation failed\"}";
         }
 
         response.header("Content-Type", new Tika().detect(body));
