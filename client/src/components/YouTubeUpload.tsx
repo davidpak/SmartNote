@@ -84,8 +84,10 @@ const YouTubeUpload = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            setInput('');
-            addLink();
+            if (input !== '') {
+              setInput('');
+              addLink();
+            }
           }}
           className='flex flex-col items-center justify-center gap-4 h-full'
         >
