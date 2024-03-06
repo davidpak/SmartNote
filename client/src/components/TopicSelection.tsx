@@ -106,7 +106,7 @@ const TopicSelection = ({
           label: removeColon(entry.children[0].literal),
         };
 
-        if (entry.level == 1 || entry.level == 2) {
+        if (entry.level == 2) {
           // parent topics
           data.push(node);
           parentNode = node;

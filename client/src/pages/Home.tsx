@@ -16,6 +16,7 @@ const Home = () => {
   const [md, setMd] = useState<string>('');
   const [json, setJson] = useState<JsonType>();
   const [notesUrl, setNotesUrl] = useState<string>('https://www.notion.so/');
+  const [isNotion, setIsNotion] = useState<boolean>(false);
 
   useEffect(() => {
     if (searchParams.has('code')) {
@@ -59,10 +60,18 @@ const Home = () => {
             prev={prev}
             next={next}
             setNotesUrl={(url: string) => setNotesUrl(url)}
+            setIsNotion={(isNotion: boolean) => setIsNotion(isNotion)}
           />
         );
       case 4:
-        return <ExportSuccess prev={prev} goHome={home} notesUrl={notesUrl} />;
+        return (
+          <ExportSuccess
+            prev={prev}
+            goHome={home}
+            notesUrl={notesUrl}
+            isNotion={isNotion}
+          />
+        );
       default:
         home();
         return null;

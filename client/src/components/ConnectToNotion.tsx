@@ -16,10 +16,12 @@ const ConnectToNotion = ({
   prev,
   next,
   setNotesUrl,
+  setIsNotion,
 }: {
   prev: () => void;
   next: () => void;
   setNotesUrl: (url: string) => void;
+  setIsNotion: (isNotion: boolean) => void;
 }) => {
   const [format, setFormat] = useState<FormatType>('txt');
   const markdown = localStorage.getItem('markdown')!;
@@ -37,6 +39,7 @@ const ConnectToNotion = ({
     const code = urlParams.get('code');
 
     if (code) {
+      setIsNotion(true);
       next();
       exportToNotion(code);
     }
@@ -108,6 +111,7 @@ const ConnectToNotion = ({
           markdown={markdown}
           format={format}
           onExport={() => {
+            setIsNotion(false);
             next();
           }}
         >
