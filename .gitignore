@@ -52,6 +52,7 @@ server/test-results
 
 *.tmp
 *.md5
+*.requirements.txt
 
 # Ignore .env files
 .env

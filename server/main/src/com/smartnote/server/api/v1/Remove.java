@@ -10,6 +10,7 @@ import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -30,7 +31,7 @@ public class Remove implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        response.type("application/json");
+        response.type(MIME.JSON);
 
         ResourceSystem system = Server.getServer().getResourceSystem();
         SessionManager sessionManager = Server.getServer().getSessionManager();

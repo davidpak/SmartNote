@@ -3,11 +3,15 @@ package com.smartnote.server.api.v1;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ProcessBuilder.Redirect;
 import java.net.URL;
 import java.nio.file.Path;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.smartnote.server.util.JSONUtil.*;
 
@@ -15,7 +19,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.smartnote.server.GeneratorConfig;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
@@ -25,6 +28,7 @@ import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
 import com.smartnote.server.util.FileUtils;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -45,6 +49,8 @@ public class Generate implements Route {
 
     public static final String OUTPUT_RESOURCE = "session:output.md";
 
+    private static final Logger LOG = LoggerFactory.getLogger(Generate.class);
+
     @Override
     public Object handle(Request request, Response response) throws Exception {
         SessionManager sessionManager = Server.getServer().getSessionManager();
@@ -54,40 +60,68 @@ public class Generate implements Route {
 
         long startTime = System.currentTimeMillis();
 
+        response.type(MIME.JSON);
+
         Session session = sessionManager.getSession(request);
         if (session == null) {
             response.status(401);
             return "{\"message\":\"No session\"}";
         }
 
-        JsonObject generateJson = new Gson().fromJson(request.body(), JsonObject.class);
+        Gson gson = new Gson();
+        JsonObject generateJson = gson.fromJson(request.body(), JsonObject.class);
 
+        JsonObject result = new JsonObject();
         Permission permission = session.getPermission();
+        String message = null;
 
         // generate the summary
         Resource outResource;
         try {
-            if (generatorConfig.isDebug())
+            if (generatorConfig.isDebug()) {
+                LOG.info("Debug mode enabled, using debug resource");
                 outResource = resourceSystem.findResource(generatorConfig.getDebugResource(), permission);
-            else {
+            } else {
+                StringBuilder messageBuilder = new StringBuilder();
                 summarizer = FileUtils.getCanonicalPath(summarizer);
-                outResource = generate(summarizer, generateJson, session, permission);
+                
+                LOG.info("Generating summary with summarizer: " + summarizer);
+                outResource = generate(summarizer, generateJson, session, permission, messageBuilder);
+
+                message = messageBuilder.toString();
+                if (message.length() == 0) message = null;
             }
         } catch (IllegalArgumentException e) {
+            LOG.warn("Invalid generation options", e);
+
             response.status(400);
-            return "{\"message\":" + e.getMessage() + "\"}";
+            result.addProperty("message", "Invalid generation options: " + e.getMessage());
+            if (message != null)
+                result.addProperty("extended", message);
+            return gson.toJson(result);
         } catch (NoSuchResourceException e) {
+            LOG.warn("Resource not found", e);
             response.status(404);
-            return "{\"message\":\"Resource not found\"}";
+            result.addProperty("message", "Resource not found");
+            return gson.toJson(result);
         } catch (SecurityException e) {
+            LOG.warn("Permission denied", e);
+
             response.status(403);
-            return "{\"message\":\"Permission denied\"}";
+            result.addProperty("message", "Permission denied");
+            if (message != null)
+                result.addProperty("extended", message);
+            return gson.toJson(result);
         } catch (IOException e) {
+            LOG.warn("IO error", e);
             response.status(500);
-            return "{\"message\":\"Generation failed\"}";
+            result.addProperty("message", "Internal server error");
+            return gson.toJson(result);
         } catch (InterruptedException e) {
+            LOG.warn("Generation interrupted", e);
             response.status(500);
-            return "{\"message\":\"Data generation interrupted\"}";
+            result.addProperty("message", "Generation interrupted");
+            return gson.toJson(result);
         }
 
         JsonObject general = generateJson.getAsJsonObject("general");
@@ -106,17 +140,24 @@ public class Generate implements Route {
                 if (includeJson)
                     md = ParsedMarkdown.parse(markdownString);
             } catch (SecurityException e) {
+                LOG.warn("Permission denied", e);
                 response.status(403);
-                return "{\"message\":\"Permission denied\"}";
+                result.addProperty("message", "Permission denied");
+                return gson.toJson(result);
             } catch (NoSuchResourceException e) {
+                LOG.warn("Resource not found", e);
                 response.status(404);
-                return "{\"message\":\"Resource not found\"}";
+                result.addProperty("message", "Resource not found");
+                return gson.toJson(result);
             } catch (IOException e) {
-                response.status(500);
-                return "{\"message\":\"Internal server error\"}";
+                LOG.warn("IO error", e);
+                result.addProperty("message", "Internal server error");
+                return gson.toJson(result);
             } catch (IllegalArgumentException e) {
+                LOG.warn("Generated content is invalid", e);
                 response.status(500);
-                return "{\"message\":\"Generated content is invalid\"}";
+                result.addProperty("message", "Generated content is invalid");
+                return gson.toJson(result);
             } finally {
                 if (in != null)
                     in.close();
@@ -126,17 +167,17 @@ public class Generate implements Route {
         long endTime = System.currentTimeMillis();
 
         // return the result
-        JsonObject resObject = new JsonObject();
-        resObject.addProperty("name", outResource.getName());
-        resObject.addProperty("time", (endTime - startTime) / 1000.0);
+        result.addProperty("name", outResource.getName());
+        result.addProperty("time", (endTime - startTime) / 1000.0);
 
         if (md != null)
-            resObject.add("result", md.writeJSON());
+            result.add("result", md.writeJSON());
 
         if (markdownString != null)
-            resObject.addProperty("markdown", markdownString);
+            result.addProperty("markdown", markdownString);
 
-        return new Gson().toJson(resObject);
+        LOG.info("Generated summary: " + outResource.getName() + " in " + result.get("time").getAsDouble() + "s");
+        return gson.toJson(result);
     }
 
     /**
@@ -146,6 +187,7 @@ public class Generate implements Route {
      * @param json       The generation options.
      * @param session    The session.
      * @param permission The permission.
+     * @param message    The message to append to.
      * @return The generated resource.
      * @throws IllegalArgumentException If the body is invalid.
      * @throws NoSuchResourceException  If the resource does not exist.
@@ -156,7 +198,7 @@ public class Generate implements Route {
      *                                  for the summarizer to finish.
      */
     private Resource generate(String summarizer, JsonObject json, Session session,
-            Permission permission)
+            Permission permission, StringBuilder message)
             throws IllegalArgumentException, NoSuchResourceException, SecurityException, IOException,
             InterruptedException {
         JsonObject generalOptions = getObjectOrNull(json, "general");
@@ -199,7 +241,7 @@ public class Generate implements Route {
             if (name.startsWith("http://") || name.startsWith("https://")) {
                 URL url = new URL(name);
                 if (!url.getHost().equals("www.youtube.com"))
-                    throw new IllegalArgumentException("URL must be a YouTube video");
+                    throw new IllegalArgumentException("A URL was specified, but was not a YouTube video");
 
                 inputFiles.add(name);
                 continue;
@@ -252,14 +294,31 @@ public class Generate implements Route {
 
         // build process
         ProcessBuilder pb = new ProcessBuilder(commandArray);
-        pb.redirectErrorStream(true);
-        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        //pb.redirectErrorStream(true);
+        //pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        pb.redirectError(Redirect.PIPE);
+        pb.redirectOutput(Redirect.INHERIT);
         pb.directory(summarizerDir);
 
         // start and wait for process to finish
         Process p = pb.start();
-        int exitCode = p.waitFor();
+        InputStream in = p.getErrorStream();
+        
+        // read output from stderr
+        try {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                System.out.write(buffer, 0, bytesRead);
+                message.append(new String(buffer, 0, bytesRead));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            in.close();
+        }
 
+        int exitCode = p.waitFor();
         if (exitCode != 0)
             throw new IOException("Summarizer exited with non-zero exit code");
 

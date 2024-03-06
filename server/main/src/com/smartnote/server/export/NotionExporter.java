@@ -144,7 +144,7 @@ public class NotionExporter implements RemoteExporter {
                 JsonObject integration = getObjectOrNull(json, "integration");
                 if (integration != null) {
                     if (!config.allowRemoteIntegrations())
-                        throw new MalformedExportOptionsException("Remote integrations are not allowed");
+                        throw new MalformedExportOptionsException("Remote integrations are not allowed, check server config");
 
                     secret = getStringOrNull(integration, "secret");
                     clientId = getStringOrNull(integration, "clientId");
