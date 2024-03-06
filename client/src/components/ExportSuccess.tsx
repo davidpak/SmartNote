@@ -36,22 +36,19 @@ const ExportSuccess = ({
       <H2>Export Successful!</H2>
       <img src='/export.png' alt='' className='w-64' />
       <Body>
-        {
-          isNotion ?
-          'Congrats! Check out your new notes page :)' :
-          'Congrats! Your notes have been exported :)'
-        }
+        {isNotion
+          ? 'Congrats! Check out your new notes page :)'
+          : 'Congrats! Your notes have been exported :)'}
       </Body>
       <div className='flex gap-5'>
         <Button onClick={goHome} variant='secondary'>
           Home
         </Button>
-        {
-          isNotion &&
+        {isNotion && (
           <a href={notesUrl} target='_blank' tabIndex={-1}>
-            <Button>Go to Notion</Button>
+            <Button>View in Notion</Button>
           </a>
-        }
+        )}
       </div>
     </div>
   );
