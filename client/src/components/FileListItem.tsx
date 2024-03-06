@@ -2,6 +2,9 @@ import prettyBytes from 'pretty-bytes';
 import { FiX as Remove } from 'react-icons/fi';
 import { IoMdWarning as Error } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
+import Truncate from 'react-truncate-inside';
+
+import { VideoType } from './YouTubeUpload';
 
 export interface File {
   name: string;
@@ -9,7 +12,7 @@ export interface File {
 }
 
 interface FileListItemType extends React.HTMLAttributes<HTMLDivElement> {
-  file: File;
+  file: File | VideoType;
   errorMessage?: string;
   onRemove?: () => void;
 }
@@ -21,8 +24,21 @@ const FileListItem = ({
   className,
   ...rest
 }: FileListItemType) => {
-  const { name, size } = file;
-  const type = name.split('.').slice(-1)[0];
+  let name: string,
+    size: string | undefined,
+    url: string | undefined,
+    type: string;
+  if (file.hasOwnProperty('url')) {
+    file = file as VideoType;
+    name = file.name;
+    url = file.url;
+    type = 'video';
+  } else {
+    file = file as File;
+    name = file.name;
+    size = prettyBytes(file.size);
+    type = name.split('.').slice(-1)[0];
+  }
 
   return (
     <div
@@ -31,17 +47,22 @@ const FileListItem = ({
     >
       <div className='flex items-center gap-5'>
         <img
-          src={`/${type === 'pdf' || type === 'pptx' ? type : 'default'}.svg`}
+          src={`/${type === 'pdf' || type === 'pptx' || type === 'video' ? type : 'default'}.svg`}
           alt=''
           className='w-6 drop-shadow-sm'
         />
         <div className='flex gap-5'>
-          <div className='flex flex-col items-start'>
-            <p className='font-medium text-neutral-500'>{name}</p>
+          <div className='flex flex-col items-start text-start'>
+            <div className='font-medium text-neutral-500' title={name}>
+              <Truncate text={name} width={300} />
+            </div>
             <div className='flex gap-1 items-start'>
-              <p className='text-sm text-neutral-450 w-16 text-start'>
-                {prettyBytes(size)}
-              </p>
+              {url && (
+                <div className='text-sm text-neutral-450' title={url}>
+                  <Truncate text={url} width={250} />
+                </div>
+              )}
+              {size && <p className='text-sm text-neutral-450 w-16'>{size}</p>}
               <div className='flex items-center gap-2 text-sm text-neutral-500'>
                 {errorMessage && (
                   <>
@@ -61,7 +82,7 @@ const FileListItem = ({
       <button
         onClick={onRemove}
         aria-label={`Remove ${name}`}
-        className='h-fit'
+        className='h-fit shrink-0'
       >
         <Remove size={24} className='text-neutral-500' aria-hidden />
       </button>
