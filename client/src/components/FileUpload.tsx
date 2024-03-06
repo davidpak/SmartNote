@@ -42,6 +42,20 @@ const FileUpload = ({
     }
   }, []);
 
+  const upload = async (name: string, body: string | File) => {
+    const res = await fetch(
+      `http://localhost:4567/api/v1/upload?name=${name}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        body: body,
+      }
+    );
+    if (!res.ok) {
+      throw new Error('HTTP error ' + res.status);
+    }
+  };
+
   const uploadFiles = () => {
     if (!isLoggedIn) {
       throw new Error('not authenticated');
@@ -50,20 +64,7 @@ const FileUpload = ({
     files.forEach(async (file) => {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
-      reader.onload = async () => {
-        const res = await fetch(
-          `http://localhost:4567/api/v1/upload?name=${file.name}`,
-          {
-            method: 'POST',
-            credentials: 'include',
-            body: file,
-          }
-        );
-        if (!res.ok) {
-          throw new Error('HTTP error ' + res.status);
-        }
-      };
-
+      reader.onload = () => upload(file.name, file);
       reader.onerror = () => console.error(reader.error);
     });
   };
@@ -95,7 +96,6 @@ const FileUpload = ({
             files={files}
             setFiles={(files) => {
               setFiles(files);
-              updateFiles(files.map((file) => `session:uploads/${file.name}`));
             }}
             errors={errors}
             setErrors={(errors) => setErrors(errors)}
@@ -106,15 +106,19 @@ const FileUpload = ({
             videos={videos}
             setVideos={(videos) => {
               setVideos(videos);
-              // updateFiles(videos.map((file) => `${file.name}`));
             }}
             className='basis-1/2'
           />
         </div>
       </section>
       <Button
-        {...((files.length === 0 || hasErrors()) && { disabled: true })}
+        {...((files.length === 0 || hasErrors()) &&
+          videos.length === 0 && { disabled: true })}
         onClick={() => {
+          updateFiles([
+            ...files.map((file) => `session:uploads/${file.name}`),
+            ...videos.map((video) => video.url),
+          ]);
           uploadFiles();
           next();
         }}
