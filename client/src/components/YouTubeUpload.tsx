@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { IoLinkOutline as Link } from 'react-icons/io5';
 
 import FileList from './FileList';
 import Button from './Button';
-import { useState } from 'react';
+import Warning from './Warning';
 
 export type VideoType = {
   name: string;
@@ -22,6 +23,7 @@ const YouTubeUpload = ({
 }: YoutubeUploadType) => {
   const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
   const [input, setInput] = useState<string>('');
+  const [hasError, setHasError] = useState<boolean>(false);
 
   const getVideoId = (url: string) => {
     // Source: https://stackoverflow.com/questions/3452546/how-do-i-get-the-youtube-video-id-from-a-url
@@ -50,6 +52,7 @@ const YouTubeUpload = ({
 
   const addLink = async () => {
     if (isValidLink(input)) {
+      setHasError(false);
       const name = await getVideoName(input);
       const video = {
         name: name,
@@ -57,6 +60,7 @@ const YouTubeUpload = ({
       };
       setVideos([...videos, video]);
     } else {
+      setHasError(true);
     }
   };
 
@@ -113,6 +117,9 @@ const YouTubeUpload = ({
         removeFile={removeLink}
         className='px-4'
       />
+      {hasError && (
+        <Warning className='mt-6'>Please enter a valid Youtube link.</Warning>
+      )}
     </section>
   );
 };
