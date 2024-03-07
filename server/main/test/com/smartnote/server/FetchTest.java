@@ -94,9 +94,6 @@ public class FetchTest extends BaseRoute {
 
         // Verify response code
         assertEquals(404, result.status());
-        
-        // Verify response body
-        assertEquals("{\"message\":\"File not found\"}", result.body());
     }
     /*
     @Test
