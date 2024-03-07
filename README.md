@@ -40,8 +40,6 @@ SmartNote is an automated note-taking organization application that aims to revo
 
 ## Building
 
-First, run `./depends.sh` to check for and download dependencies, for both the client and server. This will also check that you have all the necessary tools installed (such as `npm`, `ant`, etc.) Unix-like systems (e.g. Mac, Linux) should be able to run this script directly. Windows users may need to run it using Git Bash.
-
 ### Client
 
 The client uses [Node.js](https://nodejs.org/en/) and React. Ensure you have installed these before continuing. You may test your installation by running `node --version` and `npm --version` in a terminal.
@@ -61,7 +59,7 @@ Then, to build the client, do:
 
 ### Server
 
-The server uses [Apache Ant](https://ant.apache.org/index.html) as its build system and [Apache Ivy](https://ant.apache.org/ivy/) as its dependency manager. Ensure you have installed these before continuing (or you are using an IDE with built-in support). For Ivy, `ivy-x.x.x.jar` must be somewhere within Ant's library path (usually in the library directory at `~/.ant/lib/` or `ANT_HOME/lib/`). You may test your installation by running `ant -version` in a terminal. An installation of [Java](https://www.oracle.com/java/technologies/downloads/) 17 or higher is required. You may test your installation by running `java -version` in a terminal.
+The server uses [Apache Ant](https://ant.apache.org/index.html) as its build system and [Apache Ivy](https://ant.apache.org/ivy/) as its dependency manager. Ensure you have installed these before continuing (or you are using an IDE with built-in support). For Ivy, `ivy-x.x.x.jar` must be somewhere within Ant's library path (usually in the library directory at `~/.ant/lib/` or `$ANT_HOME/lib/`). You may test your installation by running `ant -version` in a terminal. An installation of [Java](https://www.oracle.com/java/technologies/downloads/) 17 or higher is required. You may test your installation by running `java -version` in a terminal.
 
 [JUnit 4](https://junit.org/junit4/) is used as the testing framework. It should be downloaded when running `ant resolve`, but if not, download it and ensure that `junit-4.x.jar` is on the classpath. You may need to add libraries to Ant's library path. See how [Ant handles JUnit](https://ant.apache.org/manual/Tasks/junit.html) for more information. The testing framework also uses [Mockito 5](https://site.mockito.org/), and like JUnit, it should be downloaded when running `ant resolve`. If not, download it and ensure that `mockito-core-5.x.x.jar` is on the classpath. Using a JVM that is not Java 17 may cause issues with Mockito.
 
@@ -95,6 +93,16 @@ Make sure your working directory is the `server/` directory before running any c
 If you have built a JAR file of the server, you may run either `server.bat [args...]` (Windows) or `server.sh [args...]` (Mac/Linux) from the `server/` directory.
 
 When using an IDE, you may need to setup run configurations to target buildfile `server/build.xml`. Some IDEs may be able to build without Ant, but you may need to set up the classpath within your IDE's configuration. It must include all of the `jar` files in the `server/lib/` directory. Ensure your IDE has set the working directory to the `server/` directory.
+
+**Note**: Additional setup options are required when runinng the server, see [`server/README.md`](server/README.md) for more information.
+
+### Python Setup
+
+The requires Python to generate summaries. Several packages are required for the summarizer to work. The server works with Anaconda environments. Create an environment with the packages specified in `environment.yml` using the following command:
+
+```bash
+conda env create -f environment.yml
+```
 
 ## Testing
 
