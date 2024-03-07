@@ -38,6 +38,29 @@ SmartNote is an automated note-taking organization application that aims to revo
     - `test/` - Test sources
   - `scripts/` - Scripts used by the server
 
+## Configuration
+
+### Client
+
+To configure the client, do the following:
+
+1. Generate a YouTube API key following [this guide](https://developers.google.com/youtube/v3/getting-started).
+2. Create a Notion integration following [this guide](https://developers.notion.com/docs/create-a-notion-integration) and retrieve the client ID. You will need the client ID as well as the secret to configure the server.
+3. Create an `.env` file in the `client` directory which contains the following environment variables:
+
+```
+VITE_YOUTUBE_API_KEY='<your-youtube-api-key>'
+VITE_NOTION_CLIENT_ID='<your-notion-api-key>'
+VITE_REDIRECT_URI='<client_address>'
+VITE_SERVER_BASE_URL='<server_address>/api/v1'
+```
+
+By default, the client address is `http://localhost:5173` and the server address is `http://localhost:4567`.
+
+### Server
+
+Follow the instructions in the [server README](/server/README.md) to configure the server.
+
 ## Building
 
 ### Client
