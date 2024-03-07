@@ -83,6 +83,7 @@ public class FetchTest extends BaseRoute {
         // Verify response body
         assertEquals("{\"message\": \"Expected message\"}", result.body());
     }
+    */
     @Test
     public void testNoFileFound() throws Exception {
         // Set up any necessary request parameters or headers
@@ -97,6 +98,7 @@ public class FetchTest extends BaseRoute {
         // Verify response body
         assertEquals("{\"message\":\"File not found\"}", result.body());
     }
+    /*
     @Test
     public void testForbidden() throws Exception {
         // Set up any necessary request parameters or headers
