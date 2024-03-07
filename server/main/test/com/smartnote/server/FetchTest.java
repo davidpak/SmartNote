@@ -1,9 +1,6 @@
 package com.smartnote.server;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
