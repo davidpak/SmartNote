@@ -10,6 +10,7 @@ The response of `POST` requests will always contain a response body with a JSON 
 | ---- | ---- | -------- |
 | `success` | `bool` | Whether the request was successful. |
 | `message` | `string` | A message describing the result of the request. |
+| `extended` | `string` | An extended message describing the result of the request, may not be present. |
 
 It is guaranteed that all `POST` requests will have these fields in the response body, regardless of the success of the request. The `result` object may contain additional fields depending on the RPC. See the RPC's description for more information.
 

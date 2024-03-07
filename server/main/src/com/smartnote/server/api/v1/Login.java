@@ -3,6 +3,7 @@ package com.smartnote.server.api.v1;
 import com.smartnote.server.Server;
 import com.smartnote.server.auth.Session;
 import com.smartnote.server.auth.SessionManager;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -23,7 +24,7 @@ public class Login implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        response.type("application/json");
+        response.type(MIME.JSON);
 
         SessionManager sessionManager = Server.getServer().getSessionManager();
         Session session = sessionManager.getSession(request);

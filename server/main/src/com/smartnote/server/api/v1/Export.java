@@ -17,6 +17,7 @@ import com.smartnote.server.export.ExportServiceUnavailableException;
 import com.smartnote.server.export.Exporter;
 import com.smartnote.server.export.MalformedExportOptionsException;
 import com.smartnote.server.resource.NoSuchResourceException;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -34,7 +35,7 @@ import spark.Route;
 public class Export implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        response.type("application/json");
+        response.type(MIME.JSON);
 
         Session session = Server.getServer().getSessionManager().getSession(request);
         if (session == null) {
@@ -71,41 +72,72 @@ public class Export implements Route {
         Exporter exporter = exportOptions.getExporter();
 
         // Export the resource
-        JsonObject result;
+        JsonObject result = new JsonObject();
         try {
             result = exporter.export(exportOptions, session.getPermission());
         } catch (SecurityException e) {
             response.status(403);
-            return "{\"message\":\"Access denied\"}";
+            result.addProperty("message", "Access denied");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (InvalidPathException e) {
             response.status(400);
-            return "{\"message\":\"Invalid path\"}";
+            result.addProperty("message", "Invalid path");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (NoSuchResourceException e) {
             response.status(404);
-            return "{\"message\":\"Resource not found\"}";
+            result.addProperty("message", "Resource not found");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (IOException e) {
             response.status(500);
-            return "{\"message\":\"Export service had IO error\"}";
+            result.addProperty("message", "IO error");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (ExportServiceConnectionException e) {
             response.status(502);
-            return "{\"message\":\"Could not connect to export service\"}";
+            result.addProperty("message", "Could not connect to export service");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (ExportServiceUnavailableException e) {
             response.status(503);
-            return "{\"message\":\"Export service unavailable\"}";
+            result.addProperty("message", "Export service unavailable");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (ExportServiceTimeoutException e) {
             response.status(504);
-            return "{\"message\":\"Export service timed out\"}";
+            result.addProperty("message", "Export service timed out");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (MalformedExportOptionsException e) {
-            return "{\"message\":\"" + e.getMessage() + "\"}";
+            response.status(400);
+            result.addProperty("message", "Malformed export options");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         } catch (ExportException e) {
             response.status(500);
-            return "{\"message\":\"Export error\"}";
+            result.addProperty("message", "Export error");
+            if (exportOptions.getExtended() != null)
+                result.addProperty("extended", exportOptions.getExtended());
+            return gson.toJson(result);
         }
         
         if (!result.has("message"))
             result.addProperty("message", "Export successful");
 
+        if (exportOptions.getExtended() != null)
+            result.addProperty("extended", exportOptions.getExtended());
+
         response.status(200);
-        return new Gson().toJson(result);
+        return gson.toJson(result);
     }
 }

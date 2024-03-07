@@ -27,6 +27,8 @@ public class ExportOptions {
 
     private String data;
 
+    private String extended;
+
     public String getSource() {
         return source;
     }
@@ -45,6 +47,19 @@ public class ExportOptions {
 
     public String getData() {
         return data;
+    }
+
+    /**
+     * Set the extended error message.
+     * 
+     * @param extended The extended error message.
+     */
+    public void setExtended(String extended) {
+        this.extended = extended;
+    }
+
+    public String getExtended() {
+        return extended;
     }
 
     /**
