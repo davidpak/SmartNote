@@ -26,10 +26,10 @@ SmartNote is an automated note-taking organization application that aims to revo
   - `public/` - Static assets
   - `src/` - Client source code
     - `components/` - React components
+    - `contexts/` - Context to manage state for pages
     - `pages/` - Application pages
     - `tests/` - Jest tests
     - `types` - TypeScript types
-    - `utils/` - Utility functions
 - `server/` - Server resources
   - `docs/` - Server documentation
   - `examples/` - Example API requests
