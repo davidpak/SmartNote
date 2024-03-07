@@ -46,11 +46,21 @@ const ConnectToNotion = ({
     }
   };
 
+  const padValue = (value: number) => {
+    return value.toString().padStart(2, '0');
+  };
+
   const exportToNotion = async (code: string) => {
     try {
+      const now = new Date();
+      const date = `${now.getFullYear()}-${padValue(now.getMonth() + 1)}-${padValue(now.getDate())}`;
+      const time = `${padValue(now.getHours() % 12)}.${padValue(now.getMinutes())}.${padValue(now.getSeconds())}${now.getHours() < 12 ? 'AM' : 'PM'}`;
+      const pagename = `SmartNote ${date} ${time}`;
+
       const body = {
         data: markdown,
         exporter: 'notion',
+        output: pagename,
         remote: {
           mode: 'new',
           code: code,
