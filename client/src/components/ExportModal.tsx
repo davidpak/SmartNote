@@ -83,7 +83,9 @@ const ExportModal = ({
 
     const now = new Date();
     const date = `${now.getFullYear()}-${padValue(now.getMonth() + 1)}-${padValue(now.getDate())}`;
-    const time = `${padValue(now.getHours() % 12)}.${padValue(now.getMinutes())}.${padValue(now.getSeconds())}${now.getHours() < 12 ? 'AM' : 'PM'}`;
+    const hour =
+      now.getHours() === 0 || now.getHours() === 12 ? 12 : now.getHours() % 12;
+    const time = `${padValue(hour)}.${padValue(now.getMinutes())}.${padValue(now.getSeconds())}${now.getHours() < 12 ? 'AM' : 'PM'}`;
     const filename = `smartnote-${date}-at-${time}.${format}`;
 
     const aTag = document.createElement('a');
