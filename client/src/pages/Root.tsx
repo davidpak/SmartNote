@@ -5,20 +5,32 @@ import Navbar from '../components/Navbar';
 import { PageContextProvider } from '../contexts/PageContext';
 
 const Root = () => {
-  const [pageIndex, setPageIndex] = useState<number>(0);
+  const [pageIndex, setPageIndex] = useState<number>(() => {
+    const i = localStorage.getItem('index');
+    return i ? parseInt(i, 10) : 0;
+  });
 
   return (
     <PageContextProvider
       value={{
         pageIndex: pageIndex,
         next: () => {
-          setPageIndex((prevIndex) => prevIndex + 1);
+          setPageIndex((prevIndex) => {
+            const newIndex = prevIndex + 1;
+            localStorage.setItem('index', newIndex.toString());
+            return newIndex;
+          });
         },
         prev: () => {
-          setPageIndex((prevIndex) => prevIndex - 1);
+          setPageIndex((prevIndex) => {
+            const newIndex = prevIndex - 1;
+            localStorage.setItem('index', newIndex.toString());
+            return newIndex;
+          });
         },
         home: () => {
           setPageIndex(0);
+          localStorage.setItem('index', '0');
         },
       }}
     >
