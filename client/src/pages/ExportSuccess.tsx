@@ -1,25 +1,24 @@
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 
-import H2 from './H2';
-import Body from './Body';
-import Button from './Button';
+import H2 from '../components/H2';
+import Body from '../components/Body';
+import Button from '../components/Button';
+import { usePageContext } from '../contexts/PageContext';
 
 interface ExportSuccessType extends React.HTMLAttributes<HTMLDivElement> {
-  prev: () => void;
-  goHome: () => void;
   notesUrl: string;
   isNotion: boolean;
 }
 
 const ExportSuccess = ({
-  prev,
-  goHome,
   notesUrl,
   isNotion,
   className,
   ...rest
 }: ExportSuccessType) => {
+  const { prev, home } = usePageContext();
+
   return (
     <div
       className={twMerge('flex flex-col items-center gap-5', className)}
@@ -41,7 +40,7 @@ const ExportSuccess = ({
           : 'Congrats! Your notes have been exported :)'}
       </Body>
       <div className='flex gap-5'>
-        <Button onClick={goHome} variant='secondary'>
+        <Button onClick={home} variant='secondary'>
           Home
         </Button>
         {isNotion && (

@@ -2,34 +2,33 @@ import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 import { useState } from 'react';
 
-import H2 from './H2';
-import H3 from './H3';
-import Body from './Body';
-import Button from './Button';
-import Toggle from './Toggle';
-import Slider from './Slider';
-import Carousel from './Carousel';
+import H2 from '../components/H2';
+import H3 from '../components/H3';
+import Body from '../components/Body';
+import Button from '../components/Button';
+import Toggle from '../components/Toggle';
+import Slider from '../components/Slider';
+import Carousel from '../components/Carousel';
 import { JsonType } from './TopicSelection';
+import { usePageContext } from '../contexts/PageContext';
 
 const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
 interface CustomizationType extends React.HTMLAttributes<HTMLDivElement> {
   files: string[];
-  prev: () => void;
-  next: () => void;
   setMd: (md: string) => void;
   setJson: (json: JsonType) => void;
 }
 
 const Customization = ({
   files,
-  prev,
-  next,
   setMd,
   setJson,
   className,
   ...rest
 }: CustomizationType) => {
+  const { prev, next } = usePageContext();
+
   const [verbosity, setVerbosity] = useState(0.0);
   const [hasOverview, setHasOverview] = useState(true);
   const [hasKeyConcepts, setHasKeyConcepts] = useState(true);

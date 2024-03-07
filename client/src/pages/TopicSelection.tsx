@@ -5,13 +5,12 @@ import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 import Markdown from 'react-markdown';
 
-import H2 from './H2';
-import H3 from './H3';
-import Button from './Button';
+import H2 from '../components/H2';
+import H3 from '../components/H3';
+import Button from '../components/Button';
+import { usePageContext } from '../contexts/PageContext';
 
 interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
-  prev: () => void;
-  next: () => void;
   md: string;
   json: JsonType;
 }
@@ -66,13 +65,13 @@ interface HeadingType {
 }
 
 const TopicSelection = ({
-  prev,
-  next,
   md,
   json,
   className,
   ...rest
 }: TopicSelectionType) => {
+  const { prev, next } = usePageContext();
+
   const originalMd = useRef(md); // store the original markdown
   const [markdown, setMarkdown] = useState(md); // keep track of the updated markdown
 
@@ -280,7 +279,7 @@ const TopicSelection = ({
         </section>
       </section>
       <Button
-        {...((selectedTopics.length === 0) && { disabled: true })}
+        {...(selectedTopics.length === 0 && { disabled: true })}
         onClick={() => {
           localStorage.setItem('markdown', markdown);
           next();

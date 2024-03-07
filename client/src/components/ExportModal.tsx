@@ -3,7 +3,7 @@ import { useState, Fragment } from 'react';
 
 import Button from './Button';
 
-import { FormatType } from './ConnectToNotion';
+import { FormatType } from '../pages/ConnectToNotion';
 
 const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 

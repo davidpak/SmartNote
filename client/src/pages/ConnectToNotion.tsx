@@ -1,11 +1,12 @@
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { useEffect, useState } from 'react';
 
-import Body from './Body';
-import Button from './Button';
-import H2 from './H2';
-import ExportModal from './ExportModal';
-import DropdownMenu from './DropdownMenu';
+import Body from '../components/Body';
+import Button from '../components/Button';
+import H2 from '../components/H2';
+import ExportModal from '../components/ExportModal';
+import DropdownMenu from '../components/DropdownMenu';
+import { usePageContext } from '../contexts/PageContext';
 
 const CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
@@ -14,16 +15,14 @@ const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 export type FormatType = 'txt' | 'rtf' | 'md' | 'json';
 
 const ConnectToNotion = ({
-  prev,
-  next,
   setNotesUrl,
   setIsNotion,
 }: {
-  prev: () => void;
-  next: () => void;
   setNotesUrl: (url: string) => void;
   setIsNotion: (isNotion: boolean) => void;
 }) => {
+  const { prev, next } = usePageContext();
+
   const [format, setFormat] = useState<FormatType>('txt');
   const markdown = localStorage.getItem('markdown')!;
 

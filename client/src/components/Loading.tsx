@@ -2,15 +2,18 @@ import { AnimatedCircle } from 'react-craftify-spinners';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 
 import Button from './Button';
+import { usePageContext } from '../contexts/PageContext';
 
-const Loading = ({ prev }: { prev: () => void }) => {
+const Loading = () => {
+  const { prev } = usePageContext();
+
   return (
     <div className='max-w-lg m-auto'>
       <Button
         icon={Arrow}
         variant='tertiary'
         className='absolute left-16'
-        onClick={() => prev()}
+        onClick={prev}
       >
         Back
       </Button>

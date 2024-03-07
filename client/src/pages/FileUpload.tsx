@@ -6,17 +6,18 @@ import Button from '../components/Button';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
-import YouTubeUpload, { VideoType } from './YouTubeUpload';
+import YouTubeUpload, { VideoType } from '../components/YouTubeUpload';
+import { usePageContext } from '../contexts/PageContext';
 
 const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
 const FileUpload = ({
-  next,
   updateFiles,
 }: {
-  next: () => void;
   updateFiles: (files: string[]) => void;
 }) => {
+  const { next } = usePageContext();
+
   const [files, setFiles] = useState<File[]>([]);
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
