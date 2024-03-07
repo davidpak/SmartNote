@@ -27,3 +27,4 @@ dependencies:
     - pgvector
     - nltk~=3.8.1
     - PyPDF2
+    - PyPDF
