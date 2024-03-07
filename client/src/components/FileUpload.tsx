@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
-import Warning from '../components/Warning';
 import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
+import YouTubeUpload, { VideoType } from './YouTubeUpload';
 
 const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -18,6 +18,7 @@ const FileUpload = ({
   updateFiles: (files: string[]) => void;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [videos, setVideos] = useState<VideoType[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -80,7 +81,7 @@ const FileUpload = ({
         </Link>
         <img src={'/splash.png'} alt='' className='max-w-xl' />
       </section>
-      <section className='flex flex-col gap-6 items-center w-full max-w-xl'>
+      <section className='flex flex-col gap-6 items-center w-full'>
         <div className='flex flex-col gap-4 items-center'>
           <H2>Upload Files</H2>
           <Body>
@@ -88,23 +89,34 @@ const FileUpload = ({
             here:
           </Body>
         </div>
-        <Dropzone
-          files={files}
-          setFiles={(files) => {
-            setFiles(files);
-            updateFiles(files.map((file) => `session:uploads/${file.name}`));
-          }}
-          errors={errors}
-          setErrors={(errors) => setErrors(errors)}
-          className='w-full'
-        />
-        {hasErrors() && (
-          <Warning>Remove all invalid files to continue.</Warning>
-        )}
+        <div className='flex flex-col md:flex-row gap-4 w-full max-w-4xl justify-center'>
+          <Dropzone
+            files={files}
+            setFiles={(files) => {
+              setFiles(files);
+            }}
+            errors={errors}
+            setErrors={(errors) => setErrors(errors)}
+            hasErrors={hasErrors}
+            className='basis-1/2'
+          />
+          <YouTubeUpload
+            videos={videos}
+            setVideos={(videos) => {
+              setVideos(videos);
+            }}
+            className='basis-1/2'
+          />
+        </div>
       </section>
       <Button
-        {...((files.length === 0 || hasErrors()) && { disabled: true })}
+        {...((files.length === 0 || hasErrors()) &&
+          videos.length === 0 && { disabled: true })}
         onClick={() => {
+          updateFiles([
+            ...files.map((file) => `session:uploads/${file.name}`),
+            ...videos.map((video) => video.url),
+          ]);
           uploadFiles();
           next();
         }}
