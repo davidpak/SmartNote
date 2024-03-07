@@ -73,7 +73,9 @@ Find the environment you created and copy the path to the `python` executable. T
 **Note**: The `.env` file should contain the following:
 
 ```env
-OPENAI_API_KEY=your-api-key
+OPENAI_API_KEY=<your-api-key>
 ```
+
+`<your-api-key>` must be a valid OpenAI secret.
 
 **Note**: Debug mode is used for testing the generator. It will not generate summaries, but will instead always return the data pointed to by `debugResource`.
