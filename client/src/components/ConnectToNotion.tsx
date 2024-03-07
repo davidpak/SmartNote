@@ -54,7 +54,7 @@ const ConnectToNotion = ({
     try {
       const now = new Date();
       const date = `${now.getFullYear()}-${padValue(now.getMonth() + 1)}-${padValue(now.getDate())}`;
-      const time = `${padValue(now.getHours() % 12)}.${padValue(now.getMinutes())}.${padValue(now.getSeconds())}${now.getHours() < 12 ? 'AM' : 'PM'}`;
+      const time = `${padValue(now.getHours() % 12)}:${padValue(now.getMinutes())}:${padValue(now.getSeconds())}${now.getHours() < 12 ? 'am' : 'pm'}`;
       const pagename = `SmartNote ${date} ${time}`;
 
       const body = {
