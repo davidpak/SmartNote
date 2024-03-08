@@ -34,12 +34,12 @@ const ConnectToNotion = ({
     )}`;
   };
 
-  const handleRedirect = () => {
+  const handleRedirect = async () => {
     const code = searchParams.get('code');
 
     if (code) {
+      await exportToNotion(code);
       navigate('/success');
-      exportToNotion(code);
     }
   };
 

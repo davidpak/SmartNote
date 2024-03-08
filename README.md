@@ -51,7 +51,7 @@ To configure the client, do the following:
 ```
 VITE_YOUTUBE_API_KEY='<your-youtube-api-key>'
 VITE_NOTION_CLIENT_ID='<your-notion-api-key>'
-VITE_REDIRECT_URI='<client_address>/success'
+VITE_REDIRECT_URI='<client_address>/connect'
 VITE_SERVER_BASE_URL='<server_address>/api/v1'
 ```
 
