@@ -2,10 +2,10 @@ import { AnimatedCircle } from 'react-craftify-spinners';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 
 import Button from './Button';
-import { usePageContext } from '../contexts/PageContext';
+import { useNavigate } from 'react-router-dom';
 
 const Loading = () => {
-  const { prev } = usePageContext();
+  const navigate = useNavigate();
 
   return (
     <div className='max-w-lg m-auto'>
@@ -13,7 +13,7 @@ const Loading = () => {
         icon={Arrow}
         variant='tertiary'
         className='absolute left-16'
-        onClick={prev}
+        onClick={() => navigate('/customize')}
       >
         Back
       </Button>

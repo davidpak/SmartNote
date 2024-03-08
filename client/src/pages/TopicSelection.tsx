@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { CheckTree } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
@@ -10,6 +10,7 @@ import H3 from '../components/H3';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { useOutputContext } from '../contexts/OutputContext';
+import Loading from '../components/Loading';
 
 interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
   md: string;
@@ -294,7 +295,11 @@ const _TopicSelection = ({
 const TopicSelection = () => {
   const { markdown, json } = useOutputContext();
 
-  return markdown && json && <_TopicSelection md={markdown} json={json} />;
+  return markdown && json ? (
+    <_TopicSelection md={markdown} json={json} />
+  ) : (
+    <Loading />
+  );
 };
 
 export default TopicSelection;
