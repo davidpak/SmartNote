@@ -4,20 +4,28 @@ import { twMerge } from 'tailwind-merge';
 import H2 from '../components/H2';
 import Body from '../components/Body';
 import Button from '../components/Button';
-import { usePageContext } from '../contexts/PageContext';
-
-interface ExportSuccessType extends React.HTMLAttributes<HTMLDivElement> {
-  notesUrl: string;
-  isNotion: boolean;
-}
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useExportContext } from '../contexts/ExportContext';
 
 const ExportSuccess = ({
-  notesUrl,
-  isNotion,
   className,
   ...rest
-}: ExportSuccessType) => {
-  const { prev, home } = usePageContext();
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  const navigate = useNavigate();
+  const { notesUrl } = useExportContext();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isToNotion = notesUrl !== '';
+
+  useEffect(() => {
+    if (searchParams.has('code')) {
+      searchParams.delete('code');
+    }
+    if (searchParams.has('state')) {
+      searchParams.delete('state');
+    }
+    setSearchParams(searchParams);
+  }, []);
 
   return (
     <div
@@ -28,22 +36,22 @@ const ExportSuccess = ({
         icon={Arrow}
         variant='tertiary'
         className='absolute left-16'
-        onClick={() => prev()}
+        onClick={() => navigate('/connect')}
       >
         Back
       </Button>
       <H2>Export Successful!</H2>
       <img src='/export.png' alt='' className='w-64' />
       <Body>
-        {isNotion
+        {isToNotion
           ? 'Congrats! Check out your new notes page :)'
           : 'Congrats! Your notes have been exported :)'}
       </Body>
       <div className='flex gap-5'>
-        <Button onClick={home} variant='secondary'>
+        <Button onClick={() => navigate('/')} variant='secondary'>
           Home
         </Button>
-        {isNotion && (
+        {isToNotion && (
           <a href={notesUrl} target='_blank' tabIndex={-1}>
             <Button>View in Notion</Button>
           </a>

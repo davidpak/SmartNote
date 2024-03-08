@@ -15,8 +15,6 @@ const Home = () => {
   const [fileList, setFileList] = useState<string[]>([]);
   const [md, setMd] = useState<string>('');
   const [json, setJson] = useState<JsonType>();
-  const [notesUrl, setNotesUrl] = useState<string>('https://www.notion.so/');
-  const [isNotion, setIsNotion] = useState<boolean>(false);
 
   useEffect(() => {
     if (searchParams.has('code')) {
@@ -50,14 +48,9 @@ const Home = () => {
           <Loading />
         );
       case 3:
-        return (
-          <ConnectToNotion
-            setNotesUrl={(url: string) => setNotesUrl(url)}
-            setIsNotion={(isNotion: boolean) => setIsNotion(isNotion)}
-          />
-        );
+        return <ConnectToNotion />;
       case 4:
-        return <ExportSuccess notesUrl={notesUrl} isNotion={isNotion} />;
+        return <ExportSuccess />;
       default:
         home();
         return null;

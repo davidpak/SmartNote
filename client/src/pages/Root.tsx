@@ -1,44 +1,43 @@
 import { Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Navbar from '../components/Navbar';
-import { PageContextProvider } from '../contexts/PageContext';
+import { FilesContextProvider } from '../contexts/FilesContext';
+import { OutputContextProvider } from '../contexts/OutputContext';
+import { ExportContextProvider } from '../contexts/ExportContext';
+import { JsonType } from './TopicSelection';
 
 const Root = () => {
-  const [pageIndex, setPageIndex] = useState<number>(() => {
-    const i = localStorage.getItem('index');
-    return i ? parseInt(i, 10) : 0;
-  });
+  const [files, setFiles] = useState<string[]>([]);
+  const [markdown, setMarkdown] = useState<string>('');
+  const [json, setJson] = useState<JsonType | undefined>(undefined);
+  const [notesUrl, setNotesUrl] = useState<string>('https://www.notion.so/');
 
   return (
-    <PageContextProvider
-      value={{
-        pageIndex: pageIndex,
-        next: () => {
-          setPageIndex((prevIndex) => {
-            const newIndex = prevIndex + 1;
-            localStorage.setItem('index', newIndex.toString());
-            return newIndex;
-          });
-        },
-        prev: () => {
-          setPageIndex((prevIndex) => {
-            const newIndex = prevIndex - 1;
-            localStorage.setItem('index', newIndex.toString());
-            return newIndex;
-          });
-        },
-        home: () => {
-          setPageIndex(0);
-          localStorage.setItem('index', '0');
-        },
-      }}
+    <FilesContextProvider
+      value={{ files: files, setFiles: (files: string[]) => setFiles(files) }}
     >
-      <Navbar />
-      <main className='px-16 py-14'>
-        <Outlet />
-      </main>
-    </PageContextProvider>
+      <OutputContextProvider
+        value={{
+          markdown: markdown,
+          json: json,
+          setMarkdown: (markdown: string) => setMarkdown(markdown),
+          setJson: (json: JsonType) => setJson(json),
+        }}
+      >
+        <ExportContextProvider
+          value={{
+            notesUrl: notesUrl,
+            setNotesUrl: (url: string) => setNotesUrl(url),
+          }}
+        >
+          <Navbar />
+          <main className='px-16 py-14'>
+            <Outlet />
+          </main>
+        </ExportContextProvider>
+      </OutputContextProvider>
+    </FilesContextProvider>
   );
 };
 

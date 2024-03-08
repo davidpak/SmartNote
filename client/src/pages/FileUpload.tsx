@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { twMerge } from 'tailwind-merge';
 
 import Dropzone from '../components/Dropzone';
 import Button from '../components/Button';
@@ -7,17 +8,16 @@ import H1 from '../components/H1';
 import H2 from '../components/H2';
 import Body from '../components/Body';
 import YouTubeUpload, { VideoType } from '../components/YouTubeUpload';
-import { usePageContext } from '../contexts/PageContext';
+import { useFilesContext } from '../contexts/FilesContext';
 
 const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
 const FileUpload = ({
-  updateFiles,
-}: {
-  updateFiles: (files: string[]) => void;
-}) => {
-  const { next } = usePageContext();
-
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  const navigate = useNavigate();
+  const { setFiles: updateFiles } = useFilesContext();
   const [files, setFiles] = useState<File[]>([]);
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [errors, setErrors] = useState<(string | null)[]>([]);
@@ -69,7 +69,13 @@ const FileUpload = ({
   };
 
   return (
-    <div className='flex flex-col items-center gap-6 text-center'>
+    <div
+      className={twMerge(
+        'flex flex-col items-center gap-6 text-center',
+        className
+      )}
+      {...rest}
+    >
       <H1>Extract, Customize, Export.</H1>
       <section className='flex flex-col gap-4 items-center'>
         <H2>Intelligent note-taking with AI, integrated with Notion.</H2>
@@ -119,7 +125,7 @@ const FileUpload = ({
             ...videos.map((video) => video.url),
           ]);
           uploadFiles();
-          next();
+          navigate('/customize');
         }}
       >
         Continue
