@@ -1,11 +1,14 @@
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { useEffect, useState } from 'react';
+import { twMerge } from 'tailwind-merge';
 
-import Body from './Body';
-import Button from './Button';
-import H2 from './H2';
-import ExportModal from './ExportModal';
-import DropdownMenu from './DropdownMenu';
+import Body from '../components/Body';
+import Button from '../components/Button';
+import H2 from '../components/H2';
+import ExportModal from '../components/ExportModal';
+import DropdownMenu from '../components/DropdownMenu';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useExportContext } from '../contexts/ExportContext';
 
 const CLIENT_ID = import.meta.env.VITE_NOTION_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
@@ -14,16 +17,12 @@ const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 export type FormatType = 'txt' | 'rtf' | 'md' | 'json';
 
 const ConnectToNotion = ({
-  prev,
-  next,
-  setNotesUrl,
-  setIsNotion,
-}: {
-  prev: () => void;
-  next: () => void;
-  setNotesUrl: (url: string) => void;
-  setIsNotion: (isNotion: boolean) => void;
-}) => {
+  className,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  const navigate = useNavigate();
+  const { setNotesUrl } = useExportContext();
+  const [searchParams] = useSearchParams();
   const [format, setFormat] = useState<FormatType>('txt');
   const markdown = localStorage.getItem('markdown')!;
 
@@ -36,12 +35,10 @@ const ConnectToNotion = ({
   };
 
   const handleRedirect = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    const code = searchParams.get('code');
 
     if (code) {
-      setIsNotion(true);
-      next();
+      navigate('/success');
       exportToNotion(code);
     }
   };
@@ -90,13 +87,19 @@ const ConnectToNotion = ({
   }, []);
 
   return (
-    <div className='flex flex-col items-center gap-10 text-center'>
+    <div
+      className={twMerge(
+        'flex flex-col items-center gap-10 text-center',
+        className
+      )}
+      {...rest}
+    >
       <section className='flex flex-col items-center gap-3 text-center'>
         <Button
           icon={Arrow}
           variant='tertiary'
           className='absolute left-16'
-          onClick={() => prev()}
+          onClick={() => navigate('/select')}
         >
           Back
         </Button>
@@ -122,8 +125,8 @@ const ConnectToNotion = ({
           markdown={markdown}
           format={format}
           onExport={() => {
-            setIsNotion(false);
-            next();
+            navigate('/success');
+            setNotesUrl('');
           }}
         >
           <div className='flex flex-col gap-4'>

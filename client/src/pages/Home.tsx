@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import FileUpload from '../components/FileUpload';
-import Customization from '../components/Customization';
-import TopicSelection, { JsonType } from '../components/TopicSelection';
-import ConnectToNotion from '../components/ConnectToNotion';
-import ExportSuccess from '../components/ExportSuccess';
+import FileUpload from './FileUpload';
+import Customization from './Customization';
+import TopicSelection, { JsonType } from './TopicSelection';
+import ConnectToNotion from './ConnectToNotion';
+import ExportSuccess from './ExportSuccess';
 import Loading from '../components/Loading';
 import { usePageContext } from '../contexts/PageContext';
 
 const Home = () => {
-  const { pageIndex, next, prev, home } = usePageContext();
+  const { pageIndex, home } = usePageContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [fileList, setFileList] = useState<string[]>([]);
   const [md, setMd] = useState<string>('');
   const [json, setJson] = useState<JsonType>();
-  const [notesUrl, setNotesUrl] = useState<string>('https://www.notion.so/');
-  const [isNotion, setIsNotion] = useState<boolean>(false);
 
   useEffect(() => {
     if (searchParams.has('code')) {
@@ -33,45 +31,26 @@ const Home = () => {
     switch (pageIndex) {
       case 0:
         return (
-          <FileUpload
-            next={next}
-            updateFiles={(files: string[]) => setFileList(files)}
-          />
+          <FileUpload updateFiles={(files: string[]) => setFileList(files)} />
         );
       case 1:
         return (
           <Customization
             files={fileList}
-            prev={prev}
-            next={next}
             setMd={(md: string) => setMd(md)}
             setJson={(json: JsonType) => setJson(json)}
           />
         );
       case 2:
         return md && json ? (
-          <TopicSelection prev={prev} next={next} md={md} json={json} />
+          <TopicSelection md={md} json={json} />
         ) : (
-          <Loading prev={prev} />
+          <Loading />
         );
       case 3:
-        return (
-          <ConnectToNotion
-            prev={prev}
-            next={next}
-            setNotesUrl={(url: string) => setNotesUrl(url)}
-            setIsNotion={(isNotion: boolean) => setIsNotion(isNotion)}
-          />
-        );
+        return <ConnectToNotion />;
       case 4:
-        return (
-          <ExportSuccess
-            prev={prev}
-            goHome={home}
-            notesUrl={notesUrl}
-            isNotion={isNotion}
-          />
-        );
+        return <ExportSuccess />;
       default:
         home();
         return null;

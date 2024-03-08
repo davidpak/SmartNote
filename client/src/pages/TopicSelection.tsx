@@ -1,17 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { CheckTree } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css';
 import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 import Markdown from 'react-markdown';
 
-import H2 from './H2';
-import H3 from './H3';
-import Button from './Button';
+import H2 from '../components/H2';
+import H3 from '../components/H3';
+import Button from '../components/Button';
+import { useNavigate } from 'react-router-dom';
+import { useOutputContext } from '../contexts/OutputContext';
 
 interface TopicSelectionType extends React.HTMLAttributes<HTMLDivElement> {
-  prev: () => void;
-  next: () => void;
   md: string;
   json: JsonType;
 }
@@ -65,14 +65,13 @@ interface HeadingType {
   children: TextType[];
 }
 
-const TopicSelection = ({
-  prev,
-  next,
+const _TopicSelection = ({
   md,
   json,
   className,
   ...rest
 }: TopicSelectionType) => {
+  const navigate = useNavigate();
   const originalMd = useRef(md); // store the original markdown
   const [markdown, setMarkdown] = useState(md); // keep track of the updated markdown
 
@@ -225,7 +224,7 @@ const TopicSelection = ({
         icon={Arrow}
         variant='tertiary'
         className='absolute left-16'
-        onClick={() => prev()}
+        onClick={() => navigate('/customize')}
       >
         Back
       </Button>
@@ -280,16 +279,22 @@ const TopicSelection = ({
         </section>
       </section>
       <Button
-        {...((selectedTopics.length === 0) && { disabled: true })}
+        {...(selectedTopics.length === 0 && { disabled: true })}
         onClick={() => {
           localStorage.setItem('markdown', markdown);
-          next();
+          navigate('/connect');
         }}
       >
         Continue
       </Button>
     </div>
   );
+};
+
+const TopicSelection = () => {
+  const { markdown, json } = useOutputContext();
+
+  return markdown && json && <_TopicSelection md={markdown} json={json} />;
 };
 
 export default TopicSelection;

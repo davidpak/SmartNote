@@ -2,34 +2,27 @@ import { IoMdArrowBack as Arrow } from 'react-icons/io';
 import { twMerge } from 'tailwind-merge';
 import { useState } from 'react';
 
-import H2 from './H2';
-import H3 from './H3';
-import Body from './Body';
-import Button from './Button';
-import Toggle from './Toggle';
-import Slider from './Slider';
-import Carousel from './Carousel';
-import { JsonType } from './TopicSelection';
+import H2 from '../components/H2';
+import H3 from '../components/H3';
+import Body from '../components/Body';
+import Button from '../components/Button';
+import Toggle from '../components/Toggle';
+import Slider from '../components/Slider';
+import Carousel from '../components/Carousel';
+import { useNavigate } from 'react-router-dom';
+import { useFilesContext } from '../contexts/FilesContext';
+import { useOutputContext } from '../contexts/OutputContext';
 
 const BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
-interface CustomizationType extends React.HTMLAttributes<HTMLDivElement> {
-  files: string[];
-  prev: () => void;
-  next: () => void;
-  setMd: (md: string) => void;
-  setJson: (json: JsonType) => void;
-}
-
 const Customization = ({
-  files,
-  prev,
-  next,
-  setMd,
-  setJson,
   className,
   ...rest
-}: CustomizationType) => {
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  const navigate = useNavigate();
+  const { files } = useFilesContext();
+  const { setMarkdown, setJson } = useOutputContext();
+
   const [verbosity, setVerbosity] = useState(0.0);
   const [hasOverview, setHasOverview] = useState(true);
   const [hasKeyConcepts, setHasKeyConcepts] = useState(true);
@@ -82,7 +75,7 @@ const Customization = ({
       }
 
       const data = await res.json();
-      setMd(data.markdown);
+      setMarkdown(data.markdown);
       setJson(data.result.children);
     } catch (error) {
       console.error(error);
@@ -98,7 +91,7 @@ const Customization = ({
         icon={Arrow}
         variant='tertiary'
         className='absolute left-16'
-        onClick={() => prev()}
+        onClick={() => navigate('/')}
       >
         Back
       </Button>
@@ -141,7 +134,7 @@ const Customization = ({
           {...(!isSelected && { disabled: true })}
           onClick={() => {
             generateNotes();
-            next();
+            navigate('/select');
           }}
         >
           Generate!
