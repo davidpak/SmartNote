@@ -22,7 +22,7 @@ dependencies:
     - tiktoken
     - faiss-cpu
     - wikipedia
-    - psycopg2
+    - psycopg2-binary
     - pinecone-client
     - pgvector
     - nltk~=3.8.1

@@ -244,9 +244,11 @@ def process_path(inputs: list[str], output: str, options: dict[str, cl.SwitchVal
 
     multiple_pdfs = False
 
+    output_dir = os.path.dirname(output)
+
     # Merge PDFs if multiple input PDFs are provided
     if len(inputs) > 1:
-        merged_pdf_path = "../test/combined.pdf"
+        merged_pdf_path = f"{output_dir}/combined.pdf"
         merge_pdfs(inputs, merged_pdf_path)
         inputs = [merged_pdf_path]
         multiple_pdfs = True
