@@ -15,6 +15,7 @@ import org.apache.tika.Tika;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.smartnote.server.Server;
 import com.smartnote.server.ServerConfig;
 import com.smartnote.server.auth.Session;
@@ -22,6 +23,7 @@ import com.smartnote.server.auth.SessionManager;
 import com.smartnote.server.resource.NoSuchResourceException;
 import com.smartnote.server.resource.Resource;
 import com.smartnote.server.resource.ResourceSystem;
+import com.smartnote.server.util.MIME;
 import com.smartnote.server.util.MethodType;
 import com.smartnote.server.util.ServerRoute;
 
@@ -31,7 +33,9 @@ import spark.Route;
 
 
 /**
- * <p>Fetches resources on server.</p>
+ * <p>
+ * Fetches resources on server.
+ * </p>
  * 
  * @author Ethan Vrhel
  * @author Jaden Summerville
@@ -62,14 +66,31 @@ public class Fetch implements Route {
             InputStream inputStream = resource.openInputStream();
             //add info to body
             body = inputStream.readAllBytes();
+            //close inputStream
+            inputStream.close();
             //send
+        } catch (JsonSyntaxException e) {
+            response.status(400);
+            return "{\"message\":\"Malformed fetch options\"}";
+        } catch (InvalidPathException e) {
+            response.status(400);
+            return "{\"message\":\"Invalid path\"}";
+        } catch (IllegalArgumentException e) {
+            response.status(400);
+            return "{\"message\":" + e.getMessage() + "\"}";
         } catch(SecurityException e) {
             response.status(403);
             return "{\"message\":\"Access denied\"}";
+        } catch(NoSuchResourceException e) {
+            response.status(404);
+            return "{\"message\":\"Resource not found\"}";
         } catch (FileNotFoundException e) {
             // File not found
             response.status(404);
             return "{\"message\":\"File not found\"}";
+        } catch (IOException e) {
+            response.status(500);
+            return "{\"message\":\"Generation failed\"}";
         }
 
         response.header("Content-Type", new Tika().detect(body));
